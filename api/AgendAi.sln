@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendAi.Domain", "AgendAi.Domain\AgendAi.Domain.csproj", "{4A4DE1BE-E1B4-4A04-9864-EFB07054B0EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendAi.Application", "AgendAi.Application\AgendAi.Application.csproj", "{C8123B9D-5AA2-4C70-A18F-60EA3F40C33A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendAi.Infrastructure", "AgendAi.Infrastructure\AgendAi.Infrastructure.csproj", "{00DCDE76-548C-41B8-8C33-2E5799B34C64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendAi.API", "AgendAi.API\AgendAi.API.csproj", "{15409380-F15E-4A61-8344-E20409B553A8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4A4DE1BE-E1B4-4A04-9864-EFB07054B0EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A4DE1BE-E1B4-4A04-9864-EFB07054B0EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A4DE1BE-E1B4-4A04-9864-EFB07054B0EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A4DE1BE-E1B4-4A04-9864-EFB07054B0EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8123B9D-5AA2-4C70-A18F-60EA3F40C33A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8123B9D-5AA2-4C70-A18F-60EA3F40C33A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8123B9D-5AA2-4C70-A18F-60EA3F40C33A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8123B9D-5AA2-4C70-A18F-60EA3F40C33A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00DCDE76-548C-41B8-8C33-2E5799B34C64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00DCDE76-548C-41B8-8C33-2E5799B34C64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00DCDE76-548C-41B8-8C33-2E5799B34C64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00DCDE76-548C-41B8-8C33-2E5799B34C64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15409380-F15E-4A61-8344-E20409B553A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15409380-F15E-4A61-8344-E20409B553A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15409380-F15E-4A61-8344-E20409B553A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15409380-F15E-4A61-8344-E20409B553A8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
