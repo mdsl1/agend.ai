@@ -1,0 +1,1803 @@
+/*
+ * Agend.AI — estilos extraídos do arquivo Figma
+ * Base das telas: 1440 × 1024 px
+ *
+ * Telas contempladas:
+ * - Login
+ * - Dashboard
+ * - Gestão de usuários
+ * - Novo/Atualizar usuário
+ * - Diretório, perfil, novo e atualizar paciente
+ * - Agenda semanal
+ * - Novo agendamento
+ * - Configurações do sistema
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Brand */
+  --agend-brand-700: #006578;
+  --agend-brand-600: #008097;
+  --agend-brand-500: #0097b2;
+  --agend-brand-100: #e6f5f8;
+  --agend-brand-050: rgba(230, 245, 248, 0.3);
+
+  /* Neutrals */
+  --agend-ink: #131b2e;
+  --agend-label: #3d494c;
+  --agend-table-heading: #475569;
+  --agend-muted: #515f74;
+  --agend-subtle: #6d797d;
+  --agend-placeholder: #94a3b8;
+  --agend-placeholder-light: #bdc8cd;
+  --agend-border: #e2e8f0;
+  --agend-border-strong: #bdc8cd;
+  --agend-surface-subtle: #f1f5f9;
+  --agend-canvas: #f8fafc;
+  --agend-on-brand: #f9fdff;
+  --agend-white: #ffffff;
+
+  /* Feedback */
+  --agend-success: #16a34a;
+  --agend-success-bg: #dcfce7;
+  --agend-warning: #f59e0b;
+  --agend-warning-bg: #fef3c7;
+  --agend-danger: #ef4444;
+  --agend-danger-bg: #fee2e2;
+  --agend-info: #2563eb;
+  --agend-info-bg: #dae2fd;
+  --agend-inactive-bg: #e2e7ff;
+  --agend-lavender: #f2f3ff;
+  --agend-lavender-strong: #eaedff;
+  --agend-lilac: #faf8ff;
+
+  /* Overlay and elevation */
+  --agend-overlay: rgba(15, 23, 42, 0.4);
+  --agend-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --agend-shadow-header: 0 4px 5px rgba(0, 0, 0, 0.25);
+  --agend-shadow-card: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --agend-shadow-modal: 0 8px 30px rgba(0, 0, 0, 0.12);
+
+  /* Type */
+  --agend-font-heading: 'Hanken Grotesk', sans-serif;
+  --agend-font-body: 'Inter', sans-serif;
+  --agend-font-mono: 'Nimbus Mono PS', ui-monospace, monospace;
+
+  /* Shape and rhythm */
+  --agend-radius-xs: 4px;
+  --agend-radius-sm: 6px;
+  --agend-radius-md: 8px;
+  --agend-radius-lg: 12px;
+  --agend-radius-pill: 9999px;
+  --agend-sidebar-width: 240px;
+  --agend-topbar-height: 57px;
+  --agend-page-gap: 24px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--agend-ink);
+  background: var(--agend-canvas);
+  font-family: var(--agend-font-body);
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  border: 0;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Shared application shell — Dashboard, Agenda, Pacientes, Usuários, Config. */
+/* -------------------------------------------------------------------------- */
+
+.agend-app,
+.app-shell {
+  display: flex;
+  width: 100%;
+  min-width: 1024px;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--agend-canvas);
+}
+
+.sidebar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 0 0 var(--agend-sidebar-width);
+  flex-direction: column;
+  width: var(--agend-sidebar-width);
+  height: 100vh;
+  overflow: hidden;
+  background: var(--agend-white);
+  border-right: 1px solid var(--agend-border);
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 11px 16px 12px;
+  color: var(--agend-brand-700);
+  border-bottom: 1px solid var(--agend-border);
+  font-family: var(--agend-font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.sidebar__profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--agend-border);
+}
+
+.avatar {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  color: var(--agend-brand-700);
+  background: var(--agend-brand-100);
+  border-radius: var(--agend-radius-pill);
+}
+
+.avatar--lg {
+  width: 64px;
+  height: 64px;
+  background: var(--agend-info-bg);
+  border: 2px solid var(--agend-border);
+}
+
+.avatar--profile {
+  width: 116px;
+  height: 116px;
+  font-family: var(--agend-font-heading);
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.sidebar__user-name {
+  margin: 0;
+  color: var(--agend-ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.13px;
+}
+
+.sidebar__user-role {
+  margin: 0;
+  color: var(--agend-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.sidebar__nav {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  padding: 16px 8px;
+  overflow-y: auto;
+}
+
+.sidebar__link {
+  display: flex;
+  width: 100%;
+  min-height: 36px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
+  color: var(--agend-muted);
+  background: transparent;
+  border-left: 4px solid transparent;
+  border-radius: var(--agend-radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.13px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.sidebar__link:hover {
+  color: var(--agend-brand-700);
+  background: rgba(230, 245, 248, 0.3);
+}
+
+.sidebar__link.is-active,
+.sidebar__link[aria-current='page'] {
+  color: var(--agend-brand-700);
+  background: var(--agend-brand-100);
+  border-left-color: var(--agend-brand-700);
+}
+
+.sidebar__icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.sidebar__icon--dashboard {
+  width: 18px;
+  height: 18px;
+}
+
+.sidebar__icon--calendar {
+  width: 18px;
+  height: 20px;
+}
+
+.sidebar__icon--patients {
+  width: 16px;
+  height: 16px;
+}
+
+.sidebar__icon--users {
+  width: 22px;
+  height: 16px;
+}
+
+.sidebar__icon--settings {
+  width: 20.1px;
+  height: 20px;
+}
+
+.main-workspace {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+}
+
+.topbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: var(--agend-topbar-height);
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 50px;
+  color: var(--agend-on-brand);
+  background: var(--agend-brand-600);
+  border-bottom: 1px solid var(--agend-border-strong);
+  box-shadow: var(--agend-shadow-header);
+}
+
+.topbar__greeting {
+  margin: 0;
+  color: var(--agend-on-brand);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.13px;
+}
+
+.topbar__action {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  color: var(--agend-on-brand);
+  background: transparent;
+  border-radius: var(--agend-radius-pill);
+  cursor: pointer;
+}
+
+.page-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  padding: var(--agend-page-gap);
+  overflow: auto;
+}
+
+.page-container {
+  display: flex;
+  width: 100%;
+  max-width: 1280px;
+  flex-direction: column;
+  gap: 32px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-header--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page-title,
+.heading-1 {
+  margin: 0;
+  color: var(--agend-ink);
+  font-family: var(--agend-font-heading);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 38px;
+  letter-spacing: -0.6px;
+}
+
+.section-title,
+.heading-2 {
+  margin: 0;
+  color: var(--agend-ink);
+  font-family: var(--agend-font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.page-subtitle,
+.body-copy {
+  margin: 0;
+  color: var(--agend-muted);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+/* ---------------------------- Shared components ---------------------------- */
+
+.card {
+  position: relative;
+  overflow: hidden;
+  background: var(--agend-white);
+  border: 1px solid var(--agend-border);
+  border-radius: var(--agend-radius-md);
+}
+
+.card--raised {
+  box-shadow: var(--agend-shadow-card);
+}
+
+.card--lg {
+  border-radius: var(--agend-radius-lg);
+}
+
+.button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--agend-radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.13px;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.button--primary {
+  color: var(--agend-white);
+  background: var(--agend-brand-500);
+  box-shadow: var(--agend-shadow-xs);
+}
+
+.button--primary:hover {
+  background: var(--agend-brand-600);
+}
+
+.button--secondary {
+  color: var(--agend-ink);
+  background: var(--agend-white);
+  border-color: var(--agend-border);
+}
+
+.button--secondary:hover {
+  color: var(--agend-brand-700);
+  border-color: var(--agend-brand-500);
+}
+
+.button--danger {
+  color: var(--agend-danger);
+  background: var(--agend-white);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.button--ghost {
+  color: var(--agend-muted);
+  background: transparent;
+}
+
+.button--block {
+  width: 100%;
+}
+
+.button--lg {
+  min-height: 48px;
+}
+
+.icon-button {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  color: var(--agend-muted);
+  background: transparent;
+  border-radius: var(--agend-radius-sm);
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  color: var(--agend-brand-700);
+  background: var(--agend-brand-100);
+}
+
+.button:focus-visible,
+.icon-button:focus-visible,
+.sidebar__link:focus-visible,
+.form-control:focus-visible {
+  outline: 2px solid rgba(0, 151, 178, 0.35);
+  outline-offset: 2px;
+}
+
+.button:disabled,
+.icon-button:disabled,
+.form-control:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.badge {
+  display: inline-flex;
+  min-height: 22px;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 10px;
+  border-radius: var(--agend-radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+  letter-spacing: 0.33px;
+  white-space: nowrap;
+}
+
+.badge--success {
+  color: var(--agend-success);
+  background: var(--agend-success-bg);
+}
+
+.badge--warning {
+  color: var(--agend-warning);
+  background: var(--agend-warning-bg);
+}
+
+.badge--danger {
+  color: var(--agend-danger);
+  background: var(--agend-danger-bg);
+}
+
+.badge--info {
+  color: var(--agend-brand-700);
+  background: var(--agend-brand-100);
+}
+
+.badge--inactive {
+  color: var(--agend-muted);
+  background: var(--agend-inactive-bg);
+}
+
+.field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field__label {
+  color: var(--agend-label);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.13px;
+}
+
+.field__control {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.field__icon {
+  position: absolute;
+  left: 12px;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  color: var(--agend-muted);
+  pointer-events: none;
+}
+
+.field__action {
+  position: absolute;
+  right: 12px;
+  z-index: 1;
+}
+
+.form-control {
+  width: 100%;
+  min-height: 40px;
+  padding: 10.5px 16px;
+  color: var(--agend-ink);
+  background: var(--agend-white);
+  border: 1px solid var(--agend-border);
+  border-radius: var(--agend-radius-md);
+  outline: none;
+}
+
+.form-control.has-leading-icon {
+  padding-left: 40px;
+}
+
+.form-control.has-trailing-icon {
+  padding-right: 40px;
+}
+
+.form-control::placeholder {
+  color: var(--agend-placeholder-light);
+  opacity: 1;
+}
+
+.form-control:hover {
+  border-color: var(--agend-placeholder);
+}
+
+.form-control:focus {
+  border-color: var(--agend-brand-500);
+  box-shadow: 0 0 0 3px rgba(0, 151, 178, 0.12);
+}
+
+textarea.form-control {
+  min-height: 86px;
+  padding: 12px;
+  resize: vertical;
+}
+
+select.form-control {
+  padding-right: 40px;
+  appearance: none;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.form-grid--wide {
+  gap: 24px;
+}
+
+.field--full {
+  grid-column: 1 / -1;
+}
+
+.helper-text {
+  color: var(--agend-muted);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.error-text {
+  color: var(--agend-danger);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* ---------------------------------- Login --------------------------------- */
+
+.login-screen {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 1024px;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    linear-gradient(144.58deg, #e6f5f8 0%, #f8fafc 100%),
+    var(--agend-white);
+}
+
+.login-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 0 0 600px;
+  min-height: 786px;
+  flex-direction: column;
+  gap: 125px;
+  padding: 70px 60px;
+}
+
+.login-brand {
+  display: flex;
+  height: 32px;
+  align-items: center;
+  gap: 7px;
+  color: var(--agend-brand-700);
+  font-family: var(--agend-font-heading);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+}
+
+.login-brand__mark {
+  width: 33px;
+  height: 27px;
+  object-fit: contain;
+}
+
+.login-content {
+  display: flex;
+  width: 480px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.login-heading {
+  width: 100%;
+  margin: 40px 0 60px;
+  color: var(--agend-ink);
+  font-family: var(--agend-font-heading);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 38px;
+  letter-spacing: -0.6px;
+  text-align: center;
+}
+
+.login-form {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.login-form .button--primary {
+  min-height: 48px;
+  margin-top: 0;
+}
+
+.login-help {
+  width: 448px;
+  margin-top: 48px;
+  padding-top: 24px;
+  color: var(--agend-muted);
+  border-top: 1px solid var(--agend-border);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.login-help a {
+  color: var(--agend-brand-500);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.login-visual {
+  position: absolute;
+  inset: 0 0 0 603px;
+  min-width: 0;
+  background:
+    var(--login-hero-image, none) center / cover no-repeat,
+    var(--agend-brand-100);
+}
+
+.login-visual > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* -------------------------------- Dashboard -------------------------------- */
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.metric-card {
+  position: relative;
+  display: flex;
+  min-height: 104px;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  overflow: hidden;
+  background: var(--agend-white);
+  border: 1px solid var(--agend-border);
+  border-radius: var(--agend-radius-md);
+}
+
+.metric-card__decoration {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 64px;
+  height: 64px;
+  background: var(--agend-brand-100);
+  border-bottom-left-radius: var(--agend-radius-pill);
+}
+
+.metric-card:nth-child(2) .metric-card__decoration {
+  background: var(--agend-lavender);
+}
+
+.metric-card:nth-child(4) .metric-card__decoration {
+  background: rgba(254, 226, 226, 0.5);
+}
+
+.metric-card__header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  color: var(--agend-muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.13px;
+}
+
+.metric-card__value {
+  position: relative;
+  display: flex;
+  height: 32px;
+  align-items: center;
+  gap: 8px;
+  color: var(--agend-ink);
+  font-family: var(--agend-font-heading);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 760px) minmax(320px, 368px);
+  gap: 24px;
+}
+
+.panel-header {
+  display: flex;
+  min-height: 61px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--agend-white);
+  border-bottom: 1px solid var(--agend-border);
+}
+
+.panel-header__action {
+  color: var(--agend-brand-700);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+  text-decoration: none;
+}
+
+.doctor-distribution {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.doctor-distribution__item {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.doctor-distribution__name {
+  color: var(--agend-ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.doctor-distribution__specialty {
+  color: var(--agend-muted);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.doctor-distribution__value {
+  color: var(--agend-brand-700);
+  font-family: var(--agend-font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.dashboard-grid .data-table td {
+  color: var(--agend-ink);
+  border-color: rgba(226, 232, 240, 0.5);
+}
+
+/* ----------------------- Users and patient directory ----------------------- */
+
+.content-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.content-toolbar__filters {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-control {
+  position: relative;
+  width: min(100%, 368px);
+}
+
+.search-control .form-control {
+  padding-left: 40px;
+}
+
+.filter-control {
+  width: 200px;
+}
+
+.table-card {
+  overflow: hidden;
+  background: var(--agend-white);
+  border: 1px solid var(--agend-border);
+  border-radius: var(--agend-radius-lg);
+}
+
+.data-table {
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: separate;
+  color: var(--agend-muted);
+  table-layout: fixed;
+}
+
+.data-table thead {
+  background: var(--agend-surface-subtle);
+}
+
+.data-table th {
+  height: 39px;
+  padding: 12px 16px;
+  color: var(--agend-table-heading);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: 0.33px;
+  text-align: left;
+}
+
+.data-table td {
+  height: 61px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--agend-border);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  vertical-align: middle;
+}
+
+.data-table tbody tr:first-child td {
+  border-top: 0;
+}
+
+.data-table tbody tr:hover {
+  background: rgba(248, 250, 252, 0.7);
+}
+
+.data-table__identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--agend-ink);
+  font-weight: 500;
+}
+
+.data-table__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.data-table .is-disabled {
+  color: rgba(81, 95, 116, 0.7);
+}
+
+.pagination {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  color: var(--agend-muted);
+  background: var(--agend-white);
+  border-top: 1px solid var(--agend-border);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ------------------------------ Patient profile ----------------------------- */
+
+.profile-header-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 25px;
+  background: var(--agend-white);
+  border: 1px solid var(--agend-border);
+  border-radius: var(--agend-radius-lg);
+}
+
+.profile-header-card__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-header-card__name {
+  margin: 0;
+  color: var(--agend-brand-700);
+  font-family: var(--agend-font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.profile-header-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: var(--agend-muted);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 24px;
+}
+
+.info-card {
+  padding: 24px;
+}
+
+.info-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+  margin-top: 20px;
+}
+
+.info-item__label {
+  margin: 0 0 4px;
+  color: var(--agend-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+  letter-spacing: 0.55px;
+  text-transform: uppercase;
+}
+
+.info-item__value {
+  margin: 0;
+  color: var(--agend-ink);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--agend-border);
+}
+
+.tabs__item {
+  position: relative;
+  padding: 12px 16px;
+  color: var(--agend-muted);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.13px;
+  cursor: pointer;
+}
+
+.tabs__item.is-active {
+  color: var(--agend-brand-700);
+}
+
+.tabs__item.is-active::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--agend-brand-500);
+  content: '';
+}
+
+.appointment-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.appointment-list__item {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid var(--agend-border);
+}
+
+.appointment-list__item:first-child {
+  border-top: 0;
+}
+
+/* --------------------------- Modal forms and overlay ------------------------ */
+
+.modal-overlay {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto;
+  background: var(--agend-overlay);
+}
+
+.modal {
+  display: flex;
+  width: min(672px, 100%);
+  max-height: calc(100vh - 48px);
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--agend-white);
+  border: 1px solid var(--agend-border);
+  border-radius: var(--agend-radius-lg);
+  box-shadow: var(--agend-shadow-modal);
+}
+
+.modal--user {
+  width: min(448px, 100%);
+  box-shadow: var(--agend-shadow-card);
+}
+
+.modal__header {
+  display: flex;
+  min-height: 73px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--agend-border);
+}
+
+.modal--user .modal__header {
+  min-height: 68px;
+}
+
+.modal__title {
+  margin: 0;
+  color: var(--agend-ink);
+  font-family: var(--agend-font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.modal__close {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: var(--agend-muted);
+  background: transparent;
+  border-radius: var(--agend-radius-sm);
+  cursor: pointer;
+}
+
+.modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 24px;
+  overflow: auto;
+}
+
+.modal__body--patient {
+  padding-bottom: 72px;
+}
+
+.modal__footer {
+  display: flex;
+  min-height: 67px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  background: var(--agend-white);
+  border-top: 1px solid var(--agend-border);
+}
+
+.modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.patient-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.patient-form-grid .notes-field {
+  grid-column: 1 / -1;
+  min-height: 126px;
+}
+
+.role-selector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.role-selector__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  color: var(--agend-muted);
+  background: var(--agend-white);
+  border: 1px solid var(--agend-border);
+  border-radius: var(--agend-radius-md);
+  cursor: pointer;
+}
+
+.role-selector__item.is-selected {
+  color: var(--agend-brand-700);
+  background: var(--agend-brand-100);
+  border-color: var(--agend-brand-500);
+}
+
+/* ------------------------------- Weekly agenda ------------------------------ */
+
+.calendar-card {
+  overflow: hidden;
+  background: var(--agend-white);
+  border: 1px solid var(--agend-border);
+  border-radius: var(--agend-radius-lg);
+}
+
+.calendar-toolbar {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--agend-border);
+}
+
+.calendar-toolbar__navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-toolbar__range {
+  min-width: 200px;
+  color: var(--agend-ink);
+  font-family: var(--agend-font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  text-align: center;
+}
+
+.calendar-scroll {
+  width: 100%;
+  overflow: auto;
+}
+
+.week-calendar {
+  position: relative;
+  display: grid;
+  width: 1110px;
+  min-width: 1110px;
+  grid-template-columns: 60px repeat(7, 150px);
+  grid-template-rows: 72px repeat(13, 60px);
+  background: var(--agend-white);
+}
+
+.week-calendar__day,
+.week-calendar__time,
+.week-calendar__cell {
+  border-right: 1px solid rgba(226, 232, 240, 0.5);
+  border-bottom: 1px solid var(--agend-border);
+}
+
+.week-calendar__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--agend-muted);
+  background: var(--agend-white);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+  letter-spacing: 0.55px;
+}
+
+.week-calendar__day.is-today {
+  color: var(--agend-brand-700);
+  background: var(--agend-brand-100);
+}
+
+.week-calendar__time {
+  padding: 8px 12px 0;
+  color: var(--agend-muted);
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.week-calendar__cell {
+  background: var(--agend-white);
+}
+
+.week-calendar__cell.is-weekend {
+  background: rgba(248, 250, 252, 0.3);
+}
+
+.week-calendar__cell.is-today {
+  background: rgba(230, 245, 248, 0.2);
+}
+
+.calendar-event {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 149px;
+  min-height: 59px;
+  padding: 6px 12px;
+  overflow: hidden;
+  color: var(--agend-brand-700);
+  background: var(--agend-brand-100);
+  border-left: 4px solid var(--agend-brand-700);
+  border-radius: var(--agend-radius-xs);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.calendar-event__patient {
+  overflow: hidden;
+  color: var(--agend-ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-event__meta {
+  overflow: hidden;
+  color: var(--agend-muted);
+  font-size: 11px;
+  line-height: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --------------------------- System configuration -------------------------- */
+
+.settings-subheader {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px 1px;
+  background: var(--agend-surface-subtle);
+  border-bottom: 1px solid var(--agend-border);
+}
+
+.settings-subheader__title {
+  margin: 0;
+  color: var(--agend-ink);
+  font-family: var(--agend-font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.settings-search {
+  width: 280px;
+}
+
+.settings-workspace {
+  padding: 24px;
+  overflow: auto;
+}
+
+.settings-workspace__inner {
+  display: flex;
+  width: 100%;
+  max-width: 1152px;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.settings-bento {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: 387px 245px;
+  gap: 24px;
+}
+
+.settings-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--agend-white);
+  border: 1px solid var(--agend-border);
+  border-radius: var(--agend-radius-lg);
+  box-shadow: var(--agend-shadow-xs);
+}
+
+.settings-card--clinical {
+  grid-column: 1 / span 8;
+  grid-row: 1;
+}
+
+.settings-card--side {
+  grid-column: 9 / span 4;
+  grid-row: 1;
+}
+
+.settings-card--specialties {
+  grid-column: 1 / span 6;
+  grid-row: 2;
+}
+
+.settings-card--hours {
+  grid-column: 7 / span 6;
+  grid-row: 2;
+}
+
+.settings-card__header {
+  display: flex;
+  min-height: 69px;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: var(--agend-lilac);
+  border-bottom: 1px solid var(--agend-border);
+}
+
+.settings-card__header-icon {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  color: var(--agend-brand-700);
+  background: var(--agend-brand-100);
+  border-radius: var(--agend-radius-sm);
+}
+
+.settings-card__title {
+  margin: 0;
+  color: var(--agend-ink);
+  font-family: var(--agend-font-heading);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 27px;
+}
+
+.settings-card__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+}
+
+.settings-card .field__label {
+  color: var(--agend-muted);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: 0;
+}
+
+.settings-card .form-control {
+  color: var(--agend-ink);
+  font-size: 16px;
+}
+
+.specialty-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.specialty-tag {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px;
+  color: var(--agend-brand-700);
+  background: var(--agend-brand-100);
+  border: 1px dashed rgba(0, 101, 120, 0.2);
+  border-radius: var(--agend-radius-pill);
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.hours-table {
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+.hours-table th {
+  height: 41px;
+  padding: 8px 16px 9px;
+  color: var(--agend-muted);
+  background: var(--agend-canvas);
+  border-bottom: 1px solid var(--agend-border);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.hours-table td {
+  height: 73px;
+  padding: 12px 16px 13px;
+  color: var(--agend-ink);
+  border-bottom: 1px solid var(--agend-border);
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.hours-table tr.is-disabled {
+  opacity: 0.6;
+}
+
+.time-control {
+  width: 96px;
+  min-height: 32px;
+  padding: 6px 9px;
+  color: var(--agend-ink);
+  background: var(--agend-white);
+  border: 1px solid var(--agend-border);
+  border-radius: var(--agend-radius-xs);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: 256px minmax(0, 1fr);
+  gap: 24px;
+}
+
+.settings-nav {
+  align-self: start;
+  padding: 8px;
+  background: var(--agend-white);
+  border: 1px solid var(--agend-border);
+  border-radius: var(--agend-radius-lg);
+}
+
+.settings-nav__item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  color: var(--agend-muted);
+  background: transparent;
+  border-radius: var(--agend-radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-nav__item.is-active {
+  color: var(--agend-brand-700);
+  background: var(--agend-brand-100);
+}
+
+.settings-panel {
+  overflow: hidden;
+  background: var(--agend-white);
+  border: 1px solid var(--agend-border);
+  border-radius: var(--agend-radius-lg);
+}
+
+.settings-panel__header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--agend-border);
+}
+
+.settings-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 0;
+  border-top: 1px solid var(--agend-border);
+}
+
+.settings-row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.settings-row__title {
+  margin: 0;
+  color: var(--agend-ink);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.settings-row__description {
+  margin: 4px 0 0;
+  color: rgba(81, 95, 116, 0.7);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  width: 40px;
+  height: 24px;
+  flex: 0 0 auto;
+  padding: 2px;
+  background: #d1d5db;
+  border-radius: var(--agend-radius-pill);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.switch::after {
+  width: 20px;
+  height: 20px;
+  background: var(--agend-white);
+  border-radius: var(--agend-radius-pill);
+  box-shadow: var(--agend-shadow-xs);
+  content: '';
+  transition: transform 160ms ease;
+}
+
+.switch.is-checked,
+.switch[aria-checked='true'] {
+  background: var(--agend-brand-500);
+}
+
+.switch.is-checked::after,
+.switch[aria-checked='true']::after {
+  transform: translateX(16px);
+}
+
+/* -------------------------------- Utilities -------------------------------- */
+
+.text-heading {
+  font-family: var(--agend-font-heading);
+}
+
+.text-muted {
+  color: var(--agend-muted);
+}
+
+.text-brand {
+  color: var(--agend-brand-700);
+}
+
+.text-danger {
+  color: var(--agend-danger);
+}
+
+.surface {
+  background: var(--agend-white);
+}
+
+.surface-subtle {
+  background: var(--agend-surface-subtle);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Figma uses desktop frames. These rules keep the same hierarchy on smaller UI. */
+@media (max-width: 1180px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-grid,
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 820px) {
+  .agend-app,
+  .app-shell,
+  .login-screen {
+    min-width: 0;
+  }
+
+  .sidebar {
+    flex-basis: 72px;
+    width: 72px;
+  }
+
+  .sidebar__brand,
+  .sidebar__profile {
+    justify-content: center;
+    padding-inline: 8px;
+  }
+
+  .sidebar__brand {
+    font-size: 0;
+  }
+
+  .sidebar__profile > :not(.avatar),
+  .sidebar__link > :not(.sidebar__icon) {
+    display: none;
+  }
+
+  .sidebar__link {
+    justify-content: center;
+    padding-inline: 12px;
+  }
+
+  .topbar {
+    padding-inline: 24px;
+  }
+
+  .login-panel {
+    flex: 1;
+    align-items: center;
+  }
+
+  .login-visual {
+    display: none;
+  }
+
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid,
+  .patient-form-grid,
+  .info-list {
+    grid-template-columns: 1fr;
+  }
+}
