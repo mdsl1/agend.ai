@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type {
   DatesSetArg,
@@ -29,6 +29,8 @@ type AppointmentDetails = {
 }
 
 type CalendarView = 'timeGridWeek' | 'timeGridWorkWeek' | 'dayGridMonth'
+
+const MIN_CALENDAR_HEIGHT = 608
 
 const doctors = [
   { id: 'all', name: 'Todos os profissionais' },
@@ -188,10 +190,10 @@ function AppointmentCard({ event, view }: EventContentArg) {
 
   return (
     <div
-      className={`h-full overflow-hidden rounded border-agend-brand-700 bg-agend-brand-100 text-agend-brand-700 shadow-sm ring-1 ring-agend-brand-500/10 ${
+      className={`h-full min-h-0 overflow-hidden rounded border-agend-brand-700 bg-agend-brand-100 text-agend-brand-700 ring-1 ring-inset ring-agend-brand-500/15 ${
         isMonthView
-          ? 'min-h-0 border-l-2 px-1.5 py-1'
-          : 'min-h-12 border-l-4 px-2 py-1.5'
+          ? 'border-l-2 px-1.5 py-1'
+          : 'border-l-4 px-2 py-1.5'
       }`}
     >
       <p
@@ -237,10 +239,12 @@ function CalendarDayHeader({ date, isToday, view }: DayHeaderContentArg) {
 
 export function WeeklyAgenda() {
   const calendarRef = useRef<FullCalendar>(null)
+  const calendarContainerRef = useRef<HTMLDivElement>(null)
   const [selectedDoctor, setSelectedDoctor] = useState('all')
   const [selectedDate, setSelectedDate] = useState('2026-07-29')
   const [calendarView, setCalendarView] =
     useState<CalendarView>('timeGridWeek')
+  const [calendarHeight, setCalendarHeight] = useState(MIN_CALENDAR_HEIGHT)
   const [visibleRange, setVisibleRange] = useState(
     '27 de julho — 2 de agosto de 2026',
   )
@@ -256,6 +260,64 @@ export function WeeklyAgenda() {
   }, [selectedDoctor])
 
   const activeDoctor = doctors.find((doctor) => doctor.id === selectedDoctor)
+
+  useEffect(() => {
+    const calendarContainer = calendarContainerRef.current
+
+    if (!calendarContainer) {
+      return
+    }
+
+    let resizeFrame: number | undefined
+    const mainContainer = calendarContainer.closest('main')
+
+    if (!mainContainer) {
+      return
+    }
+
+    const updateCalendarSize = () => {
+      if (resizeFrame !== undefined) {
+        cancelAnimationFrame(resizeFrame)
+      }
+
+      resizeFrame = requestAnimationFrame(() => {
+        const mainStyles = getComputedStyle(mainContainer)
+        const mainRect = mainContainer.getBoundingClientRect()
+        const calendarRect = calendarContainer.getBoundingClientRect()
+        const calendarOffset =
+          calendarRect.top - mainRect.top + mainContainer.scrollTop
+        const horizontalScrollbarHeight =
+          calendarContainer.offsetHeight - calendarContainer.clientHeight
+        const availableHeight =
+          mainContainer.clientHeight -
+          calendarOffset -
+          (Number.parseFloat(mainStyles.paddingBottom) || 0) -
+          horizontalScrollbarHeight
+        const nextHeight = Math.max(
+          MIN_CALENDAR_HEIGHT,
+          Math.floor(availableHeight),
+        )
+
+        setCalendarHeight((currentHeight) =>
+          currentHeight === nextHeight ? currentHeight : nextHeight,
+        )
+        calendarRef.current?.getApi().updateSize()
+      })
+    }
+
+    const resizeObserver = new ResizeObserver(updateCalendarSize)
+
+    resizeObserver.observe(mainContainer)
+    updateCalendarSize()
+
+    return () => {
+      resizeObserver.disconnect()
+
+      if (resizeFrame !== undefined) {
+        cancelAnimationFrame(resizeFrame)
+      }
+    }
+  }, [])
 
   function moveCalendar(direction: 'previous' | 'next') {
     const api = calendarRef.current?.getApi()
@@ -301,7 +363,10 @@ export function WeeklyAgenda() {
   }
 
   return (
-    <section aria-labelledby="agenda-title" className="flex flex-col gap-5">
+    <section
+      aria-labelledby="agenda-title"
+      className="flex min-w-0 flex-col gap-5"
+    >
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <h1
@@ -323,7 +388,7 @@ export function WeeklyAgenda() {
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-agend-border bg-white shadow-agend-card">
+      <div className="flex min-h-144 w-full min-w-0 flex-col overflow-hidden rounded-xl border border-agend-border bg-white shadow-agend-card">
         <div className="flex flex-col gap-4 border-b border-agend-border bg-white p-4 lg:flex-row lg:items-center lg:justify-between lg:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-agend-brand-100 text-agend-brand-700">
@@ -437,7 +502,10 @@ export function WeeklyAgenda() {
           </span>
         </div>
 
-        <div className="agenda-calendar w-full overflow-x-auto bg-white">
+        <div
+          ref={calendarContainerRef}
+          className="agenda-calendar w-full min-w-0 overflow-x-auto bg-white"
+        >
           <FullCalendar
             ref={calendarRef}
             plugins={[timeGridPlugin, dayGridPlugin]}
@@ -470,7 +538,7 @@ export function WeeklyAgenda() {
             datesSet={handleDatesSet}
             nowIndicator
             expandRows
-            height="auto"
+            height={calendarHeight}
           />
         </div>
       </div>

@@ -63,6 +63,10 @@
     @apply min-w-[900px] font-sans text-agend-muted;
   }
 
+  .agenda-calendar .fc .fc-scroller {
+    overflow-y: hidden !important;
+  }
+
   .agenda-calendar .fc-theme-standard .fc-scrollgrid {
     @apply border-0;
   }

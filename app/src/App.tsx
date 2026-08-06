@@ -19,8 +19,8 @@ function App() {
       <div className="flex h-screen min-w-0 flex-1 flex-col">
         <Header />
 
-        <main className="min-h-0 flex-1 overflow-auto p-4 sm:p-6">
-          <div className="mx-auto flex w-full max-w-360 flex-col gap-6">
+        <main className="min-h-0 flex-1 overflow-auto px-6 py-4 sm:py-6 lg:px-8 2xl:px-10">
+          <div className="flex min-h-full w-full min-w-0 flex-col gap-6">
             <WeeklyAgenda />
           </div>
         </main>
