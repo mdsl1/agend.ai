@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nome VARCHAR(150) NOT NULL,
     email VARCHAR(150) NOT NULL,
     senha_hash VARCHAR(255) NOT NULL,
-    cargo VARCHAR(50) NOT NULL, -- 'Doutor', 'Recepcionista', 'Administrador'
+    cargo VARCHAR(50) NOT NULL, -- 'Profissional', 'Recepcionista', 'Administrador'
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ,
@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS profissionais (
     id_usuario BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     id_especialidade BIGINT REFERENCES especialidades(id) ON DELETE SET NULL,
     registro_profissional VARCHAR(30), -- CRM, CRO, etc.
+    id_google_calendar TEXT,
+    prefixo VARCHAR(6),
     CONSTRAINT uq_profissional_usuario UNIQUE (id_usuario)
 );
 
@@ -94,17 +96,43 @@ CREATE TABLE IF NOT EXISTS agendamentos (
     id_profissional BIGINT NOT NULL REFERENCES profissionais(id) ON DELETE RESTRICT,
     id_especialidade BIGINT REFERENCES especialidades(id) ON DELETE SET NULL,
     id_procedimento BIGINT REFERENCES procedimentos(id) ON DELETE SET NULL,
+    id_event_google_calendar TEXT,
     timedate_inicio TIMESTAMPTZ NOT NULL,
     timedate_fim TIMESTAMPTZ NOT NULL,
     motivo_contato TEXT,
     anotacoes_profissional TEXT,
     valor_total NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
     status_pagamento VARCHAR(20) NOT NULL DEFAULT 'pendente', -- 'pendente', 'pago', 'isento'
-    status VARCHAR(20) NOT NULL DEFAULT 'agendado', -- 'agendado', 'concluido', 'cancelado', 'faltou'
+    status VARCHAR(20) NOT NULL DEFAULT 'pendente_integracao', -- 'pendente_integracao', 'agendado', 'falha_integracao', 'concluido', 'cancelado', 'faltou'
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ
 );
+
+-- Mantém volumes locais já existentes compatíveis com a evolução do schema.
+ALTER TABLE profissionais
+    ADD COLUMN IF NOT EXISTS id_google_calendar TEXT,
+    ADD COLUMN IF NOT EXISTS prefixo VARCHAR(6);
+
+ALTER TABLE profissionais
+    DROP CONSTRAINT IF EXISTS uq_profissional_usuario_id_calendar;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_profissional_usuario
+ON profissionais(id_usuario);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_profissional_google_calendar
+ON profissionais(id_google_calendar)
+WHERE id_google_calendar IS NOT NULL;
+
+ALTER TABLE agendamentos
+    ADD COLUMN IF NOT EXISTS id_event_google_calendar TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_agendamento_google_event
+ON agendamentos(id_event_google_calendar)
+WHERE id_event_google_calendar IS NOT NULL;
+
+ALTER TABLE agendamentos
+    ALTER COLUMN status SET DEFAULT 'pendente_integracao';
 
 
 CREATE INDEX idx_agendamento_grid ON agendamentos(id_clinica, id_profissional, timedate_inicio, timedate_fim) 
@@ -120,8 +148,8 @@ CREATE INDEX idx_usuarios_login ON usuarios(email, id_clinica)
 WHERE deleted_at IS NULL;
 
 
-INSERT INTO clinicas (id, nome, cnpj, tipo_clinica) 
-VALUES (1, 'Clínica Agend.AI Central', '12.345.678/0001-90', 'medica')
+INSERT INTO clinicas (id, nome, cnpj, tipo_clinica, webhook_calendar) 
+VALUES (1, 'Clínica Agend.AI Central', '12.345.678/0001-90', 'medica', 'https://n8n.mdsl1.com/webhook/8c6ff736-f915-4a03-9a44-5292a7f61fea')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO horario_funcionamento (id_clinica, dia_semana, hora_inicio, hora_fim) VALUES

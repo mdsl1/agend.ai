@@ -25,7 +25,7 @@ import {
 type AppointmentDetails = {
   patient: string
   procedure: string
-  doctorId: string
+  doctorUuid: string
 }
 
 type CalendarView = 'timeGridWeek' | 'timeGridWorkWeek' | 'dayGridMonth'
@@ -33,7 +33,6 @@ type CalendarView = 'timeGridWeek' | 'timeGridWorkWeek' | 'dayGridMonth'
 const MIN_CALENDAR_HEIGHT = 608
 
 const doctors = [
-  { id: 'all', name: 'Todos os profissionais' },
   { id: 'ricardo', name: 'Dr. Ricardo Almeida' },
   { id: 'camila', name: 'Dra. Camila Santos' },
   { id: 'lucas', name: 'Dr. Lucas Oliveira' },
@@ -58,7 +57,7 @@ const staticAppointments: EventInput[] = [
     extendedProps: {
       patient: 'Ana Souza',
       procedure: 'Consulta inicial',
-      doctorId: 'ricardo',
+      doctorUuid: 'ricardo',
     } satisfies AppointmentDetails,
   },
   {
@@ -69,7 +68,7 @@ const staticAppointments: EventInput[] = [
     extendedProps: {
       patient: 'Carlos Mendes',
       procedure: 'Retorno cardiológico',
-      doctorId: 'camila',
+      doctorUuid: 'camila',
     } satisfies AppointmentDetails,
   },
   {
@@ -80,7 +79,7 @@ const staticAppointments: EventInput[] = [
     extendedProps: {
       patient: 'Fernanda Lima',
       procedure: 'Avaliação dermatológica',
-      doctorId: 'lucas',
+      doctorUuid: 'lucas',
     } satisfies AppointmentDetails,
   },
   {
@@ -91,7 +90,7 @@ const staticAppointments: EventInput[] = [
     extendedProps: {
       patient: 'Rafael Costa',
       procedure: 'Consulta clínica',
-      doctorId: 'ricardo',
+      doctorUuid: 'ricardo',
     } satisfies AppointmentDetails,
   },
   {
@@ -102,7 +101,7 @@ const staticAppointments: EventInput[] = [
     extendedProps: {
       patient: 'Juliana Rocha',
       procedure: 'Retorno',
-      doctorId: 'camila',
+      doctorUuid: 'camila',
     } satisfies AppointmentDetails,
   },
   {
@@ -113,7 +112,7 @@ const staticAppointments: EventInput[] = [
     extendedProps: {
       patient: 'Paulo Nunes',
       procedure: 'Avaliação clínica',
-      doctorId: 'ricardo',
+      doctorUuid: 'ricardo',
     } satisfies AppointmentDetails,
   },
   {
@@ -124,7 +123,7 @@ const staticAppointments: EventInput[] = [
     extendedProps: {
       patient: 'Beatriz Alves',
       procedure: 'Consulta dermatológica',
-      doctorId: 'lucas',
+      doctorUuid: 'lucas',
     } satisfies AppointmentDetails,
   },
 ]
@@ -240,7 +239,7 @@ function CalendarDayHeader({ date, isToday, view }: DayHeaderContentArg) {
 export function WeeklyAgenda() {
   const calendarRef = useRef<FullCalendar>(null)
   const calendarContainerRef = useRef<HTMLDivElement>(null)
-  const [selectedDoctor, setSelectedDoctor] = useState('all')
+  const [selectedDoctor, setSelectedDoctor] = useState(doctors[0].id)
   const [selectedDate, setSelectedDate] = useState('2026-07-29')
   const [calendarView, setCalendarView] =
     useState<CalendarView>('timeGridWeek')
@@ -249,15 +248,14 @@ export function WeeklyAgenda() {
     '27 de julho — 2 de agosto de 2026',
   )
 
-  const visibleAppointments = useMemo(() => {
-    if (selectedDoctor === 'all') {
-      return staticAppointments
-    }
-
-    return staticAppointments.filter(
-      (appointment) => appointment.extendedProps?.doctorId === selectedDoctor,
-    )
-  }, [selectedDoctor])
+  const visibleAppointments = useMemo(
+    () =>
+      staticAppointments.filter(
+        (appointment) =>
+          appointment.extendedProps?.doctorUuid === selectedDoctor,
+      ),
+    [selectedDoctor],
+  )
 
   const activeDoctor = doctors.find((doctor) => doctor.id === selectedDoctor)
 
@@ -512,6 +510,7 @@ export function WeeklyAgenda() {
             initialView="timeGridWeek"
             initialDate="2026-07-29"
             locale={ptBrLocale}
+            timeZone="America/Sao_Paulo"
             firstDay={1}
             views={{
               dayGridMonth: {

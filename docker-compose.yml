@@ -6,9 +6,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=agendai_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=Psql.123456789.
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database:/docker-entrypoint-initdb.d
@@ -26,8 +26,8 @@ services:
       - ./api:/app
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=agendai_db;Username=postgres;Password=Psql.123456789.
-      - N8N_BASE_URL=http://n8n:5678
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - N8n__ApiKey=${N8N_API_KEY}
     depends_on:
       - db
     networks:
