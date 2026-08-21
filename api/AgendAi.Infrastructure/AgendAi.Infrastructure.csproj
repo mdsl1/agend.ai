@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AgendAi.Domain\AgendAi.Domain.csproj" />
+    <ProjectReference Include="..\AgendAi.Application\AgendAi.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

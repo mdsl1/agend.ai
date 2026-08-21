@@ -4,7 +4,7 @@
 
 Este arquivo é o guia operacional durável para agentes que trabalham no Agend.AI. Ele consolida a arquitetura, a stack, a configuração, a estrutura do repositório, o estado implementado, as pendências e as regras que não podem ser inferidas apenas pelo código.
 
-O inventário técnico e o estado de implementação abaixo foram revisados em **13 de agosto de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
+O inventário técnico foi revisado em **13 de agosto de 2026** e o estado da integração da agenda no frontend foi atualizado em **20 de agosto de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
 
 O Agend.AI é um CRM para clínicas com agenda, cadastros e automação de agendamentos. A solução combina uma SPA React, uma API ASP.NET Core, PostgreSQL com NHibernate e workflows n8n integrados, no desenho de destino, ao Telegram e ao Google Calendar.
 
@@ -158,6 +158,7 @@ Não crie migrations incrementais sem nova decisão explícita. Um agente nunca 
 | Tailwind CSS | `^4.3.3` | tokens e estilos utilitários |
 | `@tailwindcss/vite` | `^4.3.3` | integração Tailwind/Vite |
 | FullCalendar core/react/daygrid/timegrid | `^6.1.21` | agenda semanal, semana útil e mês |
+| FullCalendar Luxon 3 + Luxon | `^6.1.21` / `^3.7.2` | suporte ao fuso nomeado `America/Sao_Paulo` no FullCalendar v6 |
 | Lucide React | `^1.28.0` | ícones da interface |
 | Sonner | `^2.0.7` | toasts |
 | ESLint | `^10.6.0` | lint |
@@ -223,7 +224,7 @@ O `.env` da raiz existe localmente, é ignorado pelo Git e atualmente não possu
 | `POSTGRES_DB` | `db` e composição da conexão da `api` | nome do banco | obrigatória; sem default no Compose |
 | `POSTGRES_USER` | `db` e composição da conexão da `api` | usuário do PostgreSQL | obrigatória; sem default |
 | `POSTGRES_PASSWORD` | `db` e composição da conexão da `api` | senha do PostgreSQL | segredo obrigatório; sem default |
-| `N8N_API_KEY` | Compose, convertido em `N8n__ApiKey` na `api` | segredo planejado para comunicação servidor-servidor | configurado, mas ainda não consumido pelo código |
+| `N8N_API_KEY` | Compose, convertido em `N8n__ApiKey` na `api` | segredo de comunicação servidor-servidor | obrigatório e enviado pela API ao n8n no header `X-AgendAi-Api-Key` |
 
 ### Variáveis injetadas nos serviços
 
@@ -231,9 +232,10 @@ O `.env` da raiz existe localmente, é ignorado pelo Git e atualmente não possu
 |---|---|---|---|
 | `ASPNETCORE_ENVIRONMENT` | `api`; Compose e `launchSettings.json` | seleciona o ambiente ASP.NET Core | `Development` |
 | `ConnectionStrings__DefaultConnection` | `api`; Compose | equivale a `ConnectionStrings:DefaultConnection`; conexão NHibernate | montada com `db:5432` e `POSTGRES_*`; obrigatória |
-| `N8n__ApiKey` | `api`; Compose | equivale a `N8n:ApiKey` | injetada, mas sem leitura/validação implementada |
+| `N8n__ApiKey` | `api`; Compose | equivale a `N8n:ApiKey` | validada na inicialização e usada pelo cliente HTTP do gateway n8n |
 | `DOTNET_USE_POLLING_FILE_WATCHER` | `api/Dockerfile` | polling do `dotnet watch` no bind mount | `1` |
 | `CHOKIDAR_USEPOLLING` | `app`; Compose | polling do watcher do Vite no bind mount | `true` |
+| `API_PROXY_TARGET` | `app`; Compose/Vite | destino interno do proxy `/api` no desenvolvimento conteinerizado | `http://api:5000`; no host o Vite usa `http://localhost:5000` por padrão |
 | `N8N_HOST` | `n8n`; Compose | host anunciado/configurado | `localhost` |
 | `N8N_PORT` | `n8n`; Compose | porta do serviço | `5678` |
 | `N8N_PROTOCOL` | `n8n`; Compose | protocolo local | `http` |
@@ -242,10 +244,10 @@ O `.env` da raiz existe localmente, é ignorado pelo Git e atualmente não possu
 
 Observações de configuração:
 
-- `Program.cs` encerra a inicialização com `InvalidOperationException` se `ConnectionStrings:DefaultConnection` estiver ausente.
+- `Program.cs` encerra a inicialização com `InvalidOperationException` se `ConnectionStrings:DefaultConnection` ou `N8n:ApiKey` estiver ausente.
 - `appsettings.json` contém apenas logging e `AllowedHosts`.
 - O `appsettings.Development.json` local contém apenas níveis de logging e é ignorado pelo Git.
-- O frontend não usa nenhuma variável `VITE_*`, `process.env` ou `import.meta.env`.
+- O código entregue ao navegador não usa variáveis `VITE_*` nem `import.meta.env`; somente `vite.config.ts` lê `process.env.API_PROXY_TARGET` no servidor de desenvolvimento.
 - Não há variáveis de Telegram, Google Calendar, Groq, Redis, Google Sheets ou Supabase configuradas no repositório.
 - Quando essas integrações forem implementadas, use variáveis de ambiente/secret stores e adicione somente placeholders seguros ao `.env.example`.
 
@@ -331,10 +333,13 @@ agend.ai/
 |       |-- App.tsx
 |       |-- index.css
 |       |-- main.tsx
-|       `-- components/
-|           |-- AppSidebar.tsx
-|           |-- Header.tsx
-|           `-- WeeklyAgenda.tsx
+|       |-- components/
+|       |   |-- AppSidebar.tsx
+|       |   |-- Header.tsx
+|       |   `-- WeeklyAgenda.tsx
+|       `-- features/
+|           `-- agenda/
+|               `-- agendaApi.ts
 |-- database/
 |   `-- init.sql
 `-- n8n/
@@ -358,16 +363,20 @@ agend.ai/
 - Cabeçalho e sidebar recolhível.
 - Tela de agenda baseada em FullCalendar.
 - Visões de semana, semana útil e mês.
-- Filtro local por profissional.
+- Lista de profissionais ainda estática, com consulta da agenda pelo UUID selecionado.
 - Navegação por período, data selecionada e botão “Hoje”.
 - Localização `pt-BR` e fuso `America/Sao_Paulo`.
 - Tokens visuais teal e componentes acessíveis com foco visível e rótulos.
-- Eventos de demonstração estáticos.
+- Eventos carregados por período via `GET /api/agenda/{profissionalUuid}`, com adaptação ao contrato do FullCalendar.
+- Requisições canceláveis e estados visuais de carregamento, erro, tentativa novamente e período vazio.
+- Proxy `/api` do Vite para evitar CORS no desenvolvimento local; o destino conteinerizado é configurado por `API_PROXY_TARGET`.
 - Botão “Novo agendamento” visível, porém intencionalmente desabilitado.
 
 ### Backend e persistência
 
 - Solução .NET dividida em Domain, Application, Infrastructure e API.
+- Endpoint `GET /api/agenda/{profissionalUuid}` para consultar um período da agenda por profissional.
+- Consulta de agenda com contratos HTTP, caso de uso, leitura NHibernate do profissional e gateway HTTP para o n8n com timeout e erros tipados.
 - Oito entidades de domínio e oito mappings FluentNHibernate.
 - `ISessionFactory` NHibernate configurada para PostgreSQL e sessão por escopo HTTP.
 - Schema de criação integral com oito tabelas, seeds básicos, constraints e índices.
@@ -383,17 +392,15 @@ Não trate os itens abaixo como implementados apenas porque constam na documenta
 
 ### PoC funcional
 
-- Criar controllers e endpoints reais; `AgendAi.API/Controllers/` está vazio.
-- Criar DTOs e contratos HTTP; `AgendAi.API/Contracts/` está vazio.
-- Implementar casos de uso, validadores e perfis AutoMapper na Application.
+- Criar os demais controllers e endpoints; atualmente existe somente a consulta de agenda por profissional/período.
+- Criar os demais DTOs e contratos HTTP; a consulta de agenda já possui contratos próprios.
+- Implementar os demais casos de uso, validadores e perfis AutoMapper na Application.
 - Implementar repositórios, transações e filtros de soft delete no NHibernate.
 - Completar a política de retenção no schema para `profissionais` e `horario_funcionamento` e revisar FKs `ON DELETE CASCADE` antes de fluxos de exclusão.
-- Criar gateway HTTP da API para o n8n com timeout, cancelamento e erros tipados.
-- Implementar e validar o uso de `N8n__ApiKey`.
 - Exportar workflows n8n importáveis para disponibilidade, criação e consulta de agenda.
 - Integrar Google Calendar e definir tratamento de falha parcial/idempotência.
 - Implementar o fluxo Telegram -> n8n -> API.
-- Substituir profissionais e eventos estáticos do frontend por dados da API.
+- Substituir a lista estática de profissionais do frontend por dados da API.
 - Habilitar criação real de agendamento na interface.
 - Verificar o fluxo ponta a ponta React -> API -> n8n -> Google Calendar e n8n -> API -> PostgreSQL.
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type {
   DatesSetArg,
@@ -8,19 +8,27 @@ import type {
 } from '@fullcalendar/core'
 import ptBrLocale from '@fullcalendar/core/locales/pt-br'
 import dayGridPlugin from '@fullcalendar/daygrid'
+import luxonPlugin from '@fullcalendar/luxon3'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { toast } from 'sonner'
 import {
+  AlertCircle,
   CalendarDays,
   CalendarRange,
   ChevronLeft,
   ChevronRight,
   Columns3,
   Grid3X3,
+  LoaderCircle,
   Plus,
+  RefreshCw,
   Stethoscope,
 } from 'lucide-react'
+import {
+  consultarAgenda,
+  type EventoAgendaApi,
+} from '../features/agenda/agendaApi'
 
 type AppointmentDetails = {
   patient: string
@@ -33,9 +41,8 @@ type CalendarView = 'timeGridWeek' | 'timeGridWorkWeek' | 'dayGridMonth'
 const MIN_CALENDAR_HEIGHT = 608
 
 const doctors = [
-  { id: 'ricardo', name: 'Dr. Ricardo Almeida' },
-  { id: 'camila', name: 'Dra. Camila Santos' },
-  { id: 'lucas', name: 'Dr. Lucas Oliveira' },
+  { uuid: '8260f73e-e8ca-42aa-804e-2efc912a5654', name: 'Dr. Paulo Plinio' },
+  { uuid: 'f198c33b-2911-41bd-a52e-9ad662518044', name: 'Dr. Romulo D. Canuto' },
 ]
 
 const calendarViews: Array<{
@@ -46,86 +53,6 @@ const calendarViews: Array<{
   { id: 'timeGridWeek', label: 'Semana', icon: Columns3 },
   { id: 'timeGridWorkWeek', label: 'Semana útil', icon: CalendarRange },
   { id: 'dayGridMonth', label: 'Mês', icon: Grid3X3 },
-]
-
-const staticAppointments: EventInput[] = [
-  {
-    id: 'appointment-1',
-    title: 'Ana Souza',
-    start: '2026-07-27T08:00:00-03:00',
-    end: '2026-07-27T09:00:00-03:00',
-    extendedProps: {
-      patient: 'Ana Souza',
-      procedure: 'Consulta inicial',
-      doctorUuid: 'ricardo',
-    } satisfies AppointmentDetails,
-  },
-  {
-    id: 'appointment-2',
-    title: 'Carlos Mendes',
-    start: '2026-07-27T10:30:00-03:00',
-    end: '2026-07-27T11:30:00-03:00',
-    extendedProps: {
-      patient: 'Carlos Mendes',
-      procedure: 'Retorno cardiológico',
-      doctorUuid: 'camila',
-    } satisfies AppointmentDetails,
-  },
-  {
-    id: 'appointment-3',
-    title: 'Fernanda Lima',
-    start: '2026-07-28T09:00:00-03:00',
-    end: '2026-07-28T10:00:00-03:00',
-    extendedProps: {
-      patient: 'Fernanda Lima',
-      procedure: 'Avaliação dermatológica',
-      doctorUuid: 'lucas',
-    } satisfies AppointmentDetails,
-  },
-  {
-    id: 'appointment-4',
-    title: 'Rafael Costa',
-    start: '2026-07-29T13:00:00-03:00',
-    end: '2026-07-29T14:30:00-03:00',
-    extendedProps: {
-      patient: 'Rafael Costa',
-      procedure: 'Consulta clínica',
-      doctorUuid: 'ricardo',
-    } satisfies AppointmentDetails,
-  },
-  {
-    id: 'appointment-5',
-    title: 'Juliana Rocha',
-    start: '2026-07-30T08:30:00-03:00',
-    end: '2026-07-30T09:30:00-03:00',
-    extendedProps: {
-      patient: 'Juliana Rocha',
-      procedure: 'Retorno',
-      doctorUuid: 'camila',
-    } satisfies AppointmentDetails,
-  },
-  {
-    id: 'appointment-6',
-    title: 'Paulo Nunes',
-    start: '2026-07-31T15:00:00-03:00',
-    end: '2026-07-31T16:00:00-03:00',
-    extendedProps: {
-      patient: 'Paulo Nunes',
-      procedure: 'Avaliação clínica',
-      doctorUuid: 'ricardo',
-    } satisfies AppointmentDetails,
-  },
-  {
-    id: 'appointment-7',
-    title: 'Beatriz Alves',
-    start: '2026-08-01T10:00:00-03:00',
-    end: '2026-08-01T11:00:00-03:00',
-    extendedProps: {
-      patient: 'Beatriz Alves',
-      procedure: 'Consulta dermatológica',
-      doctorUuid: 'lucas',
-    } satisfies AppointmentDetails,
-  },
 ]
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
@@ -149,6 +76,10 @@ const dayNumberFormatter = new Intl.DateTimeFormat('pt-BR', {
   day: 'numeric',
   timeZone: 'America/Sao_Paulo',
 })
+
+const initialSelectedDate = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Sao_Paulo',
+}).format(new Date())
 
 function formatVisibleRange(start: Date, exclusiveEnd: Date) {
   const end = new Date(exclusiveEnd)
@@ -181,6 +112,20 @@ function formatVisiblePeriod({ start, end, view }: DatesSetArg) {
   }
 
   return formatVisibleRange(start, end)
+}
+
+function toFullCalendarEvent(event: EventoAgendaApi): EventInput {
+  return {
+    id: event.id,
+    title: event.titulo,
+    start: event.inicio,
+    end: event.fim,
+    extendedProps: {
+      patient: event.nomeCliente || event.titulo,
+      procedure: event.nomeProcedimento ?? 'Procedimento não informado',
+      doctorUuid: event.profissionalUuid,
+    } satisfies AppointmentDetails,
+  }
 }
 
 function AppointmentCard({ event, view }: EventContentArg) {
@@ -239,25 +184,67 @@ function CalendarDayHeader({ date, isToday, view }: DayHeaderContentArg) {
 export function WeeklyAgenda() {
   const calendarRef = useRef<FullCalendar>(null)
   const calendarContainerRef = useRef<HTMLDivElement>(null)
-  const [selectedDoctor, setSelectedDoctor] = useState(doctors[0].id)
-  const [selectedDate, setSelectedDate] = useState('2026-07-29')
-  const [calendarView, setCalendarView] =
-    useState<CalendarView>('timeGridWeek')
+  const [selectedDoctor, setSelectedDoctor] = useState(doctors[0].uuid)
+  const [selectedDate, setSelectedDate] = useState(initialSelectedDate)
+  const [calendarView, setCalendarView] = useState<CalendarView>('timeGridWeek')
   const [calendarHeight, setCalendarHeight] = useState(MIN_CALENDAR_HEIGHT)
-  const [visibleRange, setVisibleRange] = useState(
-    '27 de julho — 2 de agosto de 2026',
-  )
+  const [appointments, setAppointments] = useState<EventInput[]>([])
+  const [queryPeriod, setQueryPeriod] = useState<{
+    inicio: string
+    fim: string
+  } | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [reloadAttempt, setReloadAttempt] = useState(0)
+  const [visibleRange, setVisibleRange] = useState('Carregando período...')
 
-  const visibleAppointments = useMemo(
-    () =>
-      staticAppointments.filter(
-        (appointment) =>
-          appointment.extendedProps?.doctorUuid === selectedDoctor,
-      ),
-    [selectedDoctor],
-  )
+  const activeDoctor = doctors.find((doctor) => doctor.uuid === selectedDoctor)
 
-  const activeDoctor = doctors.find((doctor) => doctor.id === selectedDoctor)
+  useEffect(() => {
+    if (!queryPeriod) {
+      return
+    }
+
+    const { inicio, fim } = queryPeriod
+    const abortController = new AbortController()
+
+    async function loadAppointments() {
+      setIsLoading(true)
+      setLoadError(null)
+      setAppointments([])
+
+      try {
+        const response = await consultarAgenda({
+          profissionalUuid: selectedDoctor,
+          inicio,
+          fim,
+          signal: abortController.signal,
+        })
+
+        if (!abortController.signal.aborted) {
+          setAppointments(response.eventos.map(toFullCalendarEvent))
+        }
+      } catch (error) {
+        if (abortController.signal.aborted) {
+          return
+        }
+
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível carregar os agendamentos.',
+        )
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void loadAppointments()
+
+    return () => abortController.abort()
+  }, [queryPeriod, reloadAttempt, selectedDoctor])
 
   useEffect(() => {
     const calendarContainer = calendarContainerRef.current
@@ -358,6 +345,19 @@ export function WeeklyAgenda() {
 
   function handleDatesSet(dateInfo: DatesSetArg) {
     setVisibleRange(formatVisiblePeriod(dateInfo))
+    setQueryPeriod((currentPeriod) => {
+      if (
+        currentPeriod?.inicio === dateInfo.startStr &&
+        currentPeriod.fim === dateInfo.endStr
+      ) {
+        return currentPeriod
+      }
+
+      return {
+        inicio: dateInfo.startStr,
+        fim: dateInfo.endStr,
+      }
+    })
   }
 
   return (
@@ -406,7 +406,7 @@ export function WeeklyAgenda() {
                 className="mt-0.5 max-w-full rounded-md border border-transparent bg-transparent py-1 pr-8 text-sm font-semibold text-agend-ink outline-none transition hover:border-agend-border focus:border-agend-brand-500 focus:ring-2 focus:ring-agend-brand-500/15"
               >
                 {doctors.map((doctor) => (
-                  <option key={doctor.id} value={doctor.id}>
+                  <option key={doctor.uuid} value={doctor.uuid}>
                     {doctor.name}
                   </option>
                 ))}
@@ -491,7 +491,10 @@ export function WeeklyAgenda() {
               {visibleRange}
             </p>
             <p className="text-[11px] text-agend-subtle">
-              {activeDoctor?.name} · {visibleAppointments.length} atendimentos
+              {activeDoctor?.name} ·{' '}
+              {isLoading
+                ? 'Carregando atendimentos...'
+                : `${appointments.length} atendimentos`}
             </p>
           </div>
 
@@ -502,13 +505,61 @@ export function WeeklyAgenda() {
 
         <div
           ref={calendarContainerRef}
-          className="agenda-calendar w-full min-w-0 overflow-x-auto bg-white"
+          className="agenda-calendar relative w-full min-w-0 overflow-x-auto bg-white"
+          aria-busy={isLoading}
         >
+          {isLoading ? (
+            <div
+              className="absolute inset-0 z-20 flex items-center justify-center bg-white/70 backdrop-blur-[1px]"
+              role="status"
+            >
+              <div className="flex items-center gap-2 rounded-lg border border-agend-border bg-white px-4 py-3 text-sm font-medium text-agend-muted shadow-agend-card">
+                <LoaderCircle
+                  aria-hidden="true"
+                  className="animate-spin text-agend-brand-500"
+                  size={18}
+                />
+                Carregando agenda...
+              </div>
+            </div>
+          ) : null}
+
+          {!isLoading && loadError ? (
+            <div
+              className="absolute inset-x-4 top-4 z-20 flex flex-col items-start justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-sm sm:flex-row sm:items-center"
+              role="alert"
+            >
+              <span className="flex items-start gap-2">
+                <AlertCircle aria-hidden="true" className="mt-0.5" size={18} />
+                {loadError}
+              </span>
+              <button
+                type="button"
+                onClick={() => setReloadAttempt((attempt) => attempt + 1)}
+                className="inline-flex min-h-9 shrink-0 items-center gap-2 rounded-lg border border-red-200 bg-white px-3 text-xs font-semibold text-red-800 transition hover:bg-red-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-agend-brand-500"
+              >
+                <RefreshCw aria-hidden="true" size={15} />
+                Tentar novamente
+              </button>
+            </div>
+          ) : null}
+
+          {!isLoading && !loadError && appointments.length === 0 ? (
+            <div
+              className="pointer-events-none absolute inset-x-0 top-28 z-10 flex justify-center px-4"
+              role="status"
+            >
+              <p className="rounded-lg border border-agend-border bg-white/95 px-4 py-3 text-sm text-agend-muted shadow-sm">
+                Nenhum agendamento encontrado neste período.
+              </p>
+            </div>
+          ) : null}
+
           <FullCalendar
             ref={calendarRef}
-            plugins={[timeGridPlugin, dayGridPlugin]}
+            plugins={[timeGridPlugin, dayGridPlugin, luxonPlugin]}
             initialView="timeGridWeek"
-            initialDate="2026-07-29"
+            initialDate={new Date()}
             locale={ptBrLocale}
             timeZone="America/Sao_Paulo"
             firstDay={1}
@@ -531,7 +582,7 @@ export function WeeklyAgenda() {
             slotLabelInterval="01:00:00"
             slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
             dayHeaderContent={CalendarDayHeader}
-            events={visibleAppointments}
+            events={appointments}
             eventContent={AppointmentCard}
             eventClassNames={['!border-0', '!bg-transparent', '!shadow-none']}
             datesSet={handleDatesSet}
