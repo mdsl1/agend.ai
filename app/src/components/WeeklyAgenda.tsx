@@ -27,6 +27,8 @@ import {
 } from 'lucide-react'
 import {
   consultarAgenda,
+  listarAgendasAtivas,
+  type AgendaDisponivelApi,
   type EventoAgendaApi,
 } from '../features/agenda/agendaApi'
 
@@ -39,11 +41,7 @@ type AppointmentDetails = {
 type CalendarView = 'timeGridWeek' | 'timeGridWorkWeek' | 'dayGridMonth'
 
 const MIN_CALENDAR_HEIGHT = 608
-
-const doctors = [
-  { uuid: '8260f73e-e8ca-42aa-804e-2efc912a5654', name: 'Dr. Paulo Plinio' },
-  { uuid: 'f198c33b-2911-41bd-a52e-9ad662518044', name: 'Dr. Romulo D. Canuto' },
-]
+const POC_CLINIC_UUID = '90d45ab0-d7d9-46ed-88b6-3529a92a15ff'
 
 const calendarViews: Array<{
   id: CalendarView
@@ -184,7 +182,8 @@ function CalendarDayHeader({ date, isToday, view }: DayHeaderContentArg) {
 export function WeeklyAgenda() {
   const calendarRef = useRef<FullCalendar>(null)
   const calendarContainerRef = useRef<HTMLDivElement>(null)
-  const [selectedDoctor, setSelectedDoctor] = useState(doctors[0].uuid)
+  const [agendas, setAgendas] = useState<AgendaDisponivelApi[]>([])
+  const [selectedDoctor, setSelectedDoctor] = useState('')
   const [selectedDate, setSelectedDate] = useState(initialSelectedDate)
   const [calendarView, setCalendarView] = useState<CalendarView>('timeGridWeek')
   const [calendarHeight, setCalendarHeight] = useState(MIN_CALENDAR_HEIGHT)
@@ -196,12 +195,76 @@ export function WeeklyAgenda() {
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [reloadAttempt, setReloadAttempt] = useState(0)
+  const [isLoadingAgendas, setIsLoadingAgendas] = useState(true)
+  const [agendasError, setAgendasError] = useState<string | null>(null)
+  const [reloadAgendasAttempt, setReloadAgendasAttempt] = useState(0)
   const [visibleRange, setVisibleRange] = useState('Carregando período...')
 
-  const activeDoctor = doctors.find((doctor) => doctor.uuid === selectedDoctor)
+  const activeDoctor = agendas.find(
+    (agenda) => agenda.profissionalUuid === selectedDoctor,
+  )
 
   useEffect(() => {
-    if (!queryPeriod) {
+    const abortController = new AbortController()
+
+    async function loadAgendas() {
+      setIsLoadingAgendas(true)
+      setAgendasError(null)
+
+      try {
+        const response = await listarAgendasAtivas({
+          clinicaUuid: POC_CLINIC_UUID,
+          signal: abortController.signal,
+        })
+
+        if (abortController.signal.aborted) {
+          return
+        }
+
+        setAgendas(response.agendas)
+        if (response.agendas.length === 0) {
+          setAppointments([])
+          setIsLoading(false)
+          setLoadError(null)
+        }
+        setSelectedDoctor((currentDoctor) => {
+          const currentDoctorIsAvailable = response.agendas.some(
+            (agenda) => agenda.profissionalUuid === currentDoctor,
+          )
+
+          return currentDoctorIsAvailable
+            ? currentDoctor
+            : (response.agendas[0]?.profissionalUuid ?? '')
+        })
+      } catch (error) {
+        if (abortController.signal.aborted) {
+          return
+        }
+
+        setAgendas([])
+        setSelectedDoctor('')
+        setAppointments([])
+        setIsLoading(false)
+        setLoadError(null)
+        setAgendasError(
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível carregar as agendas ativas.',
+        )
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsLoadingAgendas(false)
+        }
+      }
+    }
+
+    void loadAgendas()
+
+    return () => abortController.abort()
+  }, [reloadAgendasAttempt])
+
+  useEffect(() => {
+    if (!queryPeriod || !selectedDoctor) {
       return
     }
 
@@ -403,11 +466,27 @@ export function WeeklyAgenda() {
                 id="doctor-filter"
                 value={selectedDoctor}
                 onChange={(event) => setSelectedDoctor(event.target.value)}
-                className="mt-0.5 max-w-full rounded-md border border-transparent bg-transparent py-1 pr-8 text-sm font-semibold text-agend-ink outline-none transition hover:border-agend-border focus:border-agend-brand-500 focus:ring-2 focus:ring-agend-brand-500/15"
+                disabled={
+                  isLoadingAgendas || Boolean(agendasError) || agendas.length === 0
+                }
+                aria-invalid={agendasError ? true : undefined}
+                className="mt-0.5 max-w-full rounded-md border border-transparent bg-transparent py-1 pr-8 text-sm font-semibold text-agend-ink outline-none transition hover:border-agend-border focus:border-agend-brand-500 focus:ring-2 focus:ring-agend-brand-500/15 disabled:cursor-not-allowed disabled:text-agend-subtle"
               >
-                {doctors.map((doctor) => (
-                  <option key={doctor.uuid} value={doctor.uuid}>
-                    {doctor.name}
+                {agendas.length === 0 ? (
+                  <option value="">
+                    {isLoadingAgendas
+                      ? 'Carregando agendas...'
+                      : agendasError
+                        ? 'Agendas indisponíveis'
+                        : 'Nenhuma agenda ativa'}
+                  </option>
+                ) : null}
+                {agendas.map((agenda) => (
+                  <option
+                    key={agenda.profissionalUuid}
+                    value={agenda.profissionalUuid}
+                  >
+                    {agenda.nomeExibicao}
                   </option>
                 ))}
               </select>
@@ -491,10 +570,17 @@ export function WeeklyAgenda() {
               {visibleRange}
             </p>
             <p className="text-[11px] text-agend-subtle">
-              {activeDoctor?.name} ·{' '}
-              {isLoading
-                ? 'Carregando atendimentos...'
-                : `${appointments.length} atendimentos`}
+              {isLoadingAgendas
+                ? 'Carregando agendas ativas...'
+                : agendasError
+                  ? 'Agendas ativas indisponíveis'
+                  : activeDoctor
+                    ? `${activeDoctor.nomeExibicao} · ${
+                        isLoading
+                          ? 'Carregando atendimentos...'
+                          : `${appointments.length} atendimentos`
+                      }`
+                    : 'Nenhuma agenda ativa disponível'}
             </p>
           </div>
 
@@ -506,9 +592,9 @@ export function WeeklyAgenda() {
         <div
           ref={calendarContainerRef}
           className="agenda-calendar relative w-full min-w-0 overflow-x-auto bg-white"
-          aria-busy={isLoading}
+          aria-busy={isLoadingAgendas || isLoading}
         >
-          {isLoading ? (
+          {isLoadingAgendas || isLoading ? (
             <div
               className="absolute inset-0 z-20 flex items-center justify-center bg-white/70 backdrop-blur-[1px]"
               role="status"
@@ -519,23 +605,29 @@ export function WeeklyAgenda() {
                   className="animate-spin text-agend-brand-500"
                   size={18}
                 />
-                Carregando agenda...
+                {isLoadingAgendas
+                  ? 'Carregando agendas ativas...'
+                  : 'Carregando agenda...'}
               </div>
             </div>
           ) : null}
 
-          {!isLoading && loadError ? (
+          {!isLoadingAgendas && !isLoading && (agendasError || loadError) ? (
             <div
               className="absolute inset-x-4 top-4 z-20 flex flex-col items-start justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-sm sm:flex-row sm:items-center"
               role="alert"
             >
               <span className="flex items-start gap-2">
                 <AlertCircle aria-hidden="true" className="mt-0.5" size={18} />
-                {loadError}
+                {agendasError ?? loadError}
               </span>
               <button
                 type="button"
-                onClick={() => setReloadAttempt((attempt) => attempt + 1)}
+                onClick={() =>
+                  agendasError
+                    ? setReloadAgendasAttempt((attempt) => attempt + 1)
+                    : setReloadAttempt((attempt) => attempt + 1)
+                }
                 className="inline-flex min-h-9 shrink-0 items-center gap-2 rounded-lg border border-red-200 bg-white px-3 text-xs font-semibold text-red-800 transition hover:bg-red-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-agend-brand-500"
               >
                 <RefreshCw aria-hidden="true" size={15} />
@@ -544,7 +636,27 @@ export function WeeklyAgenda() {
             </div>
           ) : null}
 
-          {!isLoading && !loadError && appointments.length === 0 ? (
+          {!isLoadingAgendas &&
+          !isLoading &&
+          !agendasError &&
+          !loadError &&
+          agendas.length === 0 ? (
+            <div
+              className="pointer-events-none absolute inset-x-0 top-28 z-10 flex justify-center px-4"
+              role="status"
+            >
+              <p className="rounded-lg border border-agend-border bg-white/95 px-4 py-3 text-sm text-agend-muted shadow-sm">
+                Nenhuma agenda ativa disponível para esta clínica.
+              </p>
+            </div>
+          ) : null}
+
+          {!isLoadingAgendas &&
+          !isLoading &&
+          !agendasError &&
+          !loadError &&
+          agendas.length > 0 &&
+          appointments.length === 0 ? (
             <div
               className="pointer-events-none absolute inset-x-0 top-28 z-10 flex justify-center px-4"
               role="status"

@@ -1,5 +1,6 @@
 using AgendAi.Application.Agenda.Ports;
 using AgendAi.Application.Agenda.ConsultarAgenda;
+using AgendAi.Application.Agenda.ListarAgendas;
 using AgendAi.Infrastructure;
 using AgendAi.Infrastructure.Agenda;
 using AgendAi.Infrastructure.Integracoes.N8n;
@@ -32,6 +33,9 @@ builder.Services.AddHttpClient<
         });
 
 builder.Services.AddScoped<ConsultarAgendaHandler>();
+
+builder.Services.AddScoped<IAgendasReader, AgendasReader>();
+builder.Services.AddScoped<ListarAgendasHandler>();
 
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();

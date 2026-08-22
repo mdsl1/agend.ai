@@ -8,8 +8,17 @@ export type EventoAgendaApi = {
   profissionalUuid: string
 }
 
+export type AgendaDisponivelApi = {
+  profissionalUuid: string
+  nomeExibicao: string
+}
+
 type ConsultarAgendaResponse = {
   eventos: EventoAgendaApi[]
+}
+
+type ListarAgendasResponse = {
+  agendas: AgendaDisponivelApi[]
 }
 
 type ApiProblemDetails = {
@@ -21,6 +30,11 @@ type ConsultarAgendaParams = {
   profissionalUuid: string
   inicio: string
   fim: string
+  signal?: AbortSignal
+}
+
+type ListarAgendasParams = {
+  clinicaUuid: string
   signal?: AbortSignal
 }
 
@@ -45,6 +59,14 @@ function isEventoAgenda(value: unknown): value is EventoAgendaApi {
   )
 }
 
+function isAgendaDisponivel(value: unknown): value is AgendaDisponivelApi {
+  return (
+    isRecord(value) &&
+    typeof value.profissionalUuid === 'string' &&
+    typeof value.nomeExibicao === 'string'
+  )
+}
+
 function isConsultarAgendaResponse(
   value: unknown,
 ): value is ConsultarAgendaResponse {
@@ -52,6 +74,14 @@ function isConsultarAgendaResponse(
     isRecord(value) &&
     Array.isArray(value.eventos) &&
     value.eventos.every(isEventoAgenda)
+  )
+}
+
+function isListarAgendasResponse(value: unknown): value is ListarAgendasResponse {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.agendas) &&
+    value.agendas.every(isAgendaDisponivel)
   )
 }
 
@@ -68,6 +98,35 @@ async function getApiError(response: Response) {
   }
 
   return undefined
+}
+
+export async function listarAgendasAtivas({
+  clinicaUuid,
+  signal,
+}: ListarAgendasParams): Promise<ListarAgendasResponse> {
+  const url = new URL('/api/agendas', window.location.origin)
+  url.searchParams.set('clinicaUuid', clinicaUuid)
+
+  const response = await fetch(url, {
+    headers: { Accept: 'application/json' },
+    signal,
+  })
+
+  if (!response.ok) {
+    const apiMessage = await getApiError(response)
+    throw new Error(
+      apiMessage ??
+        `Não foi possível carregar as agendas (HTTP ${response.status}).`,
+    )
+  }
+
+  const data: unknown = await response.json()
+
+  if (!isListarAgendasResponse(data)) {
+    throw new Error('A API retornou um formato de agendas inválido.')
+  }
+
+  return data
 }
 
 export async function consultarAgenda({
