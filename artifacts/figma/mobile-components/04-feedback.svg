@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="450" viewBox="0 0 1360 450" role="img" aria-labelledby="title desc">
+  <title id="title">Agend.AI Profissional — Mobile Components — Feedback and Overlays</title>
+  <desc id="desc">Banners, toast, skeleton, empty state and bottom sheet patterns for the mobile application.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-30%" width="140%" height="170%"><feDropShadow dx="0" dy="5" stdDeviation="10" flood-color="#12202D" flood-opacity=".13"/></filter>
+    <style>
+      .title{font:750 28px 'Hanken Grotesk',Inter,sans-serif;fill:#131B2E}.subtitle{font:500 13px Inter,sans-serif;fill:#515F74}.panel-title{font:700 17px 'Hanken Grotesk',Inter,sans-serif;fill:#131B2E}.h3{font:700 14px 'Hanken Grotesk',Inter,sans-serif;fill:#131B2E}.body{font:500 11px Inter,sans-serif;fill:#3D494C}.strong{font:700 11px Inter,sans-serif;fill:#131B2E}.meta{font:500 9px Inter,sans-serif;fill:#6D797D}.button{font:700 11px Inter,sans-serif;text-anchor:middle}.panel{fill:#FFFFFF;stroke:#E2E8F0}.line{stroke:#E2E8F0;stroke-width:1}
+    </style>
+  </defs>
+  <rect width="1360" height="450" rx="24" fill="#F8FAFC" stroke="#DDE5E8"/>
+  <g id="feedback-header" data-name="Feedback / Documentation">
+    <text x="40" y="48" class="title">Feedback e overlays</text>
+    <text x="40" y="73" class="subtitle">Estados claros, ações recuperáveis e confirmações sem interromper desnecessariamente o fluxo.</text>
+    <rect x="1151" y="28" width="169" height="40" rx="14" fill="#E6F5F8"/><text x="1235.5" y="53" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#006578">SYSTEM FEEDBACK</text>
+  </g>
+  <g id="feedback-panels" data-name="Feedback / Panels">
+    <rect x="40" y="98" width="620" height="318" rx="20" class="panel"/>
+    <rect x="680" y="98" width="640" height="318" rx="20" class="panel"/>
+    <text x="68" y="131" class="panel-title">Banner, Toast &amp; Loading</text>
+    <text x="708" y="131" class="panel-title">Empty State &amp; Bottom Sheet</text>
+  </g>
+
+  <g id="banner-info" data-name="Banner / Tone=Info, Action=False">
+    <rect x="68" y="153" width="270" height="72" rx="15" fill="#DAE2FD"/>
+    <circle cx="94" cy="181" r="13" fill="#FFFFFF"/><text x="94" y="186" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="800" fill="#2563EB">i</text>
+    <text x="116" y="176" font-family="Inter,sans-serif" font-size="10" font-weight="750" fill="#1E3A8A">Sincronização em andamento</text>
+    <text x="116" y="195" font-family="Inter,sans-serif" font-size="9" font-weight="500" fill="#1E40AF">Seu bloqueio será enviado ao calendário.</text>
+  </g>
+  <g id="banner-warning" data-name="Banner / Tone=Warning, Action=True">
+    <rect x="354" y="153" width="278" height="72" rx="15" fill="#FEF3C7"/>
+    <circle cx="380" cy="181" r="13" fill="#FFFFFF"/><text x="380" y="186" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="800" fill="#B45309">!</text>
+    <text x="402" y="176" font-family="Inter,sans-serif" font-size="10" font-weight="750" fill="#92400E">Horário ainda reservado</text>
+    <text x="402" y="195" font-family="Inter,sans-serif" font-size="9" font-weight="500" fill="#92400E">Aguardando resposta do paciente.</text>
+    <text x="604" y="213" text-anchor="end" font-family="Inter,sans-serif" font-size="8" font-weight="750" fill="#92400E">VER SOLICITAÇÃO</text>
+  </g>
+  <g id="banner-error" data-name="Banner / Tone=Error, Action=True">
+    <rect x="68" y="241" width="270" height="72" rx="15" fill="#FEE2E2"/>
+    <circle cx="94" cy="269" r="13" fill="#FFFFFF"/><path d="M88 263l12 12m0-12l-12 12" fill="none" stroke="#B91C1C" stroke-width="1.8" stroke-linecap="round"/>
+    <text x="116" y="264" font-family="Inter,sans-serif" font-size="10" font-weight="750" fill="#991B1B">Falha ao carregar a agenda</text>
+    <text x="116" y="283" font-family="Inter,sans-serif" font-size="9" font-weight="500" fill="#991B1B">Verifique a conexão e tente novamente.</text>
+    <text x="316" y="302" text-anchor="end" font-family="Inter,sans-serif" font-size="8" font-weight="750" fill="#B91C1C">TENTAR NOVAMENTE</text>
+  </g>
+  <g id="toast-success" data-name="Toast / Tone=Success, Action=True" filter="url(#shadow)">
+    <rect x="354" y="241" width="278" height="58" rx="16" fill="#131B2E"/>
+    <circle cx="382" cy="270" r="13" fill="#16A34A"/><path d="M376 270l4 4 8-10" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="404" y="267" font-family="Inter,sans-serif" font-size="10" font-weight="750" fill="#FFFFFF">Indisponibilidade criada</text>
+    <text x="404" y="285" font-family="Inter,sans-serif" font-size="9" font-weight="650" fill="#85D7E3">DESFAZER</text>
+  </g>
+  <g id="skeleton-card" data-name="Skeleton / Type=Card">
+    <rect x="68" y="329" width="564" height="63" rx="15" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <circle cx="98" cy="360" r="17" fill="#E4EAED"/><rect x="126" y="344" width="204" height="12" rx="6" fill="#E4EAED"/><rect x="126" y="366" width="143" height="9" rx="4.5" fill="#EDF2F4"/><rect x="500" y="344" width="101" height="12" rx="6" fill="#E4EAED"/><rect x="522" y="366" width="79" height="9" rx="4.5" fill="#EDF2F4"/>
+  </g>
+
+  <g id="empty-state" data-name="Empty State / Type=Appointments">
+    <rect x="708" y="153" width="268" height="239" rx="18" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <circle cx="842" cy="213" r="34" fill="#E6F5F8"/><rect x="829" y="200" width="26" height="27" rx="5" fill="none" stroke="#007D94" stroke-width="2"/><path d="M829 209h26m-18-14v9m10-9v9" fill="none" stroke="#007D94" stroke-width="2" stroke-linecap="round"/>
+    <text x="842" y="269" text-anchor="middle" class="h3">Agenda livre neste dia</text>
+    <text x="842" y="291" text-anchor="middle" class="body">Nenhum atendimento ou bloqueio.</text>
+    <rect x="764" y="319" width="156" height="44" rx="15" fill="#0097B2"/><text x="842" y="346" class="button" fill="#FFFFFF">Bloquear um horário</text>
+    <text x="842" y="382" text-anchor="middle" class="meta">A ação pode ser desfeita.</text>
+  </g>
+  <g id="bottom-sheet-confirmation" data-name="Bottom Sheet / Type=Confirmation, State=Default" filter="url(#shadow)">
+    <rect x="996" y="140" width="296" height="264" rx="26" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <rect x="1112" y="153" width="64" height="5" rx="2.5" fill="#CBD5E1"/>
+    <circle cx="1144" cy="207" r="28" fill="#E6F5F8"/><path d="M1132 207l8 8 16-20" fill="none" stroke="#0097B2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="1144" y="257" text-anchor="middle" class="h3">Enviar solicitação?</text>
+    <text x="1144" y="279" text-anchor="middle" class="body">O paciente receberá três opções</text><text x="1144" y="296" text-anchor="middle" class="body">de horário pelo Telegram.</text>
+    <rect x="1020" y="319" width="248" height="44" rx="15" fill="#0097B2"/><text x="1144" y="346" class="button" fill="#FFFFFF">Confirmar envio</text>
+    <text x="1144" y="386" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="750" fill="#006578">VOLTAR</text>
+  </g>
+</svg>

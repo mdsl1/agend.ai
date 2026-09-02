@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS profissionais (
     id BIGSERIAL PRIMARY KEY,
     uuid UUID NOT NULL DEFAULT uuid_generate_v4() UNIQUE,
     id_clinica BIGINT NOT NULL REFERENCES clinicas(id) ON DELETE CASCADE,
-    id_usuario BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    id_profissional BIGINT NOT NULL REFERENCES profissionais(id) ON DELETE CASCADE,
     id_especialidade BIGINT REFERENCES especialidades(id) ON DELETE SET NULL,
     registro_profissional VARCHAR(30), -- CRM, CRO, etc.
     id_google_calendar TEXT,
@@ -94,6 +94,24 @@ CREATE TABLE IF NOT EXISTS profissionais (
     CONSTRAINT uq_profissional_clinica_id UNIQUE (id_clinica, id)
 );
 
+CREATE TABLE IF NOT EXISTS profissional_procedimentos(
+    id BIGSERIAL PRIMARY KEY,
+    uuid UUID NOT NULL DEFAULT uuid_generate_v4() UNIQUE,
+    id_clinica BIGINT NOT NULL REFERENCES clinicas(id) ON DELETE CASCADE,
+    id_profissional BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    id_procedimento BIGINT NUT NULL REFERENCES procedimentos(id) ON DELETE CASCADE,
+    valor NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    duracao_minutos INT NOT NULL DEFAULT 30,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ,
+    deleted_at TIMESTAMPTZ,
+    CONSTRAINT ck_profissional_procedimento_duracao_positiva
+        CHECK (duracao_minutos > 0),
+    CONSTRAINT ck_profissional_procedimento_valor_nao_negativo
+        CHECK (valor >= 0),
+    CONSTRAINT uq_profissional_procedimento_id UNIQUE (id_profissional, id_procedimento)
+);
+
 CREATE TABLE IF NOT EXISTS clientes (
     id BIGSERIAL PRIMARY KEY,
     uuid UUID NOT NULL DEFAULT uuid_generate_v4() UNIQUE,
@@ -101,6 +119,7 @@ CREATE TABLE IF NOT EXISTS clientes (
     nome VARCHAR(150) NOT NULL,
     cpf VARCHAR(14),
     email VARCHAR(150),
+    id_telegram TEXT NOT NULL,
     telefone VARCHAR(20) NOT NULL,
     data_nascimento DATE,
     genero VARCHAR(20),

@@ -4,7 +4,7 @@
 
 Este arquivo é o guia operacional durável para agentes que trabalham no Agend.AI. Ele consolida a arquitetura, a stack, a configuração, a estrutura do repositório, o estado implementado, as pendências e as regras que não podem ser inferidas apenas pelo código.
 
-O inventário técnico foi revisado em **13 de agosto de 2026** e o estado das rotas de agenda no backend e da integração da agenda no frontend foi atualizado em **22 de agosto de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
+O inventário técnico foi revisado em **13 de agosto de 2026** e o estado das rotas de agenda no backend, da integração da agenda e da stack do frontend foi atualizado em **22 de agosto de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
 
 O Agend.AI é um CRM para clínicas com agenda, cadastros e automação de agendamentos. A solução combina uma SPA React, uma API ASP.NET Core, PostgreSQL com NHibernate e workflows n8n integrados, no desenho de destino, ao Telegram e ao Google Calendar.
 
@@ -14,7 +14,7 @@ A documentação de produto está atualmente fora deste repositório:
 
 `C:\Users\markn\mdsl1\Projetos Pessoais\Agend.AI`
 
-Se futuramente existir `docs/` neste repositório, prefira a cópia versionada em `docs/`. Se nenhuma das duas localizações estiver disponível, informe a ausência antes de tomar uma decisão de produto.
+<!-- Se futuramente existir `docs/` neste repositório, prefira a cópia versionada em `docs/`. Se nenhuma das duas localizações estiver disponível, informe a ausência antes de tomar uma decisão de produto. -->
 
 Leia somente os documentos pertinentes à tarefa:
 
@@ -160,6 +160,7 @@ Não crie migrations incrementais sem nova decisão explícita. Um agente nunca 
 | FullCalendar core/react/daygrid/timegrid | `^6.1.21` | agenda semanal, semana útil e mês |
 | FullCalendar Luxon 3 + Luxon | `^6.1.21` / `^3.7.2` | suporte ao fuso nomeado `America/Sao_Paulo` no FullCalendar v6 |
 | Lucide React | `^1.28.0` | ícones da interface |
+| Radix UI Dialog | `^1.1.23` | primitive React acessível e sem estilos para modais personalizados conforme o Figma |
 | Sonner | `^2.0.7` | toasts |
 | ESLint | `^10.6.0` | lint |
 | typescript-eslint | `^8.62.0` | regras TypeScript do ESLint |

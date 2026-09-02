@@ -1,0 +1,702 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2390" height="3370" viewBox="0 0 2390 3370" role="img" aria-labelledby="documentTitle documentDescription">
+  <title id="documentTitle">Agend.AI Profissional — telas do MVP mobile</title>
+  <desc id="documentDescription">Quinze telas mobile editáveis para importação no Figma, organizadas em grade, com identidade visual teal, margens seguras e componentes de estados do sistema.</desc>
+  <defs>
+    <filter id="phoneShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#12202D" flood-opacity="0.14"/>
+    </filter>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#12202D" flood-opacity="0.08"/>
+    </filter>
+    <clipPath id="phoneClip"><rect width="390" height="844" rx="34"/></clipPath>
+    <style>
+      .screen-label{font:700 18px 'Hanken Grotesk',Inter,sans-serif;fill:#32464B;letter-spacing:.2px}
+      .eyebrow{font:700 11px Inter,sans-serif;fill:#006578;letter-spacing:1.1px;text-transform:uppercase}
+      .h1{font:700 26px 'Hanken Grotesk',Inter,sans-serif;fill:#131B2E}
+      .h2{font:700 19px 'Hanken Grotesk',Inter,sans-serif;fill:#131B2E}
+      .h3{font:700 15px 'Hanken Grotesk',Inter,sans-serif;fill:#131B2E}
+      .body{font:500 14px Inter,sans-serif;fill:#3D494C}
+      .body-strong{font:700 14px Inter,sans-serif;fill:#131B2E}
+      .meta{font:500 12px Inter,sans-serif;fill:#6D797D}
+      .small{font:600 11px Inter,sans-serif;fill:#515F74}
+      .button{font:700 14px Inter,sans-serif;fill:#F9FDFF;text-anchor:middle}
+      .button-dark{font:700 14px Inter,sans-serif;fill:#006578;text-anchor:middle}
+      .tab{font:600 9px Inter,sans-serif;fill:#6D797D;text-anchor:middle}
+      .tab-active{font:700 9px Inter,sans-serif;fill:#007D94;text-anchor:middle}
+      .field-label{font:700 12px Inter,sans-serif;fill:#3D494C}
+      .amount{font:750 31px 'Hanken Grotesk',Inter,sans-serif;fill:#131B2E}
+      .amount-on{font:750 31px 'Hanken Grotesk',Inter,sans-serif;fill:#FFFFFF}
+      .white{fill:#FFFFFF}.ink{fill:#131B2E}.teal{fill:#0097B2}.teal-dark{fill:#006578}.muted{fill:#6D797D}
+      .line{stroke:#E2E8F0;stroke-width:1}.icon{stroke:#515F74;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+      .icon-active{stroke:#007D94;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+      .card{fill:#FFFFFF;stroke:#E2E8F0;stroke-width:1}.field{fill:#FFFFFF;stroke:#BDC8CD;stroke-width:1.2}
+      .focus{stroke:#0097B2;stroke-width:2}.divider{stroke:#E2E8F0;stroke-width:1}
+    </style>
+
+    <g id="logoMark">
+      <rect width="42" height="42" rx="13" fill="#0097B2"/>
+      <path d="M12 22.5h6.3l3.2-8 4.2 14 2.5-6H31" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="30.5" cy="11.5" r="3.5" fill="#C9F1F7"/>
+    </g>
+    <g id="statusLight">
+      <text x="22" y="28" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#131B2E">09:41</text>
+      <path d="M321 22h2m3-3h2v3m3-6h2v6" stroke="#131B2E" stroke-width="2" stroke-linecap="round"/>
+      <path d="M341 18c5-4 10-4 15 0m-11 4c3-2 5-2 8 0" fill="none" stroke="#131B2E" stroke-width="1.8" stroke-linecap="round"/>
+      <rect x="363" y="16" width="17" height="9" rx="2" fill="none" stroke="#131B2E" stroke-width="1.3"/>
+      <rect x="365" y="18" width="11" height="5" rx="1" fill="#131B2E"/>
+      <rect x="381" y="19" width="2" height="3" rx="1" fill="#131B2E"/>
+    </g>
+    <g id="statusDark">
+      <text x="22" y="28" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#FFFFFF">09:41</text>
+      <path d="M321 22h2m3-3h2v3m3-6h2v6" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+      <path d="M341 18c5-4 10-4 15 0m-11 4c3-2 5-2 8 0" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+      <rect x="363" y="16" width="17" height="9" rx="2" fill="none" stroke="#FFFFFF" stroke-width="1.3"/>
+      <rect x="365" y="18" width="11" height="5" rx="1" fill="#FFFFFF"/>
+      <rect x="381" y="19" width="2" height="3" rx="1" fill="#FFFFFF"/>
+    </g>
+    <g id="backButton">
+      <rect width="44" height="44" rx="14" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <path d="M26 14l-8 8 8 8M19 22h11" class="icon"/>
+    </g>
+    <g id="bottomNav">
+      <rect x="0" y="770" width="390" height="74" fill="#FFFFFF"/>
+      <path d="M0 770h390" class="divider"/>
+      <g id="nav-home">
+        <path d="M30 795l9-7 9 7v11H42v-7h-6v7h-6z" class="icon"/>
+        <text x="39" y="825" class="tab">Início</text>
+      </g>
+      <g id="nav-agenda">
+        <rect x="108" y="789" width="18" height="17" rx="3" class="icon"/>
+        <path d="M108 796h18m-13-10v6m8-6v6" class="icon"/>
+        <text x="117" y="825" class="tab">Agenda</text>
+      </g>
+      <g id="nav-receitas">
+        <path d="M187 805v-9m8 9v-16m8 16v-12" class="icon"/>
+        <text x="195" y="825" class="tab">Receitas</text>
+      </g>
+      <g id="nav-procedimentos">
+        <rect x="265" y="790" width="17" height="16" rx="4" class="icon"/>
+        <path d="M269 798h9m-4.5-4.5v9" class="icon"/>
+        <text x="273" y="825" class="tab">Serviços</text>
+      </g>
+      <g id="nav-perfil">
+        <circle cx="351" cy="795" r="6" class="icon"/>
+        <path d="M341 807c3-6 17-6 20 0" class="icon"/>
+        <text x="351" y="825" class="tab">Perfil</text>
+      </g>
+    </g>
+    <g id="activeHome">
+      <path d="M30 795l9-7 9 7v11H42v-7h-6v7h-6z" class="icon-active"/>
+      <text x="39" y="825" class="tab-active">Início</text>
+    </g>
+    <g id="activeAgenda">
+      <rect x="108" y="789" width="18" height="17" rx="3" class="icon-active"/>
+      <path d="M108 796h18m-13-10v6m8-6v6" class="icon-active"/>
+      <text x="117" y="825" class="tab-active">Agenda</text>
+    </g>
+    <g id="activeRevenue">
+      <path d="M187 805v-9m8 9v-16m8 16v-12" class="icon-active"/>
+      <text x="195" y="825" class="tab-active">Receitas</text>
+    </g>
+    <g id="activeServices">
+      <rect x="265" y="790" width="17" height="16" rx="4" class="icon-active"/>
+      <path d="M269 798h9m-4.5-4.5v9" class="icon-active"/>
+      <text x="273" y="825" class="tab-active">Serviços</text>
+    </g>
+    <g id="activeProfile">
+      <circle cx="351" cy="795" r="6" class="icon-active"/>
+      <path d="M341 807c3-6 17-6 20 0" class="icon-active"/>
+      <text x="351" y="825" class="tab-active">Perfil</text>
+    </g>
+  </defs>
+
+  <rect width="2390" height="3370" fill="#EDF3F5"/>
+  <g id="board-header" data-name="Board Header">
+    <text x="80" y="58" font-family="Hanken Grotesk,Inter,sans-serif" font-size="30" font-weight="750" fill="#131B2E">Agend.AI Profissional — MVP mobile</text>
+    <text x="80" y="88" font-family="Inter,sans-serif" font-size="14" font-weight="500" fill="#515F74">15 telas • React Native + Expo + TypeScript • frame 390 × 844 • área segura lateral mínima de 20 px • toque mínimo de 44 × 44 px</text>
+    <rect x="2044" y="40" width="266" height="48" rx="16" fill="#E6F5F8" stroke="#B9E5EC"/>
+    <circle cx="2072" cy="64" r="9" fill="#0097B2"/>
+    <text x="2090" y="69" font-family="Inter,sans-serif" font-size="13" font-weight="700" fill="#006578">Arquivo SVG importável</text>
+  </g>
+
+  <!-- 01 SPLASH -->
+  <g id="screen-01-splash" data-name="01 — Splash" transform="translate(80 160)">
+    <title>01 — Splash</title>
+    <text x="0" y="-26" class="screen-label">01 · Splash</text>
+    <rect width="390" height="844" rx="34" fill="#FFFFFF" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#007D94"/>
+      <circle cx="335" cy="125" r="98" fill="#0097B2" opacity=".55"/>
+      <circle cx="42" cy="706" r="135" fill="#006578" opacity=".6"/>
+      <path d="M-20 512c82-55 158-21 232 16s143 36 209-12v146H-20z" fill="#008CA5" opacity=".75"/>
+      <use href="#statusDark"/>
+      <g transform="translate(164 285) scale(1.48)"><use href="#logoMark"/></g>
+      <text x="195" y="390" text-anchor="middle" font-family="Hanken Grotesk,Inter,sans-serif" font-size="34" font-weight="780" fill="#FFFFFF">Agend.AI</text>
+      <rect x="251" y="363" width="108" height="23" rx="11.5" fill="#C9F1F7"/>
+      <text x="305" y="379" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" font-weight="800" fill="#006578">PROFISSIONAL</text>
+      <text x="195" y="431" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" font-weight="500" fill="#EAFBFE">Sua rotina profissional em um só lugar.</text>
+      <circle cx="181" cy="744" r="4" fill="#FFFFFF" opacity=".35"/>
+      <circle cx="195" cy="744" r="4" fill="#FFFFFF"/>
+      <circle cx="209" cy="744" r="4" fill="#FFFFFF" opacity=".35"/>
+      <text x="195" y="791" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#C9F1F7">gestão simples, atendimento humano</text>
+    </g>
+  </g>
+
+  <!-- 02 LOGIN -->
+  <g id="screen-02-login" data-name="02 — Login" transform="translate(540 160)">
+    <title>02 — Login</title>
+    <text x="0" y="-26" class="screen-label">02 · Login</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/>
+      <use href="#statusLight"/>
+      <g transform="translate(24 64)"><use href="#logoMark"/></g>
+      <text x="78" y="83" class="h2">Agend.AI Profissional</text>
+      <text x="24" y="156" class="h1">Bem-vindo de volta</text>
+      <text x="24" y="183" class="body">Acesse sua agenda e seus resultados.</text>
+      <text x="24" y="233" class="field-label">E-mail</text>
+      <rect x="20" y="246" width="350" height="54" rx="14" class="field"/>
+      <circle cx="45" cy="273" r="8" fill="none" stroke="#6D797D" stroke-width="1.7"/>
+      <path d="M39 269l6 5 6-5" fill="none" stroke="#6D797D" stroke-width="1.5" stroke-linecap="round"/>
+      <text x="65" y="278" class="body">marina.souza@clinica.com</text>
+      <text x="24" y="338" class="field-label">Senha</text>
+      <rect x="20" y="351" width="350" height="54" rx="14" class="field"/>
+      <rect x="38" y="372" width="14" height="11" rx="2" fill="none" stroke="#6D797D" stroke-width="1.6"/>
+      <path d="M41 372v-4a4 4 0 018 0v4" fill="none" stroke="#6D797D" stroke-width="1.6"/>
+      <text x="65" y="383" class="body">••••••••••••</text>
+      <path d="M337 372c6 5 6 8 0 13-6-5-6-8 0-13z" fill="none" stroke="#6D797D" stroke-width="1.5"/>
+      <text x="370" y="435" text-anchor="end" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#007D94">Esqueci minha senha</text>
+      <rect x="20" y="474" width="350" height="54" rx="17" fill="#0097B2"/>
+      <text x="195" y="507" class="button">Entrar</text>
+      <rect x="20" y="553" width="350" height="69" rx="15" fill="#E6F5F8"/>
+      <circle cx="48" cy="587" r="14" fill="#FFFFFF"/>
+      <path d="M44 587l3 3 6-7" fill="none" stroke="#007D94" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="72" y="580" class="body-strong">Acesso profissional seguro</text>
+      <text x="72" y="601" class="meta">Seus dados permanecem vinculados à clínica.</text>
+      <text x="195" y="766" text-anchor="middle" class="meta">Ao entrar, você aceita os termos de uso.</text>
+    </g>
+  </g>
+
+  <!-- 03 OVERVIEW -->
+  <g id="screen-03-overview" data-name="03 — Início" transform="translate(1000 160)">
+    <title>03 — Início / Overview</title>
+    <text x="0" y="-26" class="screen-label">03 · Início / Overview</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/>
+      <use href="#statusLight"/>
+      <text x="20" y="74" class="meta">SEXTA, 28 DE AGOSTO</text>
+      <text x="20" y="105" class="h1">Olá, Dra. Marina</text>
+      <circle cx="346" cy="86" r="22" fill="#D8EEF2"/>
+      <text x="346" y="92" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="800" fill="#006578">MS</text>
+      <circle cx="361" cy="69" r="6" fill="#EF4444" stroke="#F8FAFC" stroke-width="2"/>
+      <rect x="20" y="129" width="350" height="151" rx="22" fill="#007D94" filter="url(#cardShadow)"/>
+      <text x="40" y="160" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#C9F1F7">Receita estimada em agosto</text>
+      <text x="40" y="204" class="amount-on">R$ 12.480,00</text>
+      <rect x="40" y="220" width="91" height="28" rx="14" fill="#FFFFFF" opacity=".15"/>
+      <path d="M54 237l5-6 5 4 7-9" fill="none" stroke="#C9F1F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="79" y="239" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">+8,4%</text>
+      <text x="145" y="239" font-family="Inter,sans-serif" font-size="10" font-weight="500" fill="#C9F1F7">vs. mês anterior</text>
+      <path d="M256 239c18-12 28 1 42-16 14-16 23-5 42-28" fill="none" stroke="#C9F1F7" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="340" cy="195" r="4" fill="#FFFFFF"/>
+      <text x="20" y="318" class="h2">Hoje</text>
+      <rect x="20" y="335" width="168" height="94" rx="18" class="card"/>
+      <circle cx="49" cy="365" r="16" fill="#E6F5F8"/>
+      <rect x="43" y="358" width="12" height="13" rx="2" fill="none" stroke="#007D94" stroke-width="1.7"/>
+      <text x="74" y="365" class="meta">Agendamentos</text>
+      <text x="74" y="397" class="h1">6</text>
+      <rect x="202" y="335" width="168" height="94" rx="18" class="card"/>
+      <circle cx="231" cy="365" r="16" fill="#DCFCE7"/>
+      <path d="M225 369l5-9 5 9" fill="none" stroke="#16A34A" stroke-width="1.8" stroke-linecap="round"/>
+      <text x="256" y="365" class="meta">Confirmados</text>
+      <text x="256" y="397" class="h1">5</text>
+      <text x="20" y="468" class="h2">Próximo atendimento</text>
+      <rect x="20" y="485" width="350" height="126" rx="18" class="card"/>
+      <rect x="20" y="485" width="6" height="126" rx="3" fill="#0097B2"/>
+      <text x="43" y="514" class="eyebrow">10:30 — 11:20</text>
+      <text x="43" y="542" class="h3">Ana Carolina Ribeiro</text>
+      <text x="43" y="565" class="body">Consulta dermatológica</text>
+      <rect x="43" y="579" width="89" height="22" rx="11" fill="#DCFCE7"/>
+      <circle cx="56" cy="590" r="4" fill="#16A34A"/>
+      <text x="67" y="594" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#166534">Confirmado</text>
+      <circle cx="337" cy="548" r="18" fill="#E6F5F8"/>
+      <path d="M331 548h12m-5-5 5 5-5 5" class="icon-active"/>
+      <text x="20" y="650" class="h2">Acesso rápido</text>
+      <rect x="20" y="667" width="106" height="67" rx="16" fill="#E6F5F8"/>
+      <text x="73" y="694" text-anchor="middle" class="body-strong">Bloquear</text><text x="73" y="713" text-anchor="middle" class="meta">horário</text>
+      <rect x="138" y="667" width="106" height="67" rx="16" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <text x="191" y="694" text-anchor="middle" class="body-strong">Reagendar</text><text x="191" y="713" text-anchor="middle" class="meta">solicitação</text>
+      <rect x="256" y="667" width="114" height="67" rx="16" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <text x="313" y="694" text-anchor="middle" class="body-strong">Ajustar</text><text x="313" y="713" text-anchor="middle" class="meta">preços</text>
+      <use href="#bottomNav"/><use href="#activeHome"/>
+    </g>
+  </g>
+
+  <!-- 04 AGENDA -->
+  <g id="screen-04-agenda" data-name="04 — Minha Agenda" transform="translate(1460 160)">
+    <title>04 — Minha Agenda</title>
+    <text x="0" y="-26" class="screen-label">04 · Minha Agenda</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/><use href="#statusLight"/>
+      <text x="20" y="78" class="h1">Minha agenda</text>
+      <circle cx="346" cy="69" r="22" fill="#E6F5F8"/>
+      <path d="M339 69h14m-7-7v14" class="icon-active"/>
+      <rect x="20" y="104" width="350" height="49" rx="15" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <circle cx="44" cy="128" r="15" fill="#E6F5F8"/>
+      <path d="M48 123l-5 5 5 5" class="icon-active"/>
+      <text x="195" y="133" text-anchor="middle" class="body-strong">24 — 30 de agosto</text>
+      <circle cx="346" cy="128" r="15" fill="#E6F5F8"/>
+      <path d="M342 123l5 5-5 5" class="icon-active"/>
+      <g id="week-days">
+        <text x="42" y="180" text-anchor="middle" class="small">SEG</text><text x="93" y="180" text-anchor="middle" class="small">TER</text><text x="144" y="180" text-anchor="middle" class="small">QUA</text><text x="195" y="180" text-anchor="middle" class="small">QUI</text><text x="246" y="180" text-anchor="middle" class="small">SEX</text><text x="297" y="180" text-anchor="middle" class="small">SÁB</text><text x="348" y="180" text-anchor="middle" class="small">DOM</text>
+        <text x="42" y="207" text-anchor="middle" class="body-strong">24</text><text x="93" y="207" text-anchor="middle" class="body-strong">25</text><text x="144" y="207" text-anchor="middle" class="body-strong">26</text><text x="195" y="207" text-anchor="middle" class="body-strong">27</text>
+        <circle cx="246" cy="201" r="20" fill="#0097B2"/><text x="246" y="207" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" font-weight="800" fill="#FFFFFF">28</text>
+        <text x="297" y="207" text-anchor="middle" class="body-strong">29</text><text x="348" y="207" text-anchor="middle" class="body-strong">30</text>
+      </g>
+      <text x="20" y="250" class="eyebrow">SEXTA-FEIRA, 28</text>
+      <rect x="20" y="266" width="350" height="92" rx="17" class="card"/>
+      <text x="38" y="293" class="body-strong">08:00</text><text x="38" y="313" class="meta">50 min</text>
+      <rect x="98" y="280" width="4" height="64" rx="2" fill="#0097B2"/>
+      <text x="116" y="303" class="h3">Paulo Mendes</text><text x="116" y="326" class="meta">Retorno · R$ 180,00</text>
+      <rect x="291" y="287" width="62" height="22" rx="11" fill="#DCFCE7"/><text x="322" y="302" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#166534">Confirmado</text>
+      <rect x="20" y="370" width="350" height="92" rx="17" class="card"/>
+      <text x="38" y="397" class="body-strong">10:30</text><text x="38" y="417" class="meta">50 min</text>
+      <rect x="98" y="384" width="4" height="64" rx="2" fill="#0097B2"/>
+      <text x="116" y="407" class="h3">Ana Carolina</text><text x="116" y="430" class="meta">Consulta · R$ 260,00</text>
+      <rect x="291" y="391" width="62" height="22" rx="11" fill="#DCFCE7"/><text x="322" y="406" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#166534">Confirmado</text>
+      <rect x="20" y="474" width="350" height="75" rx="17" fill="#F1F5F9" stroke="#CBD5E1" stroke-dasharray="5 4"/>
+      <text x="38" y="503" class="body-strong">12:00 — 13:30</text><text x="38" y="527" class="meta">Indisponível · almoço</text>
+      <circle cx="337" cy="511" r="15" fill="#FFFFFF"/><path d="M331 511h12" class="icon"/>
+      <rect x="20" y="561" width="350" height="92" rx="17" class="card"/>
+      <text x="38" y="588" class="body-strong">14:00</text><text x="38" y="608" class="meta">40 min</text>
+      <rect x="98" y="575" width="4" height="64" rx="2" fill="#F59E0B"/>
+      <text x="116" y="598" class="h3">Luiza Ferreira</text><text x="116" y="621" class="meta">Procedimento · R$ 320,00</text>
+      <rect x="295" y="582" width="58" height="22" rx="11" fill="#FEF3C7"/><text x="324" y="597" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#92400E">Pendente</text>
+      <rect x="295" y="692" width="64" height="54" rx="18" fill="#0097B2" filter="url(#cardShadow)"/>
+      <path d="M319 719h16m-8-8v16" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/>
+      <use href="#bottomNav"/><use href="#activeAgenda"/>
+    </g>
+  </g>
+
+  <!-- 05 DETALHES AGENDAMENTO -->
+  <g id="screen-05-appointment-detail" data-name="05 — Detalhes do Agendamento" transform="translate(1920 160)">
+    <title>05 — Detalhes do Agendamento</title>
+    <text x="0" y="-26" class="screen-label">05 · Detalhes do Agendamento</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/><use href="#statusLight"/>
+      <g transform="translate(20 49)"><use href="#backButton"/></g>
+      <text x="82" y="77" class="h2">Detalhes</text>
+      <circle cx="350" cy="71" r="21" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <circle cx="343" cy="71" r="2" fill="#515F74"/><circle cx="350" cy="71" r="2" fill="#515F74"/><circle cx="357" cy="71" r="2" fill="#515F74"/>
+      <rect x="20" y="112" width="350" height="150" rx="22" class="card" filter="url(#cardShadow)"/>
+      <circle cx="65" cy="157" r="27" fill="#D8EEF2"/><text x="65" y="164" text-anchor="middle" font-family="Inter,sans-serif" font-size="15" font-weight="800" fill="#006578">AC</text>
+      <text x="105" y="151" class="h2">Ana Carolina Ribeiro</text><text x="105" y="176" class="body">Consulta dermatológica</text>
+      <rect x="105" y="194" width="91" height="25" rx="12.5" fill="#DCFCE7"/><circle cx="120" cy="206.5" r="4" fill="#16A34A"/><text x="132" y="210" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#166534">Confirmado</text>
+      <path d="M40 234h310" class="divider"/>
+      <text x="40" y="251" class="meta">Agendamento #AG-4821</text>
+      <text x="20" y="303" class="h2">Informações</text>
+      <rect x="20" y="320" width="350" height="213" rx="18" class="card"/>
+      <circle cx="48" cy="354" r="16" fill="#E6F5F8"/><rect x="42" y="347" width="12" height="13" rx="2" fill="none" stroke="#007D94" stroke-width="1.5"/>
+      <text x="74" y="348" class="meta">Data e horário</text><text x="74" y="370" class="body-strong">Sex., 28 ago · 10:30 — 11:20</text>
+      <path d="M40 388h310" class="divider"/>
+      <circle cx="48" cy="420" r="16" fill="#E6F5F8"/><path d="M43 420h10m-5-5v10" class="icon-active"/>
+      <text x="74" y="414" class="meta">Procedimento</text><text x="74" y="436" class="body-strong">Consulta dermatológica · 50 min</text>
+      <path d="M40 454h310" class="divider"/>
+      <circle cx="48" cy="486" r="16" fill="#E6F5F8"/><text x="48" y="491" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="800" fill="#007D94">R$</text>
+      <text x="74" y="480" class="meta">Valor</text><text x="74" y="502" class="body-strong">R$ 260,00</text>
+      <text x="20" y="573" class="h2">Contato</text>
+      <rect x="20" y="590" width="169" height="52" rx="16" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <circle cx="47" cy="616" r="13" fill="#E6F5F8"/><path d="M43 611c2 7 5 10 11 11" class="icon-active"/>
+      <text x="110" y="621" text-anchor="middle" class="body-strong">Ligar</text>
+      <rect x="201" y="590" width="169" height="52" rx="16" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <circle cx="228" cy="616" r="13" fill="#E6F5F8"/><path d="M222 615l12-6-4 13-3-4z" fill="none" stroke="#007D94" stroke-width="1.5" stroke-linejoin="round"/>
+      <text x="292" y="621" text-anchor="middle" class="body-strong">Telegram</text>
+      <rect x="20" y="688" width="350" height="56" rx="18" fill="#0097B2"/><text x="195" y="722" class="button">Solicitar reagendamento</text>
+      <text x="195" y="773" text-anchor="middle" class="meta">A alteração só ocorre após aceite do paciente.</text>
+    </g>
+  </g>
+
+  <!-- 06 SOLICITAR REAGENDAMENTO -->
+  <g id="screen-06-request-reschedule" data-name="06 — Solicitar Reagendamento" transform="translate(80 1120)">
+    <title>06 — Solicitar Reagendamento</title>
+    <text x="0" y="-26" class="screen-label">06 · Solicitar Reagendamento</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/><use href="#statusLight"/>
+      <g transform="translate(20 49)"><use href="#backButton"/></g><text x="82" y="76" class="h2">Reagendamento</text>
+      <text x="20" y="127" class="eyebrow">HORÁRIO ATUAL</text>
+      <rect x="20" y="142" width="350" height="73" rx="17" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <text x="39" y="171" class="body-strong">Sex., 28 ago · 10:30</text><text x="39" y="193" class="meta">Ana Carolina · Consulta dermatológica</text>
+      <text x="20" y="257" class="h2">Sugira novos horários</text><text x="20" y="281" class="meta">Selecione até três opções para o paciente.</text>
+      <rect x="20" y="299" width="350" height="70" rx="17" fill="#E6F5F8" stroke="#0097B2" stroke-width="2"/>
+      <circle cx="47" cy="334" r="13" fill="#0097B2"/><path d="M41 334l4 4 8-9" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="72" y="329" class="body-strong">Seg., 31 ago · 09:00 — 09:50</text><text x="72" y="350" class="meta">Disponível na agenda da clínica</text>
+      <rect x="20" y="381" width="350" height="70" rx="17" class="card"/>
+      <circle cx="47" cy="416" r="13" fill="#FFFFFF" stroke="#BDC8CD" stroke-width="1.5"/>
+      <text x="72" y="411" class="body-strong">Ter., 1 set · 14:00 — 14:50</text><text x="72" y="432" class="meta">Disponível na agenda da clínica</text>
+      <rect x="20" y="463" width="350" height="70" rx="17" class="card"/>
+      <circle cx="47" cy="498" r="13" fill="#FFFFFF" stroke="#BDC8CD" stroke-width="1.5"/>
+      <text x="72" y="493" class="body-strong">Qua., 2 set · 11:00 — 11:50</text><text x="72" y="514" class="meta">Disponível na agenda da clínica</text>
+      <text x="20" y="574" class="field-label">Mensagem opcional</text>
+      <rect x="20" y="588" width="350" height="81" rx="15" class="field"/>
+      <text x="37" y="615" class="body"><tspan x="37">Olá, Ana! Preciso ajustar nosso horário.</tspan><tspan x="37" dy="21">Qual destas opções funciona melhor?</tspan></text>
+      <rect x="20" y="685" width="350" height="50" rx="14" fill="#DAE2FD"/>
+      <path d="M38 710l15-7-5 16-4-5z" fill="none" stroke="#2563EB" stroke-width="1.7" stroke-linejoin="round"/>
+      <text x="65" y="706" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#1E3A8A">A solicitação será enviada pelo Telegram.</text>
+      <text x="65" y="722" font-family="Inter,sans-serif" font-size="10" font-weight="500" fill="#1E40AF">O horário atual permanece reservado até a resposta.</text>
+      <rect x="20" y="760" width="350" height="56" rx="18" fill="#0097B2"/><text x="195" y="794" class="button">Enviar solicitação</text>
+    </g>
+  </g>
+
+  <!-- 07 LISTA SOLICITAÇÕES -->
+  <g id="screen-07-reschedule-requests" data-name="07 — Solicitações de Reagendamento" transform="translate(540 1120)">
+    <title>07 — Solicitações de Reagendamento</title>
+    <text x="0" y="-26" class="screen-label">07 · Solicitações de Reagendamento</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/><use href="#statusLight"/>
+      <text x="20" y="78" class="h1">Solicitações</text><circle cx="350" cy="71" r="20" fill="#E6F5F8"/><path d="M343 71h14m-7-7v14" class="icon-active"/>
+      <g id="request-filters">
+        <rect x="20" y="105" width="71" height="34" rx="17" fill="#0097B2"/><text x="55.5" y="127" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#FFFFFF">Todas</text>
+        <rect x="99" y="105" width="89" height="34" rx="17" fill="#FFFFFF" stroke="#E2E8F0"/><text x="143.5" y="127" text-anchor="middle" class="small">Pendentes</text>
+        <rect x="196" y="105" width="75" height="34" rx="17" fill="#FFFFFF" stroke="#E2E8F0"/><text x="233.5" y="127" text-anchor="middle" class="small">Aceitas</text>
+        <rect x="279" y="105" width="91" height="34" rx="17" fill="#FFFFFF" stroke="#E2E8F0"/><text x="324.5" y="127" text-anchor="middle" class="small">Recusadas</text>
+      </g>
+      <text x="20" y="180" class="eyebrow">AGUARDANDO RESPOSTA</text>
+      <rect x="20" y="196" width="350" height="132" rx="18" class="card"/>
+      <circle cx="51" cy="227" r="18" fill="#D8EEF2"/><text x="51" y="232" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="800" fill="#006578">LF</text>
+      <text x="80" y="224" class="h3">Luiza Ferreira</text><text x="80" y="246" class="meta">Procedimento · sex., 28 ago, 14:00</text>
+      <rect x="284" y="212" width="67" height="23" rx="11.5" fill="#FEF3C7"/><text x="317.5" y="228" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#92400E">Pendente</text>
+      <path d="M38 264h314" class="divider"/><text x="38" y="288" class="meta">3 opções enviadas · há 18 min</text><text x="38" y="312" class="body-strong">Próxima opção: seg., 31 ago · 09:00</text>
+      <text x="20" y="369" class="eyebrow">RESPONDIDAS</text>
+      <rect x="20" y="385" width="350" height="125" rx="18" class="card"/>
+      <circle cx="51" cy="416" r="18" fill="#D8EEF2"/><text x="51" y="421" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="800" fill="#006578">PM</text>
+      <text x="80" y="413" class="h3">Paulo Mendes</text><text x="80" y="435" class="meta">Retorno · qui., 27 ago, 08:00</text>
+      <rect x="291" y="401" width="60" height="23" rx="11.5" fill="#DCFCE7"/><text x="321" y="417" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#166534">Aceita</text>
+      <path d="M38 453h314" class="divider"/><text x="38" y="480" class="body-strong">Novo: sex., 28 ago · 08:00</text><text x="38" y="500" class="meta">Agenda atualizada automaticamente</text>
+      <rect x="20" y="522" width="350" height="125" rx="18" class="card"/>
+      <circle cx="51" cy="553" r="18" fill="#FCE7F3"/><text x="51" y="558" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="800" fill="#9D174D">CS</text>
+      <text x="80" y="550" class="h3">Carla Santos</text><text x="80" y="572" class="meta">Consulta · qua., 26 ago, 16:00</text>
+      <rect x="280" y="538" width="71" height="23" rx="11.5" fill="#FEE2E2"/><text x="315.5" y="554" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#991B1B">Recusada</text>
+      <path d="M38 590h314" class="divider"/><text x="38" y="617" class="body-strong">Paciente não pôde mudar o horário</text><text x="38" y="637" class="meta">Agendamento original mantido</text>
+      <use href="#bottomNav"/><use href="#activeAgenda"/>
+    </g>
+  </g>
+
+  <!-- 08 DETALHE SOLICITAÇÃO -->
+  <g id="screen-08-request-detail" data-name="08 — Detalhes da Solicitação" transform="translate(1000 1120)">
+    <title>08 — Detalhes da Solicitação</title>
+    <text x="0" y="-26" class="screen-label">08 · Detalhes da Solicitação</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/><use href="#statusLight"/>
+      <g transform="translate(20 49)"><use href="#backButton"/></g><text x="82" y="76" class="h2">Detalhes da solicitação</text>
+      <rect x="20" y="112" width="350" height="107" rx="18" class="card"/>
+      <circle cx="53" cy="147" r="19" fill="#D8EEF2"/><text x="53" y="152" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="800" fill="#006578">PM</text>
+      <text x="84" y="144" class="h3">Paulo Mendes</text><text x="84" y="166" class="meta">Retorno · R$ 180,00</text>
+      <rect x="289" y="132" width="62" height="23" rx="11.5" fill="#DCFCE7"/><text x="320" y="148" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#166534">Aceita</text>
+      <path d="M39 182h312" class="divider"/><text x="39" y="205" class="meta">Solicitação #REA-238</text>
+      <text x="20" y="260" class="h2">Alteração confirmada</text>
+      <rect x="20" y="277" width="350" height="128" rx="18" fill="#E6F5F8" stroke="#B9E5EC"/>
+      <text x="39" y="306" class="meta">DE</text><text x="81" y="306" class="body-strong">Qui., 27 ago · 08:00</text>
+      <path d="M40 329h310" stroke="#B9E5EC"/>
+      <text x="39" y="357" class="meta">PARA</text><text x="81" y="357" class="body-strong">Sex., 28 ago · 08:00</text>
+      <circle cx="336" cy="342" r="16" fill="#0097B2"/><path d="M329 342l5 5 9-11" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="39" y="386" class="meta">Atualizado na agenda e no Google Calendar</text>
+      <text x="20" y="448" class="h2">Linha do tempo</text>
+      <path d="M44 478v200" stroke="#B9E5EC" stroke-width="2"/>
+      <circle cx="44" cy="489" r="9" fill="#0097B2"/><path d="M40 489l3 3 5-6" fill="none" stroke="#FFFFFF" stroke-width="1.5"/>
+      <text x="68" y="486" class="body-strong">Solicitação enviada</text><text x="68" y="506" class="meta">27 ago · 16:18 · via Telegram</text>
+      <circle cx="44" cy="554" r="9" fill="#0097B2"/><path d="M40 554l3 3 5-6" fill="none" stroke="#FFFFFF" stroke-width="1.5"/>
+      <text x="68" y="551" class="body-strong">Paciente visualizou</text><text x="68" y="571" class="meta">27 ago · 16:24</text>
+      <circle cx="44" cy="619" r="9" fill="#16A34A"/><path d="M40 619l3 3 5-6" fill="none" stroke="#FFFFFF" stroke-width="1.5"/>
+      <text x="68" y="616" class="body-strong">Novo horário aceito</text><text x="68" y="636" class="meta">27 ago · 16:31</text>
+      <circle cx="44" cy="684" r="9" fill="#16A34A"/><path d="M40 684l3 3 5-6" fill="none" stroke="#FFFFFF" stroke-width="1.5"/>
+      <text x="68" y="681" class="body-strong">Agenda sincronizada</text><text x="68" y="701" class="meta">27 ago · 16:31</text>
+      <rect x="20" y="755" width="350" height="56" rx="18" fill="#0097B2"/><text x="195" y="789" class="button">Ver agendamento</text>
+    </g>
+  </g>
+
+  <!-- 09 DISPONIBILIDADE -->
+  <g id="screen-09-availability" data-name="09 — Gestão de Disponibilidade" transform="translate(1460 1120)">
+    <title>09 — Gestão de Disponibilidade</title>
+    <text x="0" y="-26" class="screen-label">09 · Gestão de Disponibilidade</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/><use href="#statusLight"/>
+      <text x="20" y="78" class="h1">Disponibilidade</text><circle cx="350" cy="70" r="20" fill="#E6F5F8"/><path d="M343 70h14m-7-7v14" class="icon-active"/>
+      <rect x="20" y="104" width="350" height="66" rx="16" fill="#E6F5F8"/>
+      <circle cx="47" cy="137" r="15" fill="#FFFFFF"/><rect x="41" y="130" width="12" height="13" rx="2" fill="none" stroke="#007D94" stroke-width="1.5"/>
+      <text x="72" y="132" class="body-strong">Agenda-base da clínica</text><text x="72" y="153" class="meta">Seg–sex · 08:00 às 18:00</text>
+      <rect x="20" y="190" width="350" height="49" rx="15" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <circle cx="44" cy="214" r="15" fill="#E6F5F8"/><path d="M48 209l-5 5 5 5" class="icon-active"/>
+      <text x="195" y="219" text-anchor="middle" class="body-strong">24 — 30 de agosto</text>
+      <circle cx="346" cy="214" r="15" fill="#E6F5F8"/><path d="M342 209l5 5-5 5" class="icon-active"/>
+      <text x="20" y="277" class="eyebrow">SEXTA-FEIRA, 28</text>
+      <g id="availability-timeline">
+        <text x="20" y="313" class="small">08:00</text><line x1="67" y1="309" x2="370" y2="309" class="divider"/>
+        <rect x="79" y="293" width="272" height="54" rx="13" fill="#DCFCE7" stroke="#BBF7D0"/>
+        <text x="96" y="316" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#166534">Disponível</text><text x="96" y="335" font-family="Inter,sans-serif" font-size="10" font-weight="500" fill="#15803D">08:00 — 10:30</text>
+        <text x="20" y="381" class="small">10:30</text><line x1="67" y1="377" x2="370" y2="377" class="divider"/>
+        <rect x="79" y="361" width="272" height="54" rx="13" fill="#FFFFFF" stroke="#E2E8F0"/>
+        <rect x="79" y="361" width="4" height="54" rx="2" fill="#0097B2"/><text x="96" y="384" class="body-strong">Ana Carolina · Consulta</text><text x="96" y="403" class="meta">10:30 — 11:20</text>
+        <text x="20" y="449" class="small">12:00</text><line x1="67" y1="445" x2="370" y2="445" class="divider"/>
+        <rect x="79" y="429" width="272" height="76" rx="13" fill="#F1F5F9" stroke="#CBD5E1" stroke-dasharray="5 4"/>
+        <text x="96" y="457" class="body-strong">Indisponível · almoço</text><text x="96" y="478" class="meta">12:00 — 13:30 · Google Calendar</text>
+        <text x="20" y="539" class="small">13:30</text><line x1="67" y1="535" x2="370" y2="535" class="divider"/>
+        <rect x="79" y="519" width="272" height="54" rx="13" fill="#DCFCE7" stroke="#BBF7D0"/>
+        <text x="96" y="542" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#166534">Disponível</text><text x="96" y="561" font-family="Inter,sans-serif" font-size="10" font-weight="500" fill="#15803D">13:30 — 14:00</text>
+        <text x="20" y="607" class="small">14:00</text><line x1="67" y1="603" x2="370" y2="603" class="divider"/>
+        <rect x="79" y="587" width="272" height="54" rx="13" fill="#FFFFFF" stroke="#E2E8F0"/>
+        <rect x="79" y="587" width="4" height="54" rx="2" fill="#F59E0B"/><text x="96" y="610" class="body-strong">Luiza Ferreira · Procedimento</text><text x="96" y="629" class="meta">14:00 — 14:40</text>
+      </g>
+      <rect x="20" y="682" width="350" height="54" rx="17" fill="#0097B2"/><text x="195" y="715" class="button">Adicionar indisponibilidade</text>
+      <use href="#bottomNav"/><use href="#activeAgenda"/>
+    </g>
+  </g>
+
+  <!-- 10 EDITAR INDISPONIBILIDADE -->
+  <g id="screen-10-unavailability-form" data-name="10 — Criar Indisponibilidade" transform="translate(1920 1120)">
+    <title>10 — Criar ou Editar Indisponibilidade</title>
+    <text x="0" y="-26" class="screen-label">10 · Criar / Editar Indisponibilidade</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/><use href="#statusLight"/>
+      <g transform="translate(20 49)"><use href="#backButton"/></g><text x="82" y="76" class="h2">Indisponibilidade</text>
+      <text x="20" y="129" class="field-label">Motivo</text>
+      <rect x="20" y="143" width="350" height="54" rx="14" class="field"/><text x="38" y="176" class="body">Almoço</text>
+      <text x="20" y="235" class="field-label">Data</text>
+      <rect x="20" y="249" width="350" height="54" rx="14" class="field"/><text x="38" y="282" class="body">Sexta-feira, 28 de agosto</text><rect x="334" y="267" width="15" height="14" rx="2" fill="none" stroke="#6D797D" stroke-width="1.5"/>
+      <text x="20" y="341" class="field-label">Horário</text>
+      <rect x="20" y="355" width="169" height="54" rx="14" class="field"/><text x="38" y="388" class="body">12:00</text>
+      <rect x="201" y="355" width="169" height="54" rx="14" class="field"/><text x="219" y="388" class="body">13:30</text>
+      <text x="20" y="447" class="field-label">Repetição</text>
+      <rect x="20" y="461" width="350" height="64" rx="16" class="card"/>
+      <text x="38" y="486" class="body-strong">Repetir toda sexta-feira</text><text x="38" y="507" class="meta">Até você remover o bloqueio</text>
+      <rect x="312" y="479" width="40" height="24" rx="12" fill="#0097B2"/><circle cx="340" cy="491" r="9" fill="#FFFFFF"/>
+      <rect x="20" y="551" width="350" height="89" rx="16" fill="#DAE2FD"/>
+      <circle cx="48" cy="580" r="15" fill="#FFFFFF"/><path d="M42 580h12m-6-6v12" fill="none" stroke="#2563EB" stroke-width="1.7" stroke-linecap="round"/>
+      <text x="72" y="575" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#1E3A8A">Sincronização com Google Calendar</text>
+      <text x="72" y="596" font-family="Inter,sans-serif" font-size="10" font-weight="500" fill="#1E40AF"><tspan x="72">Será criado um evento “Indisponível”.</tspan><tspan x="72" dy="17">O cliente verá apenas o horário ocupado.</tspan></text>
+      <rect x="20" y="688" width="350" height="56" rx="18" fill="#0097B2"/><text x="195" y="722" class="button">Salvar indisponibilidade</text>
+      <rect x="20" y="756" width="350" height="50" rx="16" fill="#FFFFFF" stroke="#FCA5A5"/><text x="195" y="786" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="700" fill="#B91C1C">Excluir bloqueio</text>
+    </g>
+  </g>
+
+  <!-- 11 RECEITAS OVERVIEW -->
+  <g id="screen-11-revenue-overview" data-name="11 — Overview de Receitas" transform="translate(80 2080)">
+    <title>11 — Overview de Receitas</title>
+    <text x="0" y="-26" class="screen-label">11 · Overview de Receitas</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/><use href="#statusLight"/>
+      <text x="20" y="78" class="h1">Receitas</text>
+      <rect x="257" y="53" width="113" height="37" rx="13" fill="#FFFFFF" stroke="#E2E8F0"/><text x="277" y="77" class="small">Agosto 2026</text><path d="M345 68l5 5 5-5" class="icon"/>
+      <rect x="20" y="111" width="350" height="159" rx="22" fill="#007D94"/>
+      <text x="40" y="143" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#C9F1F7">Receita estimada</text>
+      <text x="40" y="187" class="amount-on">R$ 12.480,00</text>
+      <rect x="40" y="207" width="90" height="27" rx="13.5" fill="#FFFFFF" opacity=".16"/><path d="M53 224l5-6 5 4 6-8" fill="none" stroke="#C9F1F7" stroke-width="2" stroke-linecap="round"/><text x="79" y="226" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF">+8,4%</text>
+      <text x="142" y="226" font-family="Inter,sans-serif" font-size="10" font-weight="500" fill="#C9F1F7">vs. julho</text>
+      <g transform="translate(254 136)">
+        <rect x="0" y="56" width="13" height="34" rx="4" fill="#C9F1F7" opacity=".45"/><rect x="21" y="41" width="13" height="49" rx="4" fill="#C9F1F7" opacity=".55"/><rect x="42" y="50" width="13" height="40" rx="4" fill="#C9F1F7" opacity=".65"/><rect x="63" y="26" width="13" height="64" rx="4" fill="#FFFFFF" opacity=".95"/>
+      </g>
+      <rect x="20" y="288" width="168" height="93" rx="18" class="card"/>
+      <circle cx="49" cy="318" r="15" fill="#DCFCE7"/><path d="M43 319l4 4 8-10" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round"/>
+      <text x="73" y="317" class="meta">Recebido</text><text x="39" y="357" class="h2">R$ 9.840,00</text>
+      <rect x="202" y="288" width="168" height="93" rx="18" class="card"/>
+      <circle cx="231" cy="318" r="15" fill="#FEF3C7"/><path d="M231 309v10l6 4" fill="none" stroke="#D97706" stroke-width="1.8" stroke-linecap="round"/>
+      <text x="255" y="317" class="meta">Pendente</text><text x="221" y="357" class="h2">R$ 2.640,00</text>
+      <text x="20" y="423" class="h2">Evolução semanal</text><text x="370" y="423" text-anchor="end" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#007D94">Ver detalhes</text>
+      <rect x="20" y="440" width="350" height="141" rx="18" class="card"/>
+      <line x1="43" y1="551" x2="349" y2="551" class="divider"/><line x1="43" y1="515" x2="349" y2="515" stroke="#EEF2F6"/><line x1="43" y1="479" x2="349" y2="479" stroke="#EEF2F6"/>
+      <rect x="58" y="513" width="35" height="38" rx="7" fill="#B9E5EC"/><rect x="118" y="491" width="35" height="60" rx="7" fill="#B9E5EC"/><rect x="178" y="503" width="35" height="48" rx="7" fill="#B9E5EC"/><rect x="238" y="472" width="35" height="79" rx="7" fill="#0097B2"/><rect x="298" y="487" width="35" height="64" rx="7" fill="#B9E5EC"/>
+      <text x="75" y="570" text-anchor="middle" class="small">S1</text><text x="135" y="570" text-anchor="middle" class="small">S2</text><text x="195" y="570" text-anchor="middle" class="small">S3</text><text x="255" y="570" text-anchor="middle" class="small">S4</text><text x="315" y="570" text-anchor="middle" class="small">S5</text>
+      <text x="20" y="623" class="h2">Por procedimento</text>
+      <rect x="20" y="640" width="350" height="95" rx="18" class="card"/>
+      <circle cx="48" cy="670" r="8" fill="#0097B2"/><text x="67" y="674" class="body-strong">Consulta dermatológica</text><text x="351" y="674" text-anchor="end" class="body-strong">R$ 6.240</text>
+      <circle cx="48" cy="707" r="8" fill="#85D7E3"/><text x="67" y="711" class="body-strong">Procedimentos</text><text x="351" y="711" text-anchor="end" class="body-strong">R$ 4.800</text>
+      <use href="#bottomNav"/><use href="#activeRevenue"/>
+    </g>
+  </g>
+
+  <!-- 12 DETALHE RECEITAS -->
+  <g id="screen-12-revenue-detail" data-name="12 — Detalhamento de Receitas" transform="translate(540 2080)">
+    <title>12 — Detalhamento de Receitas</title>
+    <text x="0" y="-26" class="screen-label">12 · Detalhamento de Receitas</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/><use href="#statusLight"/>
+      <g transform="translate(20 49)"><use href="#backButton"/></g><text x="82" y="76" class="h2">Detalhamento</text>
+      <rect x="20" y="112" width="350" height="111" rx="18" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <text x="39" y="141" class="meta">TOTAL NO PERÍODO</text><text x="39" y="181" class="amount">R$ 12.480,00</text>
+      <rect x="279" y="143" width="72" height="29" rx="14.5" fill="#DCFCE7"/><text x="315" y="162" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#166534">+8,4%</text>
+      <text x="39" y="207" class="meta">47 atendimentos · ticket médio R$ 265,53</text>
+      <rect x="20" y="244" width="108" height="39" rx="14" fill="#0097B2"/><text x="74" y="269" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#FFFFFF">Todos</text>
+      <rect x="138" y="244" width="108" height="39" rx="14" fill="#FFFFFF" stroke="#E2E8F0"/><text x="192" y="269" text-anchor="middle" class="small">Recebidos</text>
+      <rect x="256" y="244" width="114" height="39" rx="14" fill="#FFFFFF" stroke="#E2E8F0"/><text x="313" y="269" text-anchor="middle" class="small">Pendentes</text>
+      <text x="20" y="324" class="eyebrow">SEXTA-FEIRA, 28 AGO</text>
+      <rect x="20" y="340" width="350" height="79" rx="16" class="card"/>
+      <circle cx="50" cy="379" r="17" fill="#D8EEF2"/><text x="50" y="384" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="800" fill="#006578">AC</text>
+      <text x="78" y="373" class="body-strong">Ana Carolina</text><text x="78" y="394" class="meta">Consulta · 10:30</text>
+      <text x="351" y="374" text-anchor="end" class="body-strong">R$ 260,00</text><text x="351" y="395" text-anchor="end" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#16A34A">Recebido</text>
+      <rect x="20" y="431" width="350" height="79" rx="16" class="card"/>
+      <circle cx="50" cy="470" r="17" fill="#FCE7F3"/><text x="50" y="475" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="800" fill="#9D174D">LF</text>
+      <text x="78" y="464" class="body-strong">Luiza Ferreira</text><text x="78" y="485" class="meta">Procedimento · 14:00</text>
+      <text x="351" y="465" text-anchor="end" class="body-strong">R$ 320,00</text><text x="351" y="486" text-anchor="end" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#D97706">Pendente</text>
+      <text x="20" y="551" class="eyebrow">QUINTA-FEIRA, 27 AGO</text>
+      <rect x="20" y="567" width="350" height="79" rx="16" class="card"/>
+      <circle cx="50" cy="606" r="17" fill="#E0E7FF"/><text x="50" y="611" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="800" fill="#3730A3">PM</text>
+      <text x="78" y="600" class="body-strong">Paulo Mendes</text><text x="78" y="621" class="meta">Retorno · 08:00</text>
+      <text x="351" y="601" text-anchor="end" class="body-strong">R$ 180,00</text><text x="351" y="622" text-anchor="end" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#16A34A">Recebido</text>
+      <rect x="20" y="658" width="350" height="79" rx="16" class="card"/>
+      <circle cx="50" cy="697" r="17" fill="#FEF3C7"/><text x="50" y="702" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="800" fill="#92400E">CS</text>
+      <text x="78" y="691" class="body-strong">Carla Santos</text><text x="78" y="712" class="meta">Consulta · 16:00</text>
+      <text x="351" y="692" text-anchor="end" class="body-strong">R$ 260,00</text><text x="351" y="713" text-anchor="end" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#16A34A">Recebido</text>
+      <text x="195" y="789" text-anchor="middle" class="meta">Valores estimados com base nos agendamentos.</text>
+    </g>
+  </g>
+
+  <!-- 13 PROCEDIMENTOS -->
+  <g id="screen-13-procedures" data-name="13 — Meus Procedimentos" transform="translate(1000 2080)">
+    <title>13 — Meus Procedimentos</title>
+    <text x="0" y="-26" class="screen-label">13 · Meus Procedimentos</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/><use href="#statusLight"/>
+      <text x="20" y="78" class="h1">Meus procedimentos</text>
+      <rect x="20" y="105" width="350" height="50" rx="15" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <circle cx="45" cy="130" r="7" fill="none" stroke="#6D797D" stroke-width="1.7"/><path d="M50 135l6 6" class="icon"/><text x="69" y="135" class="meta">Buscar procedimento</text>
+      <rect x="20" y="176" width="350" height="133" rx="18" class="card"/>
+      <circle cx="51" cy="209" r="17" fill="#E6F5F8"/><path d="M44 209h14m-7-7v14" class="icon-active"/>
+      <text x="79" y="205" class="h3">Consulta dermatológica</text><text x="79" y="227" class="meta">Catálogo da Clínica Aurora</text>
+      <rect x="288" y="193" width="63" height="23" rx="11.5" fill="#DCFCE7"/><text x="319.5" y="209" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#166534">Ativo</text>
+      <path d="M38 248h314" class="divider"/>
+      <text x="38" y="277" class="meta">Seu preço</text><text x="102" y="277" class="body-strong">R$ 260,00</text><text x="210" y="277" class="meta">Duração</text><text x="274" y="277" class="body-strong">50 min</text>
+      <circle cx="341" cy="276" r="16" fill="#E6F5F8"/><path d="M335 282l2-8 8-8 6 6-8 8z" fill="none" stroke="#007D94" stroke-width="1.5"/>
+      <rect x="20" y="321" width="350" height="133" rx="18" class="card"/>
+      <circle cx="51" cy="354" r="17" fill="#E6F5F8"/><path d="M44 354h14m-7-7v14" class="icon-active"/>
+      <text x="79" y="350" class="h3">Retorno</text><text x="79" y="372" class="meta">Catálogo da Clínica Aurora</text>
+      <rect x="288" y="338" width="63" height="23" rx="11.5" fill="#DCFCE7"/><text x="319.5" y="354" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#166534">Ativo</text>
+      <path d="M38 393h314" class="divider"/>
+      <text x="38" y="422" class="meta">Seu preço</text><text x="102" y="422" class="body-strong">R$ 180,00</text><text x="210" y="422" class="meta">Duração</text><text x="274" y="422" class="body-strong">40 min</text>
+      <circle cx="341" cy="421" r="16" fill="#E6F5F8"/><path d="M335 427l2-8 8-8 6 6-8 8z" fill="none" stroke="#007D94" stroke-width="1.5"/>
+      <rect x="20" y="466" width="350" height="133" rx="18" class="card" opacity=".75"/>
+      <circle cx="51" cy="499" r="17" fill="#F1F5F9"/><path d="M44 499h14m-7-7v14" class="icon"/>
+      <text x="79" y="495" class="h3">Peeling químico</text><text x="79" y="517" class="meta">Catálogo da Clínica Aurora</text>
+      <rect x="279" y="483" width="72" height="23" rx="11.5" fill="#F1F5F9"/><text x="315" y="499" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#64748B">Inativo</text>
+      <path d="M38 538h314" class="divider"/>
+      <text x="38" y="567" class="meta">Seu preço</text><text x="102" y="567" class="body-strong">R$ 350,00</text><text x="210" y="567" class="meta">Duração</text><text x="274" y="567" class="body-strong">60 min</text>
+      <circle cx="341" cy="566" r="16" fill="#F1F5F9"/><path d="M335 572l2-8 8-8 6 6-8 8z" fill="none" stroke="#64748B" stroke-width="1.5"/>
+      <rect x="20" y="629" width="350" height="72" rx="16" fill="#E6F5F8"/>
+      <text x="39" y="657" class="body-strong">Preços personalizados</text><text x="39" y="679" class="meta">Seu preço e duração não alteram o catálogo da clínica.</text>
+      <use href="#bottomNav"/><use href="#activeServices"/>
+    </g>
+  </g>
+
+  <!-- 14 EDITAR PROCEDIMENTO -->
+  <g id="screen-14-edit-procedure" data-name="14 — Editar Procedimento" transform="translate(1460 2080)">
+    <title>14 — Editar Procedimento</title>
+    <text x="0" y="-26" class="screen-label">14 · Editar Procedimento</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/><use href="#statusLight"/>
+      <g transform="translate(20 49)"><use href="#backButton"/></g><text x="82" y="76" class="h2">Editar procedimento</text>
+      <rect x="20" y="116" width="350" height="85" rx="17" fill="#E6F5F8"/>
+      <circle cx="52" cy="158" r="18" fill="#FFFFFF"/><path d="M45 158h14m-7-7v14" class="icon-active"/>
+      <text x="82" y="151" class="h3">Consulta dermatológica</text><text x="82" y="174" class="meta">Definido pela Clínica Aurora</text>
+      <path d="M345 148l-6 10 6 10" fill="none" stroke="#7BAEB7" stroke-width="1.5" opacity=".5"/>
+      <text x="20" y="242" class="field-label">Seu preço</text>
+      <rect x="20" y="256" width="350" height="58" rx="15" class="field focus"/>
+      <text x="39" y="292" class="body-strong">R$</text><text x="75" y="292" font-family="Inter,sans-serif" font-size="18" font-weight="700" fill="#131B2E">260,00</text>
+      <text x="20" y="353" class="field-label">Duração do atendimento</text>
+      <rect x="20" y="367" width="350" height="58" rx="15" class="field"/>
+      <text x="39" y="403" class="body">50 minutos</text><path d="M343 392l5 5 5-5" class="icon"/>
+      <text x="20" y="464" class="field-label">Disponibilidade</text>
+      <rect x="20" y="478" width="350" height="68" rx="16" class="card"/>
+      <text x="39" y="505" class="body-strong">Oferecer este procedimento</text><text x="39" y="526" class="meta">Disponível para novos agendamentos</text>
+      <rect x="312" y="500" width="40" height="24" rx="12" fill="#0097B2"/><circle cx="340" cy="512" r="9" fill="#FFFFFF"/>
+      <rect x="20" y="574" width="350" height="111" rx="16" fill="#FEF3C7"/>
+      <circle cx="48" cy="607" r="15" fill="#FFFFFF"/><text x="48" y="612" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="800" fill="#B45309">!</text>
+      <text x="72" y="601" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#92400E">O catálogo continua sendo da clínica</text>
+      <text x="72" y="624" font-family="Inter,sans-serif" font-size="10" font-weight="500" fill="#92400E"><tspan x="72">Sua alteração vale apenas para os seus</tspan><tspan x="72" dy="18">atendimentos e não afeta outros profissionais.</tspan></text>
+      <rect x="20" y="725" width="350" height="56" rx="18" fill="#0097B2"/><text x="195" y="759" class="button">Salvar alterações</text>
+    </g>
+  </g>
+
+  <!-- 15 PERFIL -->
+  <g id="screen-15-profile" data-name="15 — Perfil Profissional" transform="translate(1920 2080)">
+    <title>15 — Perfil Profissional</title>
+    <text x="0" y="-26" class="screen-label">15 · Perfil Profissional</text>
+    <rect width="390" height="844" rx="34" fill="#F8FAFC" filter="url(#phoneShadow)"/>
+    <g clip-path="url(#phoneClip)">
+      <rect width="390" height="844" fill="#F8FAFC"/><use href="#statusLight"/>
+      <text x="20" y="78" class="h1">Perfil</text>
+      <rect x="20" y="105" width="350" height="139" rx="20" class="card"/>
+      <circle cx="73" cy="158" r="34" fill="#D8EEF2"/><text x="73" y="166" text-anchor="middle" font-family="Inter,sans-serif" font-size="18" font-weight="800" fill="#006578">MS</text>
+      <circle cx="98" cy="182" r="12" fill="#0097B2" stroke="#FFFFFF" stroke-width="2"/><path d="M94 182h8m-4-4v8" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+      <text x="124" y="147" class="h2">Dra. Marina Souza</text><text x="124" y="171" class="body">Dermatologista · CRM 12345</text><text x="124" y="195" class="meta">Clínica Aurora</text>
+      <path d="M39 213h312" class="divider"/><text x="39" y="233" class="meta">marina.souza@clinica.com</text>
+      <text x="20" y="284" class="h2">Integrações</text>
+      <rect x="20" y="301" width="350" height="69" rx="16" class="card"/>
+      <circle cx="49" cy="335" r="17" fill="#E6F5F8"/><rect x="42" y="328" width="14" height="14" rx="2" fill="none" stroke="#007D94" stroke-width="1.5"/>
+      <text x="78" y="329" class="body-strong">Google Calendar</text><text x="78" y="350" class="meta">Agenda sincronizada</text>
+      <rect x="294" y="323" width="57" height="23" rx="11.5" fill="#DCFCE7"/><text x="322.5" y="339" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#166534">Ativo</text>
+      <rect x="20" y="382" width="350" height="69" rx="16" class="card"/>
+      <circle cx="49" cy="416" r="17" fill="#DAE2FD"/><path d="M42 416l15-7-5 16-4-5z" fill="none" stroke="#2563EB" stroke-width="1.5" stroke-linejoin="round"/>
+      <text x="78" y="410" class="body-strong">Telegram</text><text x="78" y="431" class="meta">Mensagens de reagendamento</text>
+      <rect x="294" y="404" width="57" height="23" rx="11.5" fill="#DCFCE7"/><text x="322.5" y="420" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#166534">Ativo</text>
+      <text x="20" y="492" class="h2">Preferências</text>
+      <rect x="20" y="509" width="350" height="143" rx="18" class="card"/>
+      <text x="39" y="540" class="body-strong">Lembretes da agenda</text><text x="39" y="560" class="meta">Avisos antes dos atendimentos</text><rect x="312" y="531" width="40" height="24" rx="12" fill="#0097B2"/><circle cx="340" cy="543" r="9" fill="#FFFFFF"/>
+      <path d="M39 578h312" class="divider"/>
+      <text x="39" y="609" class="body-strong">Respostas de reagendamento</text><text x="39" y="629" class="meta">Notificar aceite ou recusa</text><rect x="312" y="600" width="40" height="24" rx="12" fill="#0097B2"/><circle cx="340" cy="612" r="9" fill="#FFFFFF"/>
+      <rect x="20" y="679" width="350" height="51" rx="16" fill="#FFFFFF" stroke="#E2E8F0"/><text x="39" y="710" class="body-strong">Privacidade e segurança</text><path d="M342 698l6 6-6 6" class="icon"/>
+      <text x="195" y="753" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#B91C1C">Sair da conta</text>
+      <use href="#bottomNav"/><use href="#activeProfile"/>
+    </g>
+  </g>
+
+  <!-- SYSTEM STATES -->
+  <g id="system-states" data-name="Estados do sistema" transform="translate(80 3060)">
+    <text x="0" y="0" font-family="Hanken Grotesk,Inter,sans-serif" font-size="24" font-weight="750" fill="#131B2E">Estados do sistema</text>
+    <text x="0" y="27" font-family="Inter,sans-serif" font-size="13" font-weight="500" fill="#515F74">Padrões complementares para carregamento, ausência de dados, falhas e confirmações.</text>
+    <g id="state-loading" transform="translate(0 58)">
+      <rect width="350" height="172" rx="20" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <circle cx="44" cy="42" r="16" fill="none" stroke="#D1E9ED" stroke-width="4"/><path d="M44 26a16 16 0 0116 16" fill="none" stroke="#0097B2" stroke-width="4" stroke-linecap="round"/>
+      <text x="72" y="39" class="h3">Carregando</text><text x="72" y="59" class="meta">Skeletons preservam a estrutura.</text>
+      <rect x="24" y="86" width="302" height="18" rx="9" fill="#EDF2F4"/><rect x="24" y="116" width="246" height="14" rx="7" fill="#EDF2F4"/><rect x="24" y="142" width="176" height="14" rx="7" fill="#EDF2F4"/>
+    </g>
+    <g id="state-empty" transform="translate(372 58)">
+      <rect width="350" height="172" rx="20" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <circle cx="44" cy="42" r="17" fill="#E6F5F8"/><rect x="37" y="34" width="14" height="15" rx="2" fill="none" stroke="#007D94" stroke-width="1.5"/>
+      <text x="72" y="39" class="h3">Sem dados</text><text x="72" y="59" class="meta">Mensagem clara e próxima ação.</text>
+      <text x="24" y="104" class="body-strong">Nenhum agendamento para este dia</text><text x="24" y="128" class="meta">Aproveite para organizar sua disponibilidade.</text><text x="24" y="154" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#007D94">Bloquear um horário →</text>
+    </g>
+    <g id="state-error" transform="translate(744 58)">
+      <rect width="350" height="172" rx="20" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <circle cx="44" cy="42" r="17" fill="#FEE2E2"/><text x="44" y="48" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" font-weight="800" fill="#B91C1C">!</text>
+      <text x="72" y="39" class="h3">Erro recuperável</text><text x="72" y="59" class="meta">Contexto sem culpar o usuário.</text>
+      <text x="24" y="104" class="body-strong">Não foi possível carregar a agenda</text><text x="24" y="128" class="meta">Verifique sua conexão e tente novamente.</text><rect x="24" y="142" width="110" height="24" rx="12" fill="#FEE2E2"/><text x="79" y="158" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#B91C1C">Tentar novamente</text>
+    </g>
+    <g id="state-offline" transform="translate(1116 58)">
+      <rect width="350" height="172" rx="20" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <circle cx="44" cy="42" r="17" fill="#FEF3C7"/><path d="M35 41c6-5 12-5 18 0m-13 5c3-2 5-2 8 0m-15-14l22 22" fill="none" stroke="#B45309" stroke-width="1.6" stroke-linecap="round"/>
+      <text x="72" y="39" class="h3">Offline</text><text x="72" y="59" class="meta">Leitura local quando disponível.</text>
+      <text x="24" y="104" class="body-strong">Você está sem conexão</text><text x="24" y="128" class="meta">Mostrando a última agenda sincronizada.</text><rect x="24" y="142" width="159" height="24" rx="12" fill="#FEF3C7"/><text x="103.5" y="158" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#92400E">Sincronizado às 09:18</text>
+    </g>
+    <g id="state-session" transform="translate(1488 58)">
+      <rect width="350" height="172" rx="20" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <circle cx="44" cy="42" r="17" fill="#DAE2FD"/><rect x="38" y="38" width="12" height="11" rx="2" fill="none" stroke="#2563EB" stroke-width="1.5"/><path d="M41 38v-3a3 3 0 016 0v3" fill="none" stroke="#2563EB" stroke-width="1.5"/>
+      <text x="72" y="39" class="h3">Sessão expirada</text><text x="72" y="59" class="meta">Proteção sem perda de contexto.</text>
+      <text x="24" y="104" class="body-strong">Entre novamente para continuar</text><text x="24" y="128" class="meta">Sua ação será retomada após o acesso.</text><rect x="24" y="142" width="101" height="24" rx="12" fill="#DAE2FD"/><text x="74.5" y="158" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#1E40AF">Fazer login</text>
+    </g>
+    <g id="state-success" transform="translate(1860 58)">
+      <rect width="350" height="172" rx="20" fill="#FFFFFF" stroke="#E2E8F0"/>
+      <circle cx="44" cy="42" r="17" fill="#DCFCE7"/><path d="M36 42l5 5 10-12" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="72" y="39" class="h3">Confirmação</text><text x="72" y="59" class="meta">Feedback imediato e reversível.</text>
+      <text x="24" y="104" class="body-strong">Indisponibilidade criada</text><text x="24" y="128" class="meta">O Google Calendar será sincronizado.</text><rect x="24" y="142" width="82" height="24" rx="12" fill="#DCFCE7"/><text x="65" y="158" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#166534">Desfazer</text>
+    </g>
+  </g>
+</svg>

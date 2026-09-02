@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="450" viewBox="0 0 1360 450" role="img" aria-labelledby="title desc">
+  <title id="title">Agend.AI Profissional — Mobile Components — Atoms</title>
+  <desc id="desc">Buttons, icon buttons, badges, chips and avatars for the Agend.AI Profissional mobile application.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-30%" width="140%" height="170%"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#12202D" flood-opacity=".09"/></filter>
+    <style>
+      .title{font:750 28px 'Hanken Grotesk',Inter,sans-serif;fill:#131B2E}.subtitle{font:500 13px Inter,sans-serif;fill:#515F74}
+      .panel-title{font:700 17px 'Hanken Grotesk',Inter,sans-serif;fill:#131B2E}.eyebrow{font:700 10px Inter,sans-serif;fill:#006578;letter-spacing:1px}
+      .label{font:700 13px Inter,sans-serif;text-anchor:middle}.meta{font:500 10px Inter,sans-serif;fill:#6D797D}.small{font:650 10px Inter,sans-serif;fill:#515F74}
+      .ink{fill:#131B2E}.teal{fill:#0097B2}.line{stroke:#E2E8F0;stroke-width:1}.panel{fill:#FFFFFF;stroke:#E2E8F0;stroke-width:1}
+    </style>
+  </defs>
+  <rect width="1360" height="450" rx="24" fill="#F8FAFC" stroke="#DDE5E8"/>
+
+  <g id="atoms-header" data-name="Atoms / Documentation">
+    <text x="40" y="48" class="title">Átomos</text>
+    <text x="40" y="73" class="subtitle">Elementos fundamentais com alvo mínimo de 44 px, foco visível e estados legíveis.</text>
+    <rect x="1132" y="28" width="188" height="40" rx="14" fill="#E6F5F8"/>
+    <circle cx="1155" cy="48" r="7" fill="#0097B2"/>
+    <text x="1171" y="53" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#006578">AGEND.AI MOBILE</text>
+  </g>
+
+  <g id="atoms-panels" data-name="Atoms / Panels">
+    <rect x="40" y="98" width="635" height="318" rx="20" class="panel"/>
+    <rect x="695" y="98" width="625" height="318" rx="20" class="panel"/>
+    <text x="68" y="131" class="panel-title">Button &amp; Icon Button</text>
+    <text x="68" y="151" class="meta">Size: Medium / Large · Style: Primary / Secondary / Destructive · State: Default / Pressed / Disabled</text>
+    <text x="723" y="131" class="panel-title">Badge, Chip &amp; Avatar</text>
+    <text x="723" y="151" class="meta">Status sem depender apenas de cor · chips para filtros · avatar com fallback por iniciais</text>
+  </g>
+
+  <g id="button-primary-default" data-name="Button / Size=Large, Style=Primary, State=Default" filter="url(#shadow)">
+    <rect x="68" y="177" width="180" height="52" rx="17" fill="#0097B2"/>
+    <text x="158" y="209" class="label" fill="#FFFFFF">Continuar</text>
+  </g>
+  <g id="button-primary-pressed" data-name="Button / Size=Large, Style=Primary, State=Pressed">
+    <rect x="260" y="177" width="180" height="52" rx="17" fill="#006578"/>
+    <text x="350" y="209" class="label" fill="#FFFFFF">Continuar</text>
+  </g>
+  <g id="button-primary-disabled" data-name="Button / Size=Large, Style=Primary, State=Disabled">
+    <rect x="452" y="177" width="180" height="52" rx="17" fill="#D6E2E5"/>
+    <text x="542" y="209" class="label" fill="#7B898D">Continuar</text>
+  </g>
+
+  <g id="button-secondary-default" data-name="Button / Size=Medium, Style=Secondary, State=Default">
+    <rect x="68" y="245" width="154" height="46" rx="15" fill="#FFFFFF" stroke="#0097B2" stroke-width="1.5"/>
+    <text x="145" y="274" class="label" fill="#007D94">Voltar</text>
+  </g>
+  <g id="button-destructive-default" data-name="Button / Size=Medium, Style=Destructive, State=Default">
+    <rect x="234" y="245" width="154" height="46" rx="15" fill="#FFFFFF" stroke="#FCA5A5" stroke-width="1.5"/>
+    <text x="311" y="274" class="label" fill="#B91C1C">Excluir</text>
+  </g>
+  <g id="button-ghost-default" data-name="Button / Size=Medium, Style=Ghost, State=Default">
+    <rect x="400" y="245" width="132" height="46" rx="15" fill="#E6F5F8"/>
+    <text x="466" y="274" class="label" fill="#006578">Ver detalhes</text>
+  </g>
+  <g id="button-loading" data-name="Button / Size=Medium, Style=Primary, State=Loading">
+    <rect x="544" y="245" width="88" height="46" rx="15" fill="#0097B2"/>
+    <circle cx="588" cy="268" r="9" fill="none" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="3"/>
+    <path d="M588 259a9 9 0 019 9" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <g id="icon-button-default" data-name="Icon Button / Size=Large, State=Default">
+    <rect x="68" y="320" width="48" height="48" rx="16" fill="#E6F5F8"/>
+    <path d="M84 344h16m-8-8v16" fill="none" stroke="#007D94" stroke-width="2.3" stroke-linecap="round"/>
+  </g>
+  <g id="icon-button-outline" data-name="Icon Button / Size=Large, State=Outline">
+    <rect x="128" y="320" width="48" height="48" rx="16" fill="#FFFFFF" stroke="#BDC8CD"/>
+    <path d="M158 336l-9 8 9 8m-8-8h12" fill="none" stroke="#515F74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g id="icon-button-danger" data-name="Icon Button / Size=Large, State=Danger">
+    <rect x="188" y="320" width="48" height="48" rx="16" fill="#FEE2E2"/>
+    <path d="M204 338h16m-13-5h10m-11 5l2 16h8l2-16" fill="none" stroke="#B91C1C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g id="touch-target-note" data-name="Touch Target / Documentation">
+    <path d="M263 319v50M252 319h22M252 369h22" stroke="#B9C4C8" stroke-width="1"/>
+    <text x="284" y="341" class="small">48 px visual</text><text x="284" y="358" class="meta">≥ 44 px toque</text>
+  </g>
+
+  <g id="badge-confirmed" data-name="Badge / Status=Confirmed">
+    <rect x="723" y="177" width="98" height="26" rx="13" fill="#DCFCE7"/>
+    <circle cx="739" cy="190" r="4" fill="#16A34A"/><text x="750" y="194" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#166534">Confirmado</text>
+  </g>
+  <g id="badge-pending" data-name="Badge / Status=Pending">
+    <rect x="833" y="177" width="83" height="26" rx="13" fill="#FEF3C7"/>
+    <circle cx="849" cy="190" r="4" fill="#F59E0B"/><text x="860" y="194" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#92400E">Pendente</text>
+  </g>
+  <g id="badge-declined" data-name="Badge / Status=Declined">
+    <rect x="928" y="177" width="86" height="26" rx="13" fill="#FEE2E2"/>
+    <circle cx="944" cy="190" r="4" fill="#EF4444"/><text x="955" y="194" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#991B1B">Recusado</text>
+  </g>
+  <g id="badge-info" data-name="Badge / Status=Info">
+    <rect x="1026" y="177" width="75" height="26" rx="13" fill="#DAE2FD"/>
+    <circle cx="1042" cy="190" r="4" fill="#2563EB"/><text x="1053" y="194" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#1E40AF">Enviado</text>
+  </g>
+  <g id="badge-inactive" data-name="Badge / Status=Inactive">
+    <rect x="1113" y="177" width="72" height="26" rx="13" fill="#F1F5F9"/>
+    <circle cx="1129" cy="190" r="4" fill="#94A3B8"/><text x="1140" y="194" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#64748B">Inativo</text>
+  </g>
+
+  <g id="chip-default" data-name="Chip / Selected=False">
+    <rect x="723" y="228" width="98" height="38" rx="19" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="772" y="252" class="label" fill="#515F74">Pendentes</text>
+  </g>
+  <g id="chip-selected" data-name="Chip / Selected=True">
+    <rect x="833" y="228" width="86" height="38" rx="19" fill="#0097B2"/>
+    <path d="M849 247l4 4 7-9" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="883" y="252" class="label" fill="#FFFFFF">Todas</text>
+  </g>
+  <g id="chip-filter" data-name="Chip / Type=Filter, Selected=False">
+    <rect x="931" y="228" width="112" height="38" rx="19" fill="#E6F5F8"/>
+    <path d="M949 240h14l-5 7v6" fill="none" stroke="#007D94" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="1002" y="252" class="label" fill="#006578">Este mês</text>
+  </g>
+
+  <g id="avatar-small" data-name="Avatar / Size=Small, Type=Initials">
+    <circle cx="750" cy="326" r="18" fill="#D8EEF2"/><text x="750" y="331" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="800" fill="#006578">MS</text>
+  </g>
+  <g id="avatar-medium" data-name="Avatar / Size=Medium, Type=Initials">
+    <circle cx="813" cy="326" r="25" fill="#E0E7FF"/><text x="813" y="332" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="800" fill="#3730A3">PM</text>
+  </g>
+  <g id="avatar-large" data-name="Avatar / Size=Large, Type=Initials">
+    <circle cx="894" cy="326" r="34" fill="#FCE7F3"/><text x="894" y="333" text-anchor="middle" font-family="Inter,sans-serif" font-size="15" font-weight="800" fill="#9D174D">AC</text>
+    <circle cx="919" cy="351" r="12" fill="#0097B2" stroke="#FFFFFF" stroke-width="2"/><path d="M915 351h8m-4-4v8" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <g id="avatar-fallback" data-name="Avatar / Size=Large, Type=Fallback">
+    <circle cx="996" cy="326" r="34" fill="#F1F5F9"/>
+    <circle cx="996" cy="316" r="9" fill="none" stroke="#94A3B8" stroke-width="2"/><path d="M980 341c4-12 28-12 32 0" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <g id="atoms-specs" data-name="Atoms / Specs">
+    <rect x="1062" y="296" width="230" height="76" rx="15" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <text x="1080" y="320" class="eyebrow">ESPECIFICAÇÃO</text>
+    <text x="1080" y="343" class="small">Radius: 15–19 px</text><text x="1190" y="343" class="small">Gap: 8–12 px</text>
+    <text x="1080" y="361" class="meta">Foco: anel teal de 2 px + contraste AA</text>
+  </g>
+</svg>
