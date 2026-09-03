@@ -39,6 +39,9 @@ internal sealed record AgendamentoN8nResponse(
     [property: JsonPropertyName("title")]
     string Titulo,
 
+    [property: JsonPropertyName("tipo")]
+    string Tipo,
+
     [property: JsonPropertyName("inicio")]
     DateTimeOffset Inicio,
 

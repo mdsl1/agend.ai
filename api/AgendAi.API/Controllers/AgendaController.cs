@@ -40,6 +40,8 @@ public sealed class AgendaController : ControllerBase
         var eventos = result.Eventos.Select(evento => new EventoAgendaResponse(
             Id: evento.Id,
             Titulo: evento.Titulo,
+            Tipo: evento.Tipo,
+            AgendamentoUuid: evento.AgendamentoUuid,
             Inicio: evento.Inicio,
             Fim: evento.Fim,
             NomeCliente: evento.NomeCliente,

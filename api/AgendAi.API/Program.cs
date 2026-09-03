@@ -36,6 +36,7 @@ builder.Services.AddScoped<ConsultarAgendaHandler>();
 
 builder.Services.AddScoped<IAgendasReader, AgendasReader>();
 builder.Services.AddScoped<ListarAgendasHandler>();
+builder.Services.AddScoped<IAgendamentoAgendaReader, AgendamentoAgendaReader>();
 
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();

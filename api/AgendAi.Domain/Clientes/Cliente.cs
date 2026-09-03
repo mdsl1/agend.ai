@@ -9,6 +9,7 @@ public class Cliente
     public virtual string Nome { get; set; } = string.Empty;
     public virtual string? Cpf { get; set; }
     public virtual string? Email { get; set; }
+    public virtual string? IdTelegram { get; set; }
     public virtual string Telefone { get; set; } = string.Empty;
     public virtual DateOnly? DataNascimento { get; set; }
     public virtual string? Genero { get; set; }

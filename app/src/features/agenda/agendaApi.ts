@@ -1,9 +1,11 @@
 export type EventoAgendaApi = {
   id: string
   titulo: string
+  tipo: 'agendamento' | 'indisponibilidade'
+  agendamentoUuid: string | null
   inicio: string
   fim: string
-  nomeCliente: string
+  nomeCliente: string | null
   nomeProcedimento: string | null
   profissionalUuid: string
 }
@@ -50,9 +52,12 @@ function isEventoAgenda(value: unknown): value is EventoAgendaApi {
   return (
     typeof value.id === 'string' &&
     typeof value.titulo === 'string' &&
+    (value.tipo === 'agendamento' || value.tipo === 'indisponibilidade') &&
+    (typeof value.agendamentoUuid === 'string' ||
+      value.agendamentoUuid === null) &&
     typeof value.inicio === 'string' &&
     typeof value.fim === 'string' &&
-    typeof value.nomeCliente === 'string' &&
+    (typeof value.nomeCliente === 'string' || value.nomeCliente === null) &&
     (typeof value.nomeProcedimento === 'string' ||
       value.nomeProcedimento === null) &&
     typeof value.profissionalUuid === 'string'

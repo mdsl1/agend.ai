@@ -37,7 +37,7 @@ public sealed class N8nAgendaGateway : IAgendaExternaGateway
 
         try
         {
-                using var resHttp = await _httpClient.PostAsJsonAsync(
+            using var resHttp = await _httpClient.PostAsJsonAsync(
                 urlWebhookAgenda,
                 req,
                 cancellationToken
@@ -134,19 +134,45 @@ public sealed class N8nAgendaGateway : IAgendaExternaGateway
                 );
             }
 
-            var resNomeCliente = agendamento.ExtendedProps?.Cliente;
-            if(string.IsNullOrWhiteSpace(resNomeCliente))
+            if(string.IsNullOrWhiteSpace(agendamento.Titulo))
             {
-                resNomeCliente = agendamento.Titulo;
+                throw new IntegracaoExternaException(
+                    codigo: "n8n_titulo_evento_invalido",
+                    mensagem: "O n8n retornou um evento sem título."
+                );
+            }
+
+            var resTipoAgendamento = agendamento.Tipo;
+            if(resTipoAgendamento is not ("agendamento" or "indisponibilidade"))
+            {
+                throw new IntegracaoExternaException(
+                    codigo: "n8n_tipo_evento_invalido",
+                    mensagem: "O n8n retornou um evento com tipo inválido."
+                );
+            }
+
+            string? resNomeCliente = null;
+            string? resNomeProcedimento = null;
+
+            if(resTipoAgendamento == "agendamento")
+            {
+                resNomeCliente = agendamento.ExtendedProps?.Cliente;
+                if(string.IsNullOrWhiteSpace(resNomeCliente))
+                {
+                    resNomeCliente = agendamento.Titulo;
+                }
+
+                resNomeProcedimento = agendamento.ExtendedProps?.Procedimento;
             }
 
             return new EventoAgendaExterna(
                 IdExterno: agendamento.Id,
                 Titulo: agendamento.Titulo,
+                Tipo: resTipoAgendamento,
                 Inicio: agendamento.Inicio,
                 Fim: agendamento.Fim,
                 NomeCliente: resNomeCliente,
-                NomeProcedimento: agendamento.ExtendedProps?.Procedimento,
+                NomeProcedimento: resNomeProcedimento,
                 ProfissionalUuid: profissionalUuid
             );
         }).ToArray();

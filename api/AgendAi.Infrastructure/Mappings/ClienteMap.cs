@@ -15,6 +15,7 @@ public class ClienteMap : ClassMap<Cliente>
         Map(x => x.Nome).Column("nome").Length(150).Not.Nullable();
         Map(x => x.Cpf).Column("cpf").Length(14);
         Map(x => x.Email).Column("email").Length(150);
+        Map(x => x.IdTelegram).Column("id_telegram");
         Map(x => x.Telefone).Column("telefone").Length(20).Not.Nullable();
         Map(x => x.DataNascimento).Column("data_nascimento");
         Map(x => x.Genero).Column("genero").Length(20);

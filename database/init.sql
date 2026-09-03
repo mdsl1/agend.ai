@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS profissionais (
     id BIGSERIAL PRIMARY KEY,
     uuid UUID NOT NULL DEFAULT uuid_generate_v4() UNIQUE,
     id_clinica BIGINT NOT NULL REFERENCES clinicas(id) ON DELETE CASCADE,
-    id_profissional BIGINT NOT NULL REFERENCES profissionais(id) ON DELETE CASCADE,
+    id_usuario BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     id_especialidade BIGINT REFERENCES especialidades(id) ON DELETE SET NULL,
     registro_profissional VARCHAR(30), -- CRM, CRO, etc.
     id_google_calendar TEXT,
@@ -97,9 +97,9 @@ CREATE TABLE IF NOT EXISTS profissionais (
 CREATE TABLE IF NOT EXISTS profissional_procedimentos(
     id BIGSERIAL PRIMARY KEY,
     uuid UUID NOT NULL DEFAULT uuid_generate_v4() UNIQUE,
-    id_clinica BIGINT NOT NULL REFERENCES clinicas(id) ON DELETE CASCADE,
-    id_profissional BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    id_procedimento BIGINT NUT NULL REFERENCES procedimentos(id) ON DELETE CASCADE,
+    id_clinica BIGINT NOT NULL REFERENCES clinicas(id) ON DELETE RESTRICT,
+    id_profissional BIGINT NOT NULL REFERENCES profissionais(id) ON DELETE RESTRICT,
+    id_procedimento BIGINT NOT NULL REFERENCES procedimentos(id) ON DELETE RESTRICT,
     valor NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
     duracao_minutos INT NOT NULL DEFAULT 30,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -109,7 +109,13 @@ CREATE TABLE IF NOT EXISTS profissional_procedimentos(
         CHECK (duracao_minutos > 0),
     CONSTRAINT ck_profissional_procedimento_valor_nao_negativo
         CHECK (valor >= 0),
-    CONSTRAINT uq_profissional_procedimento_id UNIQUE (id_profissional, id_procedimento)
+    CONSTRAINT uq_profissional_procedimento_clinica_id UNIQUE (id_clinica, id),
+    CONSTRAINT fk_profissional_procedimento_profissional_clinica
+        FOREIGN KEY (id_clinica, id_profissional)
+        REFERENCES profissionais(id_clinica, id),
+    CONSTRAINT fk_profissional_procedimento_procedimento_clinica
+        FOREIGN KEY (id_clinica, id_procedimento)
+        REFERENCES procedimentos(id_clinica, id)
 );
 
 CREATE TABLE IF NOT EXISTS clientes (
@@ -119,7 +125,7 @@ CREATE TABLE IF NOT EXISTS clientes (
     nome VARCHAR(150) NOT NULL,
     cpf VARCHAR(14),
     email VARCHAR(150),
-    id_telegram TEXT NOT NULL,
+    id_telegram TEXT,
     telefone VARCHAR(20) NOT NULL,
     data_nascimento DATE,
     genero VARCHAR(20),
@@ -223,9 +229,19 @@ WHERE deleted_at IS NULL;
 CREATE INDEX idx_usuarios_login ON usuarios(email, id_clinica) 
 WHERE deleted_at IS NULL;
 
+CREATE INDEX idx_profissional_procedimentos_profissional
+ON profissional_procedimentos(id_clinica, id_profissional);
 
-INSERT INTO clinicas (nome, cnpj, tipo_clinica, webhook_calendar)
-VALUES ('Clínica Agend.AI Central', '12.345.678/0001-95', 'medica', 'https://n8n.mdsl1.com/webhook/8c6ff736-f915-4a03-9a44-5292a7f61fea')
+CREATE INDEX idx_profissional_procedimentos_procedimento
+ON profissional_procedimentos(id_clinica, id_procedimento);
+
+CREATE UNIQUE INDEX uq_profissional_procedimento_ativo
+ON profissional_procedimentos(id_profissional, id_procedimento)
+WHERE deleted_at IS NULL;
+
+
+INSERT INTO clinicas (nome, cnpj, tipo_clinica)
+VALUES ('Clínica Vitality', '12.345.678/0001-95', 'medica')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO horario_funcionamento (id_clinica, dia_semana, hora_inicio, hora_fim) VALUES

@@ -4,7 +4,7 @@
 
 Este arquivo é o guia operacional durável para agentes que trabalham no Agend.AI. Ele consolida a arquitetura, a stack, a configuração, a estrutura do repositório, o estado implementado, as pendências e as regras que não podem ser inferidas apenas pelo código.
 
-O inventário técnico foi revisado em **13 de agosto de 2026** e o estado das rotas de agenda no backend, da integração da agenda e da stack do frontend foi atualizado em **22 de agosto de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
+O inventário técnico foi revisado em **13 de agosto de 2026** e o estado das rotas de agenda no backend, da integração da agenda, do schema e da stack do frontend foi atualizado em **3 de setembro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
 
 O Agend.AI é um CRM para clínicas com agenda, cadastros e automação de agendamentos. A solução combina uma SPA React, uma API ASP.NET Core, PostgreSQL com NHibernate e workflows n8n integrados, no desenho de destino, ao Telegram e ao Google Calendar.
 
@@ -99,8 +99,8 @@ AgendAi.API -+-- também referencia AgendAi.Application
 ```
 
 - `AgendAi.Domain`: contém as entidades atuais e deve concentrar as regras centrais; não depende das outras camadas.
-- `AgendAi.Application`: contém os casos de uso de consulta de eventos e listagem de agendas, contratos internos, portas, modelos de integração, validação e erros tipados; depende de Domain.
-- `AgendAi.Infrastructure`: contém a configuração/mappings NHibernate, readers de agenda e o gateway HTTP do n8n; referencia Application para implementar suas portas e Domain para consultar as entidades persistidas.
+- `AgendAi.Application`: contém os casos de uso de consulta de eventos e listagem de agendas, contratos internos, portas, modelos de integração, correlação entre eventos externos e agendamentos persistidos, validação e erros tipados; depende de Domain.
+- `AgendAi.Infrastructure`: contém a configuração/mappings NHibernate, readers de agenda e agendamentos e o gateway HTTP do n8n; referencia Application para implementar suas portas e Domain para consultar as entidades persistidas.
 - `AgendAi.API`: contém os contratos HTTP, os controllers das duas consultas de agenda, a composição de dependências e o tratamento global de exceções com Problem Details; referencia Application e Infrastructure. Autenticação e autorização ainda não estão implementadas.
 
 Preserve essa direção de dependências. Regras de negócio não pertencem a controllers, componentes React ou workflows quando forem regras centrais do CRM.
@@ -117,6 +117,7 @@ Tabelas atuais:
 - `usuarios`
 - `procedimentos`
 - `profissionais`
+- `profissional_procedimentos`
 - `clientes`
 - `agendamentos`
 
@@ -124,8 +125,9 @@ Características implementadas no schema:
 
 - identificadores internos `BIGSERIAL` e UUIDs públicos;
 - instantes persistidos em `TIMESTAMPTZ`;
-- soft delete por `deleted_at` em `clinicas`, `especialidades`, `usuarios`, `procedimentos`, `clientes` e `agendamentos`;
+- soft delete por `deleted_at` em `clinicas`, `especialidades`, `usuarios`, `procedimentos`, `profissional_procedimentos`, `clientes` e `agendamentos`;
 - chaves estrangeiras compostas para impedir relacionamentos entre clínicas distintas;
+- associação entre profissionais e procedimentos com UUID público, valor, duração, soft delete e unicidade do par profissional/procedimento entre registros ativos;
 - `CHECK` para tipos, cargos, durações, valores, status e intervalos válidos;
 - telefone ativo de cliente deduplicado por clínica após normalização para dígitos;
 - IDs externos de profissional e agendamento no Google Calendar únicos quando presentes;
@@ -305,10 +307,12 @@ agend.ai/
 |   |   |   |   `-- ListarAgendasResult.cs
 |   |   |   |-- Models/
 |   |   |   |   |-- DadosAgendaDisponivel.cs
+|   |   |   |   |-- DadosAgendamentoAgenda.cs
 |   |   |   |   |-- DadosAgendaProfissional.cs
 |   |   |   |   `-- EventoAgendaExterna.cs
 |   |   |   `-- Ports/
 |   |   |       |-- IAgendaExternaGateway.cs
+|   |   |       |-- IAgendamentoAgendaReader.cs
 |   |   |       |-- IAgendasReader.cs
 |   |   |       `-- IProfissionalAgendaReader.cs
 |   |   `-- Common/
@@ -330,13 +334,15 @@ agend.ai/
 |   |   |-- Profissionais/
 |   |   |   |-- Especialidade.cs
 |   |   |   |-- Procedimento.cs
-|   |   |   `-- Profissional.cs
+|   |   |   |-- Profissional.cs
+|   |   |   `-- ProfissionalProcedimento.cs
 |   |   `-- Usuarios/
 |   |       `-- Usuario.cs
 |   `-- AgendAi.Infrastructure/
 |       |-- AgendAi.Infrastructure.csproj
 |       |-- NHibernateHelper.cs
 |       |-- Agenda/
+|       |   |-- AgendamentoAgendaReader.cs
 |       |   |-- AgendasReader.cs
 |       |   `-- ProfissionalAgendaReader.cs
 |       |-- Integracoes/
@@ -351,6 +357,7 @@ agend.ai/
 |           |-- HorarioFuncionamentoMap.cs
 |           |-- ProcedimentoMap.cs
 |           |-- ProfissionalMap.cs
+|           |-- ProfissionalProcedimentoMap.cs
 |           `-- UsuarioMap.cs
 |-- app/
 |   |-- .dockerignore
@@ -407,6 +414,7 @@ agend.ai/
 - Localização `pt-BR` e fuso `America/Sao_Paulo`.
 - Tokens visuais teal e componentes acessíveis com foco visível e rótulos.
 - Eventos carregados por período via `GET /api/agenda/{profissionalUuid}`, com adaptação ao contrato do FullCalendar.
+- O contrato de eventos distingue `agendamento` de `indisponibilidade`, expõe o UUID relacional apenas quando houver agendamento correspondente e aceita cliente/procedimento ausentes em indisponibilidades.
 - Requisições canceláveis e estados visuais de carregamento, erro, tentativa novamente e período vazio.
 - Proxy `/api` do Vite para evitar CORS no desenvolvimento local; o destino conteinerizado é configurado por `API_PROXY_TARGET`.
 - Botão “Novo agendamento” visível, porém intencionalmente desabilitado.
@@ -416,15 +424,15 @@ agend.ai/
 - Solução .NET dividida em Domain, Application, Infrastructure e API.
 - Endpoint `GET /api/agenda/{profissionalUuid}` para consultar um período da agenda por profissional.
 - Endpoint `GET /api/agendas?clinicaUuid={clinicaUuid}` para listar as agendas ativas configuradas para uma clínica.
-- Consulta de agenda com contratos HTTP, caso de uso, leitura NHibernate do profissional e gateway HTTP para o n8n com timeout e erros tipados.
-- Oito entidades de domínio e oito mappings FluentNHibernate.
+- Consulta de agenda com contratos HTTP, caso de uso, leitura NHibernate do profissional, correlação em lote do ID externo com o UUID do agendamento e gateway HTTP para o n8n com timeout e erros tipados.
+- Nove entidades de domínio e nove mappings FluentNHibernate.
 - `ISessionFactory` NHibernate configurada para PostgreSQL e sessão por escopo HTTP.
-- Schema de criação integral com oito tabelas, seeds básicos, constraints e índices.
+- Schema de criação integral com nove tabelas, seeds básicos, constraints e índices.
 - Campos de integração `profissionais.id_google_calendar`, `profissionais.prefixo` e `agendamentos.id_event_google_calendar` sincronizados entre schema, domínio e mappings.
 - Status inicial de agendamento `pendente_integracao`, com estados de sucesso, falha, conclusão, cancelamento e falta.
 - Integridade multi-clínica no banco por FKs compostas.
 - Deduplicação concorrente de telefone ativo e bloqueio de sobreposição da agenda no banco.
-- Soft delete por `deleted_at` nas seis tabelas que já possuem o campo; a cobertura de `profissionais`/`horario_funcionamento` e a remoção de caminhos de exclusão física permanecem pendentes.
+- Soft delete por `deleted_at` nas sete tabelas que já possuem o campo; a cobertura de `profissionais`/`horario_funcionamento` e a remoção de caminhos de exclusão física permanecem pendentes.
 
 ### Rotas HTTP implementadas
 
@@ -438,9 +446,10 @@ Fluxo executado:
 2. O handler valida UUID, presença e ordem do período e limita a consulta a no máximo 45 dias.
 3. `ProfissionalAgendaReader` consulta o profissional via NHibernate, excluindo clínica ou usuário com `deleted_at` preenchido, e obtém internamente o ID do Google Calendar e o webhook da clínica.
 4. `N8nAgendaGateway` envia `consultar_agenda` ao webhook com timeout de 10 segundos e o segredo no header `X-AgendAi-Api-Key`.
-5. A resposta externa é validada e normalizada antes de ser devolvida como `ConsultarAgendaResponse`.
+5. A resposta externa é validada e normalizada; `AgendamentoAgendaReader` consulta em lote os IDs externos existentes no PostgreSQL para obter os UUIDs relacionais.
+6. O handler combina os eventos externos com os agendamentos encontrados antes de devolver `ConsultarAgendaResponse`.
 
-Resposta de sucesso: HTTP `200` com `eventos`, coleção que pode ser vazia. Cada item expõe `id`, `titulo`, `inicio`, `fim`, `nomeCliente`, `nomeProcedimento` e `profissionalUuid`; IDs de calendário, URL de webhook e credenciais não fazem parte do contrato público.
+Resposta de sucesso: HTTP `200` com `eventos`, coleção que pode ser vazia. Cada item expõe `id`, `titulo`, `tipo`, `agendamentoUuid`, `inicio`, `fim`, `nomeCliente`, `nomeProcedimento` e `profissionalUuid`; `agendamentoUuid` é nulo quando o evento não possui registro relacional, enquanto `nomeCliente` e `nomeProcedimento` podem ser nulos em indisponibilidades. IDs de calendário, URL de webhook e credenciais não fazem parte do contrato público.
 
 Falhas tratadas: HTTP `400` para entrada inválida, `404` para profissional não encontrado, `409` para agenda ou webhook não configurado, `502` para falhas/contratos inválidos do n8n e `500` para erro inesperado.
 
@@ -505,7 +514,6 @@ Não trate os itens abaixo como implementados apenas porque constam na documenta
 - `launchSettings.json` abre `swagger`, mas a API não registra o middleware Swagger.
 - Não há health checks nem espera de prontidão do PostgreSQL.
 - Imagens base usam patches flutuantes e n8n usa `latest`; avaliar fixação antes de produção.
-- Remover de seeds qualquer URL real/privada de webhook e usar configuração ou placeholder local seguro.
 - Definir se o relacionamento profissional-especialidade continuará 1:N ou será migrado para N:N.
 
 ## Invariantes arquiteturais e de negócio

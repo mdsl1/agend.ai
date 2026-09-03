@@ -7,14 +7,17 @@ public sealed class ConsultarAgendaHandler
     private const int MaximoDiasConsulta = 45;
     private readonly IProfissionalAgendaReader _profissionalAgendaReader;
     private readonly IAgendaExternaGateway _agendaExternaGateway;
+    private readonly IAgendamentoAgendaReader _agendamentoAgendaReader;
 
     public ConsultarAgendaHandler (
         IProfissionalAgendaReader profissionalAgendaReader,
-        IAgendaExternaGateway agendaExternaGateway
+        IAgendaExternaGateway agendaExternaGateway,
+        IAgendamentoAgendaReader agendamentoAgendaReader
     )
     {
         _profissionalAgendaReader = profissionalAgendaReader;
         _agendaExternaGateway = agendaExternaGateway;
+        _agendamentoAgendaReader = agendamentoAgendaReader;
     }
 
     public async Task<ConsultarAgendaResult> HandleAsync(
@@ -75,9 +78,31 @@ public sealed class ConsultarAgendaHandler
             cancellationToken: cancellationToken
         );
 
+        var idsEventosExternos = eventosExternos
+            .Where(evento => evento.Tipo == "agendamento")
+            .Select(evento => evento.IdExterno)
+            .Distinct()
+            .ToArray();
+
+        var dadosAgendamentos = await _agendamentoAgendaReader.ListarPorIdsEventosExternosAsync(
+            query.ProfissionalUuid,
+            idsEventosExternos,
+            cancellationToken
+        );
+
+        var agendamentoUuidPorEvento = dadosAgendamentos.ToDictionary(
+            dado => dado.IdEventoExterno,
+            dado => dado.AgendamentoUuid
+        );
+
         var eventos = eventosExternos.Select(evento => new EventoAgendaResult(
             Id: evento.IdExterno,
             Titulo: evento.Titulo,
+            Tipo: evento.Tipo,
+            AgendamentoUuid: evento.Tipo == "agendamento" && agendamentoUuidPorEvento.TryGetValue(
+                evento.IdExterno,
+                out var uuidEncontrado
+            ) ? uuidEncontrado : null,
             Inicio: evento.Inicio,
             Fim: evento.Fim,
             NomeCliente: evento.NomeCliente,
