@@ -47,6 +47,7 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
       - API_PROXY_TARGET=http://api:5000
+      - VITE_POC_CLINIC_UUID=${VITE_POC_CLINIC_UUID}
     networks:
       - app_net
 

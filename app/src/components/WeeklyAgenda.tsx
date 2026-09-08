@@ -41,7 +41,11 @@ type AppointmentDetails = {
 type CalendarView = 'timeGridWeek' | 'timeGridWorkWeek' | 'dayGridMonth'
 
 const MIN_CALENDAR_HEIGHT = 608
-const POC_CLINIC_UUID = '90d45ab0-d7d9-46ed-88b6-3529a92a15ff'
+const POC_CLINIC_UUID = import.meta.env.VITE_POC_CLINIC_UUID;
+
+if (!POC_CLINIC_UUID) {
+  throw new Error('A variável VITE_POC_CLINIC_UUID não foi configurada.');
+}
 
 const calendarViews: Array<{
   id: CalendarView
@@ -120,7 +124,7 @@ function toFullCalendarEvent(event: EventoAgendaApi): EventInput {
     end: event.fim,
     extendedProps: {
       patient: event.nomeCliente || event.titulo,
-      procedure: event.nomeProcedimento ?? 'Procedimento não informado',
+      procedure: event.titulo === 'Indisponível' ? 'Horário indisponível' : event.nomeProcedimento ?? 'Procedimento não informado',
       doctorUuid: event.profissionalUuid,
     } satisfies AppointmentDetails,
   }
