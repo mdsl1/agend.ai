@@ -1,12 +1,17 @@
+using AgendAi.Application.Agenda.Services;
 using AgendAi.Application.Agenda.Ports;
+using AgendAi.Infrastructure.Integracoes.N8n;
+using AgendAi.Infrastructure.Agenda;
 using AgendAi.Application.Agenda.ConsultarAgenda;
 using AgendAi.Application.Agenda.ListarAgendas;
 using AgendAi.Application.Agenda.ConsultarDisponibilidade;
 using AgendAi.Application.Agenda.CriarAgendamento;
-using AgendAi.Application.Agenda.Services;
+
+using AgendAi.Application.Profissionais.Ports;
+using AgendAi.Infrastructure.Profissionais;
+using AgendAi.Application.Profissionais.ListarProfissionais;
+
 using AgendAi.Infrastructure;
-using AgendAi.Infrastructure.Agenda;
-using AgendAi.Infrastructure.Integracoes.N8n;
 using AgendAi.API.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +45,9 @@ builder.Services.AddScoped<ConsultarAgendaHandler>();
 builder.Services.AddScoped<IAgendasReader, AgendasReader>();
 builder.Services.AddScoped<ListarAgendasHandler>();
 builder.Services.AddScoped<IAgendamentoAgendaReader, AgendamentoAgendaReader>();
+
+builder.Services.AddScoped<IProfissionaisReader, ProfissionaisReader>();
+builder.Services.AddScoped<ListarProfissionaisHandler>();
 
 builder.Services.AddScoped<IDisponibilidadeReader, DisponibilidadeReader>();
 builder.Services.AddHttpClient<IDisponibilidadeExternaGateway, N8nDisponibilidadeGateway>(
