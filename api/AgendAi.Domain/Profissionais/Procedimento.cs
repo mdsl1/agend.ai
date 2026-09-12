@@ -9,7 +9,7 @@ public class Procedimento
     public virtual string Nome { get; set; } = string.Empty;
     public virtual int DuracaoEstimadaMinutos { get; set; } = 30;
     public virtual decimal ValorBase { get; set; }
-    public virtual DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public virtual DateTimeOffset? UpdatedAt { get; set; }
-    public virtual DateTimeOffset? DeletedAt { get; set; }
+    public virtual DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public virtual DateTime? UpdatedAt { get; set; }
+    public virtual DateTime? DeletedAt { get; set; }
 }

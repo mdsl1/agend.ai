@@ -14,7 +14,7 @@ public class Cliente
     public virtual DateOnly? DataNascimento { get; set; }
     public virtual string? Genero { get; set; }
     public virtual string? ObservacoesAnamnese { get; set; }
-    public virtual DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public virtual DateTimeOffset? UpdatedAt { get; set; }
-    public virtual DateTimeOffset? DeletedAt { get; set; }
+    public virtual DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public virtual DateTime? UpdatedAt { get; set; }
+    public virtual DateTime? DeletedAt { get; set; }
 }

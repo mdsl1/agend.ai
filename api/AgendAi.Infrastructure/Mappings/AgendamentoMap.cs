@@ -11,6 +11,7 @@ public class AgendamentoMap : ClassMap<Agendamento>
         Table("agendamentos");
         Id(x => x.Id).Column("id").GeneratedBy.Native();
         Map(x => x.Uuid).Column("uuid").Not.Nullable().Unique();
+        Map(x => x.ChaveIdempotencia).Column("chave_idempotencia").Length(200).Not.Nullable();
         References(x => x.Clinica).Column("id_clinica").Not.Nullable();
         References(x => x.Cliente).Column("id_cliente").Not.Nullable();
         References(x => x.Profissional).Column("id_profissional").Not.Nullable();

@@ -10,7 +10,7 @@ public class ProfissionalProcedimento
     public virtual Procedimento Procedimento { get; set; } = null!;
     public virtual decimal Valor { get; set; }
     public virtual int DuracaoMinutos { get; set; }
-    public virtual DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public virtual DateTimeOffset? UpdatedAt { get; set ;}
-    public virtual DateTimeOffset? DeletedAt { get; set; }
+    public virtual DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public virtual DateTime? UpdatedAt { get; set; }
+    public virtual DateTime? DeletedAt { get; set; }
 }

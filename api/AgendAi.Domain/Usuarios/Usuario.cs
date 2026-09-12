@@ -11,7 +11,7 @@ public class Usuario
     public virtual string SenhaHash { get; set; } = string.Empty;
     public virtual string Cargo { get; set; } = string.Empty;
     public virtual bool IsAdmin { get; set; }
-    public virtual DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public virtual DateTimeOffset? UpdatedAt { get; set; }
-    public virtual DateTimeOffset? DeletedAt { get; set; }
+    public virtual DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public virtual DateTime? UpdatedAt { get; set; }
+    public virtual DateTime? DeletedAt { get; set; }
 }

@@ -2,6 +2,8 @@ using AgendAi.Application.Agenda.Ports;
 using AgendAi.Application.Agenda.ConsultarAgenda;
 using AgendAi.Application.Agenda.ListarAgendas;
 using AgendAi.Application.Agenda.ConsultarDisponibilidade;
+using AgendAi.Application.Agenda.CriarAgendamento;
+using AgendAi.Application.Agenda.Services;
 using AgendAi.Infrastructure;
 using AgendAi.Infrastructure.Agenda;
 using AgendAi.Infrastructure.Integracoes.N8n;
@@ -22,7 +24,7 @@ if (string.IsNullOrWhiteSpace(n8nApiKey))
 
 builder.Services.AddSingleton(_ => NHibernateHelper.CreateSessionFactory(connectionString));
 builder.Services.AddScoped(sp => sp.GetRequiredService<NHibernate.ISessionFactory>().OpenSession());
-
+builder.Services.AddScoped<VerificarDisponibilidadeService>();
 
 builder.Services.AddScoped< IProfissionalAgendaReader, ProfissionalAgendaReader >();
 builder.Services.AddHttpClient<
@@ -48,6 +50,24 @@ builder.Services.AddHttpClient<IDisponibilidadeExternaGateway, N8nDisponibilidad
     }
 );
 builder.Services.AddScoped<ConsultarDisponibilidadeHandler>();
+
+builder.Services.AddScoped<ICriacaoAgendamentoReader, CriacaoAgendamentoReader>();
+builder.Services.AddScoped<IAgendamentoWriter, AgendamentoWriter>();
+builder.Services.AddHttpClient<
+    ICriacaoAgendamentoExternoGateway,
+    N8nCriacaoAgendamentoGateway
+>(
+    httpClient =>
+    {
+        httpClient.Timeout = TimeSpan.FromSeconds(10);
+
+        httpClient.DefaultRequestHeaders.Add(
+            "X-AgendAi-Api-Key",
+            n8nApiKey
+        );
+    }
+);
+builder.Services.AddScoped<CriarAgendamentoHandler>();
 
 
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();

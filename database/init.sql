@@ -144,6 +144,7 @@ CREATE TABLE IF NOT EXISTS clientes (
 CREATE TABLE IF NOT EXISTS agendamentos (
     id BIGSERIAL PRIMARY KEY,
     uuid UUID NOT NULL DEFAULT uuid_generate_v4() UNIQUE,
+    chave_idempotencia VARCHAR(200) NOT NULL,
     id_clinica BIGINT NOT NULL REFERENCES clinicas(id) ON DELETE CASCADE,
     id_cliente BIGINT NOT NULL REFERENCES clientes(id) ON DELETE RESTRICT,
     id_profissional BIGINT NOT NULL REFERENCES profissionais(id) ON DELETE RESTRICT,
@@ -160,6 +161,8 @@ CREATE TABLE IF NOT EXISTS agendamentos (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ,
+    CONSTRAINT uq_agendamento_clinica_chave_idempotencia 
+        UNIQUE (id_clinica, chave_idempotencia),
     CONSTRAINT ck_agendamento_periodo_valido
         CHECK (timedate_inicio < timedate_fim),
     CONSTRAINT ck_agendamento_valor_nao_negativo

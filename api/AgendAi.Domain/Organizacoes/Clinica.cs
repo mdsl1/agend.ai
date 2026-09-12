@@ -12,8 +12,8 @@ public class Clinica
     public virtual string? Endereco { get; set; }
     public virtual string TipoClinica { get; set; } = "medica";
     public virtual string? WebhookCalendar { get; set; }
-    public virtual DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public virtual DateTimeOffset? UpdatedAt { get; set; }
-    public virtual DateTimeOffset? DeletedAt { get; set; }
+    public virtual DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public virtual DateTime? UpdatedAt { get; set; }
+    public virtual DateTime? DeletedAt { get; set; }
     public virtual IList<HorarioFuncionamento> HorariosFuncionamento { get; set; } = new List<HorarioFuncionamento>();
 }
