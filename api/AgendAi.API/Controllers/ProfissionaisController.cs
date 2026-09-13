@@ -25,7 +25,7 @@ public sealed class ProfissionaisController : ControllerBase
         StatusCodes.Status400BadRequest
     )]
     public async Task<ActionResult<ListarProfissionaisResponse>> ListarAsync(
-        [FromQuery] ListarProfissionaisQuery req,
+        [FromQuery] ListarProfissionaisRequest req,
         CancellationToken cancellationToken
     )
     {

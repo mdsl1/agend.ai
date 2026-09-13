@@ -52,7 +52,8 @@ public class Agendamento
             throw new ArgumentException("O fim do agendamento deve ser posterior ao início.");
         }
 
-        return new Agendamento{
+        return new Agendamento
+        {
             Uuid = Guid.NewGuid(),
             ChaveIdempotencia = chaveIdempotencia.Trim(),
             Clinica = profissionalProcedimento.Clinica,

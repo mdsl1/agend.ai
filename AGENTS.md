@@ -4,17 +4,17 @@
 
 Este arquivo é o guia operacional durável para agentes que trabalham no Agend.AI. Ele consolida a arquitetura, a stack, a configuração, a estrutura do repositório, o estado implementado, as pendências e as regras que não podem ser inferidas apenas pelo código.
 
-O inventário técnico foi revisado em **13 de agosto de 2026** e o estado das rotas de agenda, disponibilidade e criação de agendamentos no backend, das integrações n8n, do schema, da stack e dos consumidores foi atualizado em **11 de setembro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
+O inventário técnico foi revisado em **13 de agosto de 2026** e o estado das rotas de agenda, profissionais agendáveis, resolução de clientes, disponibilidade e criação de agendamentos no backend, das integrações n8n, do schema, da stack e dos consumidores foi atualizado em **13 de setembro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
 
 O Agend.AI é um CRM para clínicas com agenda, cadastros e automação de agendamentos. A solução combina uma SPA React, uma API ASP.NET Core, PostgreSQL com NHibernate e workflows n8n integrados, no desenho de destino, ao Telegram e ao Google Calendar.
 
 ## Fontes de verdade
 
-A documentação de produto está atualmente fora deste repositório:
+A documentação de produto permanece majoritariamente fora deste repositório:
 
 `C:\Users\markn\mdsl1\Projetos Pessoais\Agend.AI`
 
-<!-- Se futuramente existir `docs/` neste repositório, prefira a cópia versionada em `docs/`. Se nenhuma das duas localizações estiver disponível, informe a ausência antes de tomar uma decisão de produto. -->
+A documentação de contratos HTTP já possui uma cópia versionada em `docs/Rotas da API RESTful — MVP Acadêmico Web, Mobile e Chatbot.md`, que prevalece sobre a cópia externa. Se nenhuma fonte pertinente estiver disponível, informe a ausência antes de tomar uma decisão de produto.
 
 Leia somente os documentos pertinentes à tarefa:
 
@@ -99,9 +99,9 @@ AgendAi.API -+-- também referencia AgendAi.Application
 ```
 
 - `AgendAi.Domain`: contém as entidades atuais e deve concentrar as regras centrais; não depende das outras camadas.
-- `AgendAi.Application`: contém os casos de uso de consulta de eventos, listagem de agendas, verificação de disponibilidade e criação de agendamento, contratos internos, portas, modelos de integração, correlação entre eventos externos e agendamentos persistidos, validação e erros tipados; depende de Domain.
-- `AgendAi.Infrastructure`: contém a configuração/mappings NHibernate, readers e writers de agenda, agendamentos e disponibilidade e os gateways HTTP do n8n; referencia Application para implementar suas portas e Domain para consultar e persistir as entidades.
-- `AgendAi.API`: contém os contratos HTTP, os controllers dos quatro endpoints implementados, a composição de dependências e o tratamento global de exceções com Problem Details; referencia Application e Infrastructure. Autenticação e autorização ainda não estão implementadas.
+- `AgendAi.Application`: contém os casos de uso de consulta de eventos, listagem de profissionais agendáveis, resolução de clientes, verificação de disponibilidade e criação de agendamento, contratos internos, portas, modelos de integração, correlação entre eventos externos e agendamentos persistidos, validação e erros tipados; depende de Domain.
+- `AgendAi.Infrastructure`: contém a configuração/mappings NHibernate, readers e writers de agenda, profissionais, clientes, agendamentos e disponibilidade e os gateways HTTP do n8n; referencia Application para implementar suas portas e Domain para consultar e persistir as entidades.
+- `AgendAi.API`: contém os contratos HTTP, os controllers dos cinco endpoints implementados, a composição de dependências e o tratamento global de exceções com Problem Details; referencia Application e Infrastructure. Autenticação e autorização ainda não estão implementadas.
 
 Preserve essa direção de dependências. Regras de negócio não pertencem a controllers, componentes React ou workflows quando forem regras centrais do CRM.
 
@@ -130,6 +130,7 @@ Características implementadas no schema:
 - associação entre profissionais e procedimentos com UUID público, valor, duração, soft delete e unicidade do par profissional/procedimento entre registros ativos;
 - `CHECK` para tipos, cargos, durações, valores, status e intervalos válidos;
 - telefone ativo de cliente deduplicado por clínica após normalização para dígitos;
+- usuário do Telegram único por clínica entre clientes ativos quando informado;
 - IDs externos de profissional e agendamento no Google Calendar únicos quando presentes;
 - exclusão GiST que impede sobreposição de agendamentos ativos do mesmo profissional;
 - índices para a grade de agenda, busca de clientes e login;
@@ -182,7 +183,7 @@ Todos os projetos usam .NET 8 (`net8.0`), nullable reference types e implicit us
 | `AgendAi.Infrastructure` | FluentNHibernate 3.4.1; NHibernate 5.7.0; Npgsql 9.0.5 |
 | `AgendAi.API` | AutoMapper 16.2.0; FluentValidation DI 12.1.1; Microsoft.AspNetCore.OpenApi 8.0.29; Swashbuckle.AspNetCore 6.6.2 |
 
-A API constrói um `ISessionFactory` singleton e abre uma `ISession` por escopo HTTP. Existem controllers concretos para consultar a agenda de um profissional por período, listar as agendas ativas de uma clínica, verificar um horário solicitado com alternativas próximas e criar um agendamento. O Npgsql está deliberadamente fixado na versão 9.0.5 porque a mudança de leitura padrão de colunas PostgreSQL `TIME` no Npgsql 10 é incompatível com o tipo usado pelo mapping NHibernate atual; reavalie essa fixação ao atualizar o NHibernate ou o mapping. Instantes persistidos em `TIMESTAMPTZ` são representados nas entidades por `DateTime` UTC, enquanto contratos HTTP e integrações externas usam `DateTimeOffset` para exigir offset explícito nas fronteiras. Os pacotes OpenAPI/Swagger estão referenciados, porém o middleware Swagger não está configurado.
+A API constrói um `ISessionFactory` singleton e abre uma `ISession` por escopo HTTP. Existem controllers concretos para consultar a agenda de um profissional por período, listar profissionais agendáveis de uma clínica, verificar um horário solicitado com alternativas próximas, resolver a identidade de um cliente e criar um agendamento. O Npgsql está deliberadamente fixado na versão 9.0.5 porque a mudança de leitura padrão de colunas PostgreSQL `TIME` no Npgsql 10 é incompatível com o tipo usado pelo mapping NHibernate atual; reavalie essa fixação ao atualizar o NHibernate ou o mapping. Instantes persistidos em `TIMESTAMPTZ` são representados nas entidades por `DateTime` UTC, enquanto contratos HTTP e integrações externas usam `DateTimeOffset` para exigir offset explícito nas fronteiras. Os pacotes OpenAPI/Swagger estão referenciados, porém o middleware Swagger não está configurado.
 
 ### Banco de dados
 
@@ -256,7 +257,7 @@ Observações de configuração:
 
 ## Estrutura exata do projeto
 
-Árvore lógica revisada em 07/09/2026. Foram omitidos somente artefatos gerados ou internos: `.git/`, `node_modules/`, `dist/`, `bin/`, `obj/`, `.tmp-nhibernate-audit/` e o conteúdo do `.env`.
+Árvore lógica revisada em 13/09/2026. Foram omitidos somente artefatos gerados ou internos: `.git/`, `node_modules/`, `dist/`, `bin/`, `obj/`, `.tmp-nhibernate-audit/` e o conteúdo do `.env`.
 
 Diretórios marcados como vazios existem no workspace, mas, por estarem vazios, não são rastreados pelo Git e não aparecerão em um clone até receberem arquivos.
 
@@ -282,21 +283,27 @@ agend.ai/
 |   |   |   |   |-- CriarAgendamentoRequest.cs
 |   |   |   |   `-- CriarAgendamentoResponse.cs
 |   |   |   |-- Agenda/
-|   |   |   |   |-- AgendaDisponivelResponse.cs
 |   |   |   |   |-- ConsultarAgendaRequest.cs
 |   |   |   |   |-- ConsultarAgendaResponse.cs
-|   |   |   |   |-- EventoAgendaResponse.cs
-|   |   |   |   |-- ListarAgendasRequest.cs
-|   |   |   |   `-- ListarAgendasResponse.cs
-|   |   |   `-- Disponibilidade/
-|   |   |       |-- ConsultarDisponibilidadeRequest.cs
-|   |   |       |-- ConsultarDisponibilidadeResponse.cs
-|   |   |       `-- HorarioDisponivelResponse.cs
+|   |   |   |   `-- EventoAgendaResponse.cs
+|   |   |   |-- Clientes/
+|   |   |   |   |-- ResolverClienteRequest.cs
+|   |   |   |   `-- ResolverClienteResponse.cs
+|   |   |   |-- Disponibilidade/
+|   |   |   |   |-- ConsultarDisponibilidadeRequest.cs
+|   |   |   |   |-- ConsultarDisponibilidadeResponse.cs
+|   |   |   |   `-- HorarioDisponivelResponse.cs
+|   |   |   `-- Profissionais/
+|   |   |       |-- EspecialidadeProfissionalResponse.cs
+|   |   |       |-- ListarProfissionaisRequest.cs
+|   |   |       |-- ListarProfissionaisResponse.cs
+|   |   |       `-- ProfissionalAgendavelResponse.cs
 |   |   |-- Controllers/
 |   |   |   |-- AgendaController.cs
 |   |   |   |-- AgendamentosController.cs
-|   |   |   |-- AgendasController.cs
-|   |   |   `-- DisponibilidadeController.cs
+|   |   |   |-- ClientesController.cs
+|   |   |   |-- DisponibilidadeController.cs
+|   |   |   `-- ProfissionaisController.cs
 |   |   |-- Infrastructure/
 |   |   |   `-- ApiExceptionHandler.cs
 |   |   `-- Properties/
@@ -318,14 +325,8 @@ agend.ai/
 |   |   |   |   |-- CriarAgendamentoCommand.cs
 |   |   |   |   |-- CriarAgendamentoHandler.cs
 |   |   |   |   `-- CriarAgendamentoResult.cs
-|   |   |   |-- ListarAgendas/
-|   |   |   |   |-- AgendaDisponivelResult.cs
-|   |   |   |   |-- ListarAgendasHandler.cs
-|   |   |   |   |-- ListarAgendasQuery.cs
-|   |   |   |   `-- ListarAgendasResult.cs
 |   |   |   |-- Models/
 |   |   |   |   |-- CriacaoAgendamentoExterno.cs
-|   |   |   |   |-- DadosAgendaDisponivel.cs
 |   |   |   |   |-- DadosAgendamentoAgenda.cs
 |   |   |   |   |-- DadosAgendaProfissional.cs
 |   |   |   |   |-- DadosCriacaoAgendamento.cs
@@ -340,7 +341,6 @@ agend.ai/
 |   |   |   |   |-- IAgendaExternaGateway.cs
 |   |   |   |   |-- IAgendamentoAgendaReader.cs
 |   |   |   |   |-- IAgendamentoWriter.cs
-|   |   |   |   |-- IAgendasReader.cs
 |   |   |   |   |-- ICriacaoAgendamentoExternoGateway.cs
 |   |   |   |   |-- ICriacaoAgendamentoReader.cs
 |   |   |   |   |-- IDisponibilidadeExternaGateway.cs
@@ -348,13 +348,34 @@ agend.ai/
 |   |   |   |   `-- IProfissionalAgendaReader.cs
 |   |   |   `-- Services/
 |   |   |       `-- VerificarDisponibilidadeService.cs
-|   |   `-- Common/
-|   |       `-- Exceptions/
-|   |           |-- AplicacaoException.cs
-|   |           |-- ConflitoException.cs
-|   |           |-- IntegracaoExternaException.cs
-|   |           |-- RecursoNaoEncontradoException.cs
-|   |           `-- ValidacaoException.cs
+|   |   |-- Clientes/
+|   |   |   |-- Models/
+|   |   |   |   `-- DadosResolucaoCliente.cs
+|   |   |   |-- Ports/
+|   |   |   |   |-- IClienteWriter.cs
+|   |   |   |   `-- IResolucaoClienteReader.cs
+|   |   |   `-- ResolverCliente/
+|   |   |       |-- ResolverClienteCommand.cs
+|   |   |       |-- ResolverClienteHandler.cs
+|   |   |       `-- ResolverClienteResult.cs
+|   |   |-- Common/
+|   |   |   `-- Exceptions/
+|   |   |       |-- AplicacaoException.cs
+|   |   |       |-- ConflitoException.cs
+|   |   |       |-- IntegracaoExternaException.cs
+|   |   |       |-- RecursoNaoEncontradoException.cs
+|   |   |       `-- ValidacaoException.cs
+|   |   `-- Profissionais/
+|   |       |-- ListarProfissionais/
+|   |       |   |-- EspecialidadeProfissionalResult.cs
+|   |       |   |-- ListarProfissionaisHandler.cs
+|   |       |   |-- ListarProfissionaisQuery.cs
+|   |       |   |-- ListarProfissionaisResult.cs
+|   |       |   `-- ProfissionalAgendavelResult.cs
+|   |       |-- Models/
+|   |       |   `-- DadosProfissionalAgendavel.cs
+|   |       `-- Ports/
+|   |           `-- IProfissionaisReader.cs
 |   |-- AgendAi.Domain/
 |   |   |-- AgendAi.Domain.csproj
 |   |   |-- Agendamentos/
@@ -377,10 +398,12 @@ agend.ai/
 |       |-- Agenda/
 |       |   |-- AgendamentoAgendaReader.cs
 |       |   |-- AgendamentoWriter.cs
-|       |   |-- AgendasReader.cs
 |       |   |-- CriacaoAgendamentoReader.cs
 |       |   |-- DisponibilidadeReader.cs
 |       |   `-- ProfissionalAgendaReader.cs
+|       |-- Clientes/
+|       |   |-- ClienteWriter.cs
+|       |   `-- ResolucaoClienteReader.cs
 |       |-- Integracoes/
 |       |   `-- N8n/
 |       |       |-- N8nAgendaContracts.cs
@@ -389,6 +412,8 @@ agend.ai/
 |       |       |-- N8nCriacaoAgendamentoGateway.cs
 |       |       |-- N8nDisponibilidadeContracts.cs
 |       |       `-- N8nDisponibilidadeGateway.cs
+|       |-- Profissionais/
+|       |   `-- ProfissionaisReader.cs
 |       `-- Mappings/
 |           |-- AgendamentoMap.cs
 |           |-- ClienteMap.cs
@@ -428,6 +453,8 @@ agend.ai/
 |               `-- agendaApi.ts
 |-- database/
 |   `-- init.sql
+|-- docs/
+|   `-- Rotas da API RESTful — MVP Acadêmico Web, Mobile e Chatbot.md
 `-- n8n/
     |-- scripts/                          # vazio
     `-- workflows/                        # vazio
@@ -449,7 +476,7 @@ agend.ai/
 - Cabeçalho e sidebar recolhível.
 - Tela de agenda baseada em FullCalendar.
 - Visões de semana, semana útil e mês.
-- Seletor de profissionais carregado via `GET /api/agendas?clinicaUuid={clinicaUuid}`, com UUID da clínica da PoC temporariamente fixo no frontend.
+- Seletor de profissionais carregado via `GET /api/profissionais?clinicaUuid={clinicaUuid}`, sem o filtro opcional de especialidade nesta tela e com UUID da clínica da PoC temporariamente fixo no frontend.
 - Navegação por período, data selecionada e botão “Hoje”.
 - Localização `pt-BR` e fuso `America/Sao_Paulo`.
 - Tokens visuais teal e componentes acessíveis com foco visível e rótulos.
@@ -464,9 +491,12 @@ agend.ai/
 
 - Solução .NET dividida em Domain, Application, Infrastructure e API.
 - Endpoint `GET /api/agenda/{profissionalUuid}` para consultar um período da agenda por profissional.
-- Endpoint `GET /api/agendas?clinicaUuid={clinicaUuid}` para listar as agendas ativas configuradas para uma clínica.
+- Endpoint `GET /api/profissionais?clinicaUuid={clinicaUuid}&especialidadeUuid={especialidadeUuid}` para listar profissionais agendáveis, com filtro opcional por especialidade, destinado ao Web e ao chatbot.
 - Endpoint `GET /api/profissionais/{profissionalUuid}/disponibilidade`, exclusivo do chatbot, para verificar um horário solicitado e retornar alternativas próximas quando ele estiver ocupado.
+- Endpoint `POST /api/clientes/resolver?clinicaUuid={clinicaUuid}`, destinado ao Web e ao chatbot, para localizar ou criar um cliente pelo telefone e, quando informado, vincular sua identidade do Telegram.
 - Endpoint `POST /api/agendamentos`, usado pelo Web e pelo chatbot, para revalidar o horário, reservar o intervalo no PostgreSQL e criar o evento correspondente via n8n.
+- Listagem de profissionais agendáveis com filtro por clínica, calendário configurado e especialidade ativa opcional, sem expor o ID externo do Google Calendar.
+- Resolução de clientes com normalização de telefone, reaproveitamento do cadastro ativo existente, vínculo opcional do Telegram e detecção de identidades conflitantes.
 - Consulta de agenda com contratos HTTP, caso de uso, leitura NHibernate do profissional, correlação em lote do ID externo com o UUID do agendamento e gateway HTTP para o n8n com timeout e erros tipados.
 - Consulta de disponibilidade com duração obtida da associação profissional/procedimento, validação das janelas de atendimento antes da integração, busca externa via n8n e validação defensiva das alternativas retornadas. A mesma lógica foi extraída para `VerificarDisponibilidadeService` e é reutilizada pela criação sem chamar internamente outro handler ou endpoint HTTP.
 - Criação de agendamento com `Idempotency-Key` obrigatória, consulta idempotente por clínica, persistência inicial como `pendente_integracao`, bloqueio concorrente de sobreposição, integração n8n com até duas tentativas totais e transição para `agendado` ou `falha_integracao`.
@@ -476,7 +506,7 @@ agend.ai/
 - Campos de integração `profissionais.id_google_calendar`, `profissionais.prefixo` e `agendamentos.id_event_google_calendar` sincronizados entre schema, domínio e mappings.
 - Status inicial de agendamento `pendente_integracao`, com estados de sucesso, falha, conclusão, cancelamento e falta.
 - Integridade multi-clínica no banco por FKs compostas.
-- Deduplicação concorrente de telefone ativo e bloqueio de sobreposição da agenda no banco.
+- Deduplicação concorrente de telefone e identidade do Telegram entre clientes ativos da mesma clínica, além do bloqueio de sobreposição da agenda no banco.
 - Soft delete por `deleted_at` nas sete tabelas que já possuem o campo; a cobertura de `profissionais`/`horario_funcionamento` e a remoção de caminhos de exclusão física permanecem pendentes.
 
 ### Rotas HTTP implementadas
@@ -498,20 +528,20 @@ Resposta de sucesso: HTTP `200` com `eventos`, coleção que pode ser vazia. Cad
 
 Falhas tratadas: HTTP `400` para entrada inválida, `404` para profissional não encontrado, `409` para agenda ou webhook não configurado, `502` para falhas/contratos inválidos do n8n e `500` para erro inesperado.
 
-#### `GET /api/agendas?clinicaUuid={clinicaUuid}`
+#### `GET /api/profissionais?clinicaUuid={clinicaUuid}&especialidadeUuid={especialidadeUuid}`
 
-Lista as agendas disponíveis para preencher o seletor de profissional no frontend. Durante a PoC, o UUID público da clínica é recebido pela query string; após autenticação, ele deverá vir da sessão ou do contexto autenticado.
+Lista os profissionais agendáveis de uma clínica para seleção no Web e no chatbot. Durante a PoC, `clinicaUuid` é obrigatório na query string e `especialidadeUuid` é um filtro opcional; após autenticação, a clínica deverá ser obtida do contexto autenticado ou da credencial de serviço.
 
 Fluxo executado:
 
-1. O controller converte `clinicaUuid` em `ListarAgendasQuery`.
-2. O handler rejeita UUID vazio.
-3. `AgendasReader` consulta via NHibernate os profissionais da clínica cuja clínica e usuário não estejam em soft delete e cujo `id_google_calendar` esteja preenchido.
-4. O handler monta `nomeExibicao` a partir de `prefixo` e nome do usuário, abreviando o segundo nome quando houver mais de duas partes, ordena a coleção e devolve `ListarAgendasResponse`.
+1. O controller recebe os parâmetros de consulta e cria `ListarProfissionaisQuery`.
+2. O handler rejeita UUID vazio da clínica e, quando presente, UUID vazio da especialidade.
+3. `ProfissionaisReader` consulta via NHibernate somente profissionais cuja clínica e usuário estejam ativos e cujo ID privado do Google Calendar esteja configurado. Especialidades excluídas não são expostas e o filtro opcional exige correspondência com uma especialidade ativa.
+4. O handler monta `nomeExibicao` com prefixo e nome tratado, inclui a especialidade quando disponível, ordena alfabeticamente e devolve `ListarProfissionaisResponse`.
 
-Resposta de sucesso: HTTP `200` com `agendas`, coleção que pode ser vazia. Cada item expõe somente `profissionalUuid` e `nomeExibicao`; o ID externo do calendário é usado apenas como filtro interno.
+Resposta de sucesso: HTTP `200` com `profissionais`, coleção que pode ser vazia. Cada item expõe `profissionalUuid`, `nomeExibicao` e `especialidade`, que pode ser nula; quando presente, a especialidade contém somente `uuid` e `nome`. O ID externo do calendário é apenas um critério interno de elegibilidade e nunca integra o contrato público.
 
-Falhas tratadas: HTTP `400` para UUID vazio e `500` para erro inesperado. A implementação atual não diferencia clínica inexistente de clínica sem agendas: ambos resultam em HTTP `200` com coleção vazia.
+Falhas tratadas: HTTP `400` para UUID inválido e `500` para erro inesperado. A implementação atual não distingue clínica ou especialidade inexistente de uma busca sem profissionais elegíveis: ambos resultam em HTTP `200` com coleção vazia.
 
 #### `GET /api/profissionais/{profissionalUuid}/disponibilidade`
 
@@ -550,11 +580,28 @@ Resposta de sucesso: HTTP `201` com `uuid`, `inicio`, `fim`, `nomeCliente`, `nom
 
 Falhas tratadas: HTTP `400` para entrada, chave ausente/inválida ou horário fora do atendimento; `404` para cliente ou associação não encontrada no mesmo escopo; `409` para horário ocupado, configuração ausente, reutilização divergente da chave, operação pendente/falha ou colisões protegidas pelo banco; `502` para timeout, falha HTTP, JSON ou contrato inválido do n8n; e `500` para erro inesperado. Foram validados manualmente criação, repetição idempotente, reutilização divergente, entrada inválida, recurso inexistente, horário ocupado ou fora do atendimento, concorrência, falha externa e nova tentativa com outra chave.
 
+#### `POST /api/clientes/resolver?clinicaUuid={clinicaUuid}`
+
+Resolve a identidade de um cliente para os fluxos Web e chatbot. Na PoC, a clínica é informada pela query string; o corpo recebe `nome`, `telefone` e `telegramUserId` opcional. A rota não é um CRUD geral: ela localiza o cadastro ativo pelo telefone normalizado, cria o cliente quando ele ainda não existe e pode associar a identidade do Telegram sem duplicar pessoas.
+
+Fluxo executado:
+
+1. O controller transforma query string e corpo em `ResolverClienteCommand`.
+2. O handler valida a clínica, nome, telefone e o identificador opcional do Telegram. O telefone é reduzido a dígitos ASCII e deve possuir entre 10 e 15 dígitos; o identificador do Telegram deve ser numérico e ter no máximo 30 caracteres.
+3. `ResolucaoClienteReader` confirma que a clínica está ativa e consulta, no mesmo escopo, clientes ativos por telefone e por identidade do Telegram.
+4. Se o telefone já existir, o cadastro é reutilizado sem sobrescrever o nome. O Telegram é vinculado apenas quando o cliente ainda não possui outro identificador; repetir a mesma resolução não provoca nova alteração.
+5. Se telefone e Telegram apontarem para clientes diferentes, ou se o Telegram informado já estiver vinculado a outra identidade, o caso de uso retorna conflito.
+6. Quando nenhum cliente corresponde, `Cliente.Criar` cria a entidade e `ClienteWriter` persiste o cadastro. Índices parciais únicos protegem telefone e Telegram ativos por clínica também sob concorrência.
+
+Resposta de sucesso: HTTP `201` quando o cliente é criado e HTTP `200` quando um cadastro existente é reutilizado. Ambos retornam `clienteUuid`, `criado`, `nome` e `telefone`; o identificador do Telegram não é exposto na resposta.
+
+Falhas tratadas: HTTP `400` para entrada inválida, `404` para clínica inexistente ou inativa, `409` para conflito de identidade ou colisão concorrente de unicidade e `500` para erro inesperado. A rota foi validada manualmente nos cenários de criação, nova resolução por telefone, vínculo e repetição do Telegram, conflitos de identidade, validações e concorrência.
+
 #### Tratamento HTTP compartilhado
 
-`ApiExceptionHandler` converte `ValidacaoException` em `400`, `RecursoNaoEncontradoException` em `404`, `ConflitoException` em `409`, `IntegracaoExternaException` em `502` e exceções desconhecidas em `500`. As falhas são retornadas como `application/problem+json`, com `codigo` e `traceId`. Os quatro endpoints propagam `CancellationToken` da requisição.
+`ApiExceptionHandler` converte `ValidacaoException` em `400`, `RecursoNaoEncontradoException` em `404`, `ConflitoException` em `409`, `IntegracaoExternaException` em `502` e exceções desconhecidas em `500`. As falhas são retornadas como `application/problem+json`, com `codigo` e `traceId`. Os cinco endpoints propagam `CancellationToken` da requisição.
 
-As quatro rotas ainda operam sem autenticação, autorização e escopo derivado de identidade. O parâmetro de clínica fornecido pelo frontend e os UUIDs informados nas consultas e criação são soluções temporárias da PoC e não satisfazem sozinhos a invariante multi-clínica de produção.
+As cinco rotas ainda operam sem autenticação, autorização e escopo derivado de identidade. O parâmetro de clínica fornecido pelos consumidores e os UUIDs informados nas consultas e criação são soluções temporárias da PoC e não satisfazem sozinhos a invariante multi-clínica de produção.
 
 ## Pendências conhecidas
 
@@ -562,9 +609,10 @@ Não trate os itens abaixo como implementados apenas porque constam na documenta
 
 ### PoC funcional
 
-- As quatro rotas centrais planejadas para o backend da PoC estão implementadas: consulta de agenda, listagem de agendas, disponibilidade e criação de agendamento. Rotas auxiliares de clientes e profissional/procedimento permanecem fora desta entrega e os dados são cadastrados manualmente para os testes.
+- Os cinco endpoints atuais do backend da PoC estão implementados: consulta de agenda, listagem de profissionais agendáveis, disponibilidade, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida depois da migração do frontend.
+- Implementar a listagem das associações profissional/procedimento para que o chatbot e as futuras telas obtenham dinamicamente os UUIDs, durações e valores hoje cadastrados manualmente.
 - Criar os DTOs, casos de uso e endpoints adicionais somente quando os próximos fluxos de cadastro ou MVP os exigirem.
-- Implementar repositórios, transações e filtros de soft delete no NHibernate.
+- Completar readers, writers, transações e filtros de soft delete no NHibernate conforme os próximos casos de uso; as cinco rotas atuais já possuem as implementações necessárias ao próprio fluxo.
 - Completar a política de retenção no schema para `profissionais` e `horario_funcionamento` e revisar FKs `ON DELETE CASCADE` antes de fluxos de exclusão.
 - Exportar workflows n8n importáveis para disponibilidade, criação e consulta de agenda.
 - Implementar o fluxo Telegram -> n8n -> API.

@@ -10,17 +10,23 @@ export type EventoAgendaApi = {
   profissionalUuid: string
 }
 
-export type AgendaDisponivelApi = {
+export type EspecialidadeProfissionalApi = {
+  uuid: string
+  nome: string
+}
+
+export type ProfissionalAgendavelApi = {
   profissionalUuid: string
   nomeExibicao: string
+  especialidade: EspecialidadeProfissionalApi | null
 }
 
 type ConsultarAgendaResponse = {
   eventos: EventoAgendaApi[]
 }
 
-type ListarAgendasResponse = {
-  agendas: AgendaDisponivelApi[]
+type ListarProfissionaisResponse = {
+  profissionais: ProfissionalAgendavelApi[]
 }
 
 type ApiProblemDetails = {
@@ -35,7 +41,7 @@ type ConsultarAgendaParams = {
   signal?: AbortSignal
 }
 
-type ListarAgendasParams = {
+type ListarProfissionaisParams = {
   clinicaUuid: string
   signal?: AbortSignal
 }
@@ -64,11 +70,25 @@ function isEventoAgenda(value: unknown): value is EventoAgendaApi {
   )
 }
 
-function isAgendaDisponivel(value: unknown): value is AgendaDisponivelApi {
+function isEspecialidadeProfissional(
+  value: unknown,
+): value is EspecialidadeProfissionalApi {
+  return (
+    isRecord(value) &&
+    typeof value.uuid === 'string' &&
+    typeof value.nome === 'string'
+  )
+}
+
+function isProfissionalAgendavel(
+  value: unknown,
+): value is ProfissionalAgendavelApi {
   return (
     isRecord(value) &&
     typeof value.profissionalUuid === 'string' &&
-    typeof value.nomeExibicao === 'string'
+    typeof value.nomeExibicao === 'string' &&
+    (value.especialidade === null ||
+      isEspecialidadeProfissional(value.especialidade))
   )
 }
 
@@ -82,11 +102,13 @@ function isConsultarAgendaResponse(
   )
 }
 
-function isListarAgendasResponse(value: unknown): value is ListarAgendasResponse {
+function isListarProfissionaisResponse(
+  value: unknown,
+): value is ListarProfissionaisResponse {
   return (
     isRecord(value) &&
-    Array.isArray(value.agendas) &&
-    value.agendas.every(isAgendaDisponivel)
+    Array.isArray(value.profissionais) &&
+    value.profissionais.every(isProfissionalAgendavel)
   )
 }
 
@@ -105,11 +127,11 @@ async function getApiError(response: Response) {
   return undefined
 }
 
-export async function listarAgendasAtivas({
+export async function listarProfissionaisAgendaveis({
   clinicaUuid,
   signal,
-}: ListarAgendasParams): Promise<ListarAgendasResponse> {
-  const url = new URL('/api/agendas', window.location.origin)
+}: ListarProfissionaisParams): Promise<ListarProfissionaisResponse> {
+  const url = new URL('/api/profissionais', window.location.origin)
   url.searchParams.set('clinicaUuid', clinicaUuid)
 
   const response = await fetch(url, {
@@ -127,7 +149,7 @@ export async function listarAgendasAtivas({
 
   const data: unknown = await response.json()
 
-  if (!isListarAgendasResponse(data)) {
+  if (!isListarProfissionaisResponse(data)) {
     throw new Error('A API retornou um formato de agendas inválido.')
   }
 

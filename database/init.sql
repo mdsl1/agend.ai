@@ -219,6 +219,14 @@ ON clientes (
 )
 WHERE deleted_at IS NULL;
 
+CREATE UNIQUE INDEX uq_cliente_telegram_ativo
+ON clientes (
+    id_clinica,
+    id_telegram
+)
+WHERE deleted_at IS NULL
+AND id_telegram IS NOT NULL;
+
 
 CREATE INDEX idx_agendamento_grid ON agendamentos(id_clinica, id_profissional, timedate_inicio, timedate_fim) 
 WHERE deleted_at IS NULL;

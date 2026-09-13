@@ -27,9 +27,9 @@ import {
 } from 'lucide-react'
 import {
   consultarAgenda,
-  listarAgendasAtivas,
-  type AgendaDisponivelApi,
+  listarProfissionaisAgendaveis,
   type EventoAgendaApi,
+  type ProfissionalAgendavelApi,
 } from '../features/agenda/agendaApi'
 
 type AppointmentDetails = {
@@ -186,7 +186,9 @@ function CalendarDayHeader({ date, isToday, view }: DayHeaderContentArg) {
 export function WeeklyAgenda() {
   const calendarRef = useRef<FullCalendar>(null)
   const calendarContainerRef = useRef<HTMLDivElement>(null)
-  const [agendas, setAgendas] = useState<AgendaDisponivelApi[]>([])
+  const [professionals, setProfessionals] = useState<
+    ProfissionalAgendavelApi[]
+  >([])
   const [selectedDoctor, setSelectedDoctor] = useState('')
   const [selectedDate, setSelectedDate] = useState(initialSelectedDate)
   const [calendarView, setCalendarView] = useState<CalendarView>('timeGridWeek')
@@ -199,24 +201,27 @@ export function WeeklyAgenda() {
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [reloadAttempt, setReloadAttempt] = useState(0)
-  const [isLoadingAgendas, setIsLoadingAgendas] = useState(true)
-  const [agendasError, setAgendasError] = useState<string | null>(null)
-  const [reloadAgendasAttempt, setReloadAgendasAttempt] = useState(0)
+  const [isLoadingProfessionals, setIsLoadingProfessionals] = useState(true)
+  const [professionalsError, setProfessionalsError] = useState<string | null>(
+    null,
+  )
+  const [reloadProfessionalsAttempt, setReloadProfessionalsAttempt] =
+    useState(0)
   const [visibleRange, setVisibleRange] = useState('Carregando período...')
 
-  const activeDoctor = agendas.find(
-    (agenda) => agenda.profissionalUuid === selectedDoctor,
+  const activeDoctor = professionals.find(
+    (professional) => professional.profissionalUuid === selectedDoctor,
   )
 
   useEffect(() => {
     const abortController = new AbortController()
 
-    async function loadAgendas() {
-      setIsLoadingAgendas(true)
-      setAgendasError(null)
+    async function loadProfessionals() {
+      setIsLoadingProfessionals(true)
+      setProfessionalsError(null)
 
       try {
-        const response = await listarAgendasAtivas({
+        const response = await listarProfissionaisAgendaveis({
           clinicaUuid: POC_CLINIC_UUID,
           signal: abortController.signal,
         })
@@ -225,47 +230,48 @@ export function WeeklyAgenda() {
           return
         }
 
-        setAgendas(response.agendas)
-        if (response.agendas.length === 0) {
+        setProfessionals(response.profissionais)
+        if (response.profissionais.length === 0) {
           setAppointments([])
           setIsLoading(false)
           setLoadError(null)
         }
         setSelectedDoctor((currentDoctor) => {
-          const currentDoctorIsAvailable = response.agendas.some(
-            (agenda) => agenda.profissionalUuid === currentDoctor,
+          const currentDoctorIsAvailable = response.profissionais.some(
+            (professional) =>
+              professional.profissionalUuid === currentDoctor,
           )
 
           return currentDoctorIsAvailable
             ? currentDoctor
-            : (response.agendas[0]?.profissionalUuid ?? '')
+            : (response.profissionais[0]?.profissionalUuid ?? '')
         })
       } catch (error) {
         if (abortController.signal.aborted) {
           return
         }
 
-        setAgendas([])
+        setProfessionals([])
         setSelectedDoctor('')
         setAppointments([])
         setIsLoading(false)
         setLoadError(null)
-        setAgendasError(
+        setProfessionalsError(
           error instanceof Error
             ? error.message
             : 'Não foi possível carregar as agendas ativas.',
         )
       } finally {
         if (!abortController.signal.aborted) {
-          setIsLoadingAgendas(false)
+          setIsLoadingProfessionals(false)
         }
       }
     }
 
-    void loadAgendas()
+    void loadProfessionals()
 
     return () => abortController.abort()
-  }, [reloadAgendasAttempt])
+  }, [reloadProfessionalsAttempt])
 
   useEffect(() => {
     if (!queryPeriod || !selectedDoctor) {
@@ -471,26 +477,28 @@ export function WeeklyAgenda() {
                 value={selectedDoctor}
                 onChange={(event) => setSelectedDoctor(event.target.value)}
                 disabled={
-                  isLoadingAgendas || Boolean(agendasError) || agendas.length === 0
+                  isLoadingProfessionals ||
+                  Boolean(professionalsError) ||
+                  professionals.length === 0
                 }
-                aria-invalid={agendasError ? true : undefined}
+                aria-invalid={professionalsError ? true : undefined}
                 className="mt-0.5 max-w-full rounded-md border border-transparent bg-transparent py-1 pr-8 text-sm font-semibold text-agend-ink outline-none transition hover:border-agend-border focus:border-agend-brand-500 focus:ring-2 focus:ring-agend-brand-500/15 disabled:cursor-not-allowed disabled:text-agend-subtle"
               >
-                {agendas.length === 0 ? (
+                {professionals.length === 0 ? (
                   <option value="">
-                    {isLoadingAgendas
+                    {isLoadingProfessionals
                       ? 'Carregando agendas...'
-                      : agendasError
+                      : professionalsError
                         ? 'Agendas indisponíveis'
                         : 'Nenhuma agenda ativa'}
                   </option>
                 ) : null}
-                {agendas.map((agenda) => (
+                {professionals.map((professional) => (
                   <option
-                    key={agenda.profissionalUuid}
-                    value={agenda.profissionalUuid}
+                    key={professional.profissionalUuid}
+                    value={professional.profissionalUuid}
                   >
-                    {agenda.nomeExibicao}
+                    {professional.nomeExibicao}
                   </option>
                 ))}
               </select>
@@ -574,9 +582,9 @@ export function WeeklyAgenda() {
               {visibleRange}
             </p>
             <p className="text-[11px] text-agend-subtle">
-              {isLoadingAgendas
+              {isLoadingProfessionals
                 ? 'Carregando agendas ativas...'
-                : agendasError
+                : professionalsError
                   ? 'Agendas ativas indisponíveis'
                   : activeDoctor
                     ? `${activeDoctor.nomeExibicao} · ${
@@ -596,9 +604,9 @@ export function WeeklyAgenda() {
         <div
           ref={calendarContainerRef}
           className="agenda-calendar relative w-full min-w-0 overflow-x-auto bg-white"
-          aria-busy={isLoadingAgendas || isLoading}
+          aria-busy={isLoadingProfessionals || isLoading}
         >
-          {isLoadingAgendas || isLoading ? (
+          {isLoadingProfessionals || isLoading ? (
             <div
               className="absolute inset-0 z-20 flex items-center justify-center bg-white/70 backdrop-blur-[1px]"
               role="status"
@@ -609,27 +617,29 @@ export function WeeklyAgenda() {
                   className="animate-spin text-agend-brand-500"
                   size={18}
                 />
-                {isLoadingAgendas
+                {isLoadingProfessionals
                   ? 'Carregando agendas ativas...'
                   : 'Carregando agenda...'}
               </div>
             </div>
           ) : null}
 
-          {!isLoadingAgendas && !isLoading && (agendasError || loadError) ? (
+          {!isLoadingProfessionals &&
+          !isLoading &&
+          (professionalsError || loadError) ? (
             <div
               className="absolute inset-x-4 top-4 z-20 flex flex-col items-start justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-sm sm:flex-row sm:items-center"
               role="alert"
             >
               <span className="flex items-start gap-2">
                 <AlertCircle aria-hidden="true" className="mt-0.5" size={18} />
-                {agendasError ?? loadError}
+                {professionalsError ?? loadError}
               </span>
               <button
                 type="button"
                 onClick={() =>
-                  agendasError
-                    ? setReloadAgendasAttempt((attempt) => attempt + 1)
+                  professionalsError
+                    ? setReloadProfessionalsAttempt((attempt) => attempt + 1)
                     : setReloadAttempt((attempt) => attempt + 1)
                 }
                 className="inline-flex min-h-9 shrink-0 items-center gap-2 rounded-lg border border-red-200 bg-white px-3 text-xs font-semibold text-red-800 transition hover:bg-red-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-agend-brand-500"
@@ -640,11 +650,11 @@ export function WeeklyAgenda() {
             </div>
           ) : null}
 
-          {!isLoadingAgendas &&
+          {!isLoadingProfessionals &&
           !isLoading &&
-          !agendasError &&
+          !professionalsError &&
           !loadError &&
-          agendas.length === 0 ? (
+          professionals.length === 0 ? (
             <div
               className="pointer-events-none absolute inset-x-0 top-28 z-10 flex justify-center px-4"
               role="status"
@@ -655,11 +665,11 @@ export function WeeklyAgenda() {
             </div>
           ) : null}
 
-          {!isLoadingAgendas &&
+          {!isLoadingProfessionals &&
           !isLoading &&
-          !agendasError &&
+          !professionalsError &&
           !loadError &&
-          agendas.length > 0 &&
+          professionals.length > 0 &&
           appointments.length === 0 ? (
             <div
               className="pointer-events-none absolute inset-x-0 top-28 z-10 flex justify-center px-4"
