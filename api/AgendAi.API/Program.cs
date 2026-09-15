@@ -9,6 +9,7 @@ using AgendAi.Application.Agenda.CriarAgendamento;
 using AgendAi.Application.Profissionais.Ports;
 using AgendAi.Infrastructure.Profissionais;
 using AgendAi.Application.Profissionais.ListarProfissionais;
+using AgendAi.Application.Profissionais.ListarProcedimentosProfissional;
 
 using AgendAi.Application.Clientes.Ports;
 using AgendAi.Infrastructure.Clientes;
@@ -16,6 +17,7 @@ using AgendAi.Application.Clientes.ResolverCliente;
 
 using AgendAi.Infrastructure;
 using AgendAi.API.Infrastructure;
+using AgendAi.Application.Profissionais.ListarProcedimentosProfissional.Ports;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -77,6 +79,9 @@ builder.Services.AddScoped<CriarAgendamentoHandler>();
 
 builder.Services.AddScoped<IProfissionaisReader, ProfissionaisReader>();
 builder.Services.AddScoped<ListarProfissionaisHandler>();
+
+builder.Services.AddScoped<IProcedimentosProfissionalReader, ProcedimentosProfissionalReader>();
+builder.Services.AddScoped<ListarProcedimentosProfissionalHandler>();
 
 builder.Services.AddScoped<IResolucaoClienteReader, ResolucaoClienteReader>();
 builder.Services.AddScoped<IClienteWriter, ClienteWriter>();

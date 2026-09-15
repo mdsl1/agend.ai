@@ -1,6 +1,6 @@
 # Rotas da API RESTful — MVP Acadêmico Web, Mobile e Chatbot
 
-> Última revisão: 13 de setembro de 2026.
+> Última revisão: 15 de setembro de 2026.
 
 Este documento define os contratos HTTP necessários para integrar os três projetos:
 
@@ -14,6 +14,7 @@ As seguintes rotas já existem na PoC:
 
 - `GET /api/agenda/{profissionalUuid}?inicio={iso}&fim={iso}`;
 - `GET /api/profissionais?clinicaUuid={clinicaUuid}&especialidadeUuid={uuid-opcional}`;
+- `GET /api/profissionais/{profissionalUuid}/procedimentos`;
 - `GET /api/profissionais/{profissionalUuid}/disponibilidade?profissionalProcedimentoUuid={uuid}&inicio={iso}&limite={1-3}`;
 - `POST /api/clientes/resolver?clinicaUuid={clinicaUuid}`;
 - `POST /api/agendamentos`.
@@ -670,7 +671,7 @@ Saída `200 OK`:
 ### `GET /api/profissionais/{profissionalUuid}/procedimentos`
 
 - **Projeto:** Web e Chatbot.
-- **Estado/acesso:** planejada; usuário autorizado ou identidade de serviço.
+- **Estado/acesso:** implementada na PoC sem autenticação; deverá aceitar usuário autorizado ou identidade de serviço e validar o escopo da clínica.
 - **Descrição:** lista somente os procedimentos oferecidos pelo profissional, com preço e duração efetivos.
 
 Entrada:
@@ -695,7 +696,11 @@ Saída `200 OK`:
 }
 ```
 
-O `profissionalProcedimentoUuid` deve ser enviado ao criar um agendamento, garantindo que preço e duração pertencem àquele profissional.
+O `profissionalProcedimentoUuid` deve ser enviado ao consultar disponibilidade e criar um agendamento, garantindo que preço e duração pertencem àquele profissional. Um profissional existente sem associações ativas retorna `200 OK` com `procedimentos: []`; profissional inexistente, clínica inativa ou usuário inativo retorna `404 Not Found`. `Guid.Empty` retorna `400 Bad Request`, enquanto um segmento que não seja um GUID não satisfaz a restrição da rota e recebe o `404` do roteamento.
+
+Somente associações e procedimentos sem soft delete são retornados, em ordem alfabética pelo nome. IDs internos, ID do Google Calendar e dados privados da clínica não integram a resposta. Foram testados manualmente profissional com procedimentos, profissional existente sem vínculos e UUID inválido.
+
+Na modelagem simplificada atual, `profissional_procedimentos.valor` e `duracao_minutos` são obrigatórios e armazenam os valores efetivos. Ao implementar a criação da associação, valores omitidos deverão ser copiados de `procedimentos.valor_base` e `duracao_estimada_minutos`. A cópia é um snapshot: alterações futuras no catálogo não atualizam automaticamente vínculos existentes.
 
 ### `GET /api/procedimentos`
 
@@ -737,7 +742,7 @@ Saída `200 OK`:
 
 - **Projeto:** Mobile.
 - **Estado/acesso:** planejada; profissional autenticado.
-- **Descrição:** lista os procedimentos atualmente associados ao profissional, incluindo valores-base, personalizados e efetivos.
+- **Descrição:** lista os procedimentos atualmente associados ao profissional, incluindo os valores-base atuais do catálogo e os valores efetivos armazenados na associação.
 
 Entrada:
 
@@ -756,10 +761,8 @@ Saída `200 OK`:
       "procedimentoUuid": "19ad57ea-7523-4659-8eab-6d1475831a13",
       "nome": "Consulta inicial",
       "valorBase": 180.00,
-      "valorPersonalizado": 220.00,
       "valorEfetivo": 220.00,
       "duracaoBaseMinutos": 30,
-      "duracaoPersonalizadaMinutos": 45,
       "duracaoEfetivaMinutos": 45,
       "disponivelAgendamento": true
     }
@@ -778,8 +781,8 @@ Entrada:
 ```json
 {
   "procedimentoUuid": "81c3e389-738f-4d46-a992-11f78cb9a3fd",
-  "valorPersonalizado": null,
-  "duracaoPersonalizadaMinutos": null
+  "valor": null,
+  "duracaoMinutos": null
 }
 ```
 
@@ -796,7 +799,7 @@ Saída `201 Created`:
 }
 ```
 
-Associação já disponível retorna `409`. Se ela existir como indisponível, a rota reativa o mesmo registro.
+Quando `valor` ou `duracaoMinutos` forem omitidos ou enviados como `null`, o caso de uso copia os respectivos valores-base vigentes no catálogo e grava o resultado na associação. Associação já disponível retorna `409`. Se ela existir como indisponível, a rota reativa o mesmo registro.
 
 ### `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}`
 
@@ -808,8 +811,8 @@ Entrada:
 
 ```json
 {
-  "valorPersonalizado": 240.00,
-  "duracaoPersonalizadaMinutos": 50,
+  "valor": 240.00,
+  "duracaoMinutos": 50,
   "disponivelAgendamento": true
 }
 ```
@@ -820,17 +823,15 @@ Saída `200 OK`:
 {
   "profissionalProcedimentoUuid": "9528014c-5161-4e5e-a8a1-ebf1c26f7417",
   "valorBase": 180.00,
-  "valorPersonalizado": 240.00,
   "valorEfetivo": 240.00,
   "duracaoBaseMinutos": 30,
-  "duracaoPersonalizadaMinutos": 50,
   "duracaoEfetivaMinutos": 50,
   "disponivelAgendamento": true,
   "atualizadoEm": "2026-09-02T14:30:00-03:00"
 }
 ```
 
-Enviar `null` em um valor personalizado restaura o padrão do catálogo. `disponivelAgendamento: false` deixa de oferecer o procedimento sem apagar o histórico.
+No `PATCH`, omitir um campo preserva o valor efetivo atual; enviar `null` copia o valor-base vigente para a associação; enviar um número grava o novo valor efetivo. Em todos os casos, alterações futuras no catálogo não se propagam automaticamente. `disponivelAgendamento: false` deixa de oferecer o procedimento sem apagar o histórico.
 
 ---
 
@@ -921,7 +922,7 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 3. **Identificação da clínica no login:** o e-mail é único apenas dentro de uma clínica. O `clinicaUuid` deve vir de configuração, convite ou informação conhecida pela interface.
 4. **Dados iniciais:** clínica, usuários, horários de funcionamento, especialidades e catálogo de procedimentos precisam existir previamente no ambiente acadêmico.
 5. **Clientes e Telegram:** `clientes.id_telegram` aceita `NULL` no schema, na entidade e no mapping. A rota de resolução mantém o campo opcional e índices parciais únicos impedem que telefone ou Telegram ativos sejam compartilhados por clientes da mesma clínica.
-6. **Procedimentos do profissional:** `profissional_procedimentos` está sincronizada entre `database/init.sql`, entidade e mapping NHibernate, com unicidade ativa do par profissional/procedimento. Ainda falta expor a associação em uma rota de listagem para os consumidores.
+6. **Procedimentos do profissional:** `profissional_procedimentos` está sincronizada entre `database/init.sql`, entidade e mapping NHibernate, com unicidade ativa do par profissional/procedimento e valor/duração efetivos obrigatórios sem defaults silenciosos. A associação já é exposta para seleção por `GET /api/profissionais/{profissionalUuid}/procedimentos`; a criação administrativa futura deverá gravar os valores informados ou copiar os valores-base vigentes quando eles forem omitidos.
 7. **Schema atual:** a relação de `profissionais` com `usuarios` e a definição de `profissional_procedimentos` já estão corrigidas no bootstrap canônico. Mudanças estruturais futuras devem continuar sincronizadas com entidades e mappings.
 8. **Eventos do Calendar:** padronizar o marcador `tipo = agendamento | indisponibilidade`. A consulta deve retornar `agendamentoUuid` apenas quando o evento possuir registro relacional.
 9. **Bloqueios:** criar no n8n as operações de criar e excluir um evento `Indisponível`. A exclusão deve validar agenda, profissional e marcador do evento.
@@ -930,9 +931,9 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 
 ## Resumo quantitativo
 
-- **22 contratos HTTP**;
-- **5 rotas existentes que precisam receber autenticação e ajustes de escopo**;
-- **17 rotas planejadas**;
+- **21 contratos HTTP**;
+- **6 rotas existentes que precisam receber autenticação e ajustes de escopo**;
+- **15 rotas planejadas**;
 - nenhuma listagem com busca ou paginação.
 
 As rotas estão agrupadas por domínio para que controllers, handlers, validações e modelos possam ser reutilizados sem misturar responsabilidades.
