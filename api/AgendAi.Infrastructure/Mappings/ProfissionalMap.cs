@@ -16,5 +16,8 @@ public class ProfissionalMap : ClassMap<Profissional>
         Map(x => x.RegistroProfissional).Column("registro_profissional").Length(30);
         Map(x => x.IdGoogleCalendar).Column("id_google_calendar").CustomSqlType("text");
         Map(x => x.Prefixo).Column("prefixo").Length(6);
+        Map(x => x.CreatedAt).Column("created_at").CustomSqlType("timestamptz").Not.Nullable();
+        Map(x => x.UpdatedAt).Column("updated_at").CustomSqlType("timestamptz");
+        Map(x => x.DeletedAt).Column("deleted_at").CustomSqlType("timestamptz");
     }
 }

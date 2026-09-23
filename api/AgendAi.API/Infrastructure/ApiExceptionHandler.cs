@@ -20,6 +20,12 @@ public sealed class ApiExceptionHandler : IExceptionHandler
     {
         var (statusCode, titulo, codigo) = exception switch
         {
+            CredenciaisInvalidasException er => (
+                StatusCodes.Status401Unauthorized,
+                "Não autorizado",
+                er.Codigo
+            ),
+
             ValidacaoException er => (
                 StatusCodes.Status400BadRequest,
                 "Requisição inválida",

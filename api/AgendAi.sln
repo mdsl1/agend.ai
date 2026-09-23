@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendAi.Infrastructure", "A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendAi.API", "AgendAi.API\AgendAi.API.csproj", "{15409380-F15E-4A61-8344-E20409B553A8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendAi.PasswordTool", "AgendAi.PasswordTool\AgendAi.PasswordTool.csproj", "{629CD6DF-5087-4A5D-BB84-340A7EB5358C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{15409380-F15E-4A61-8344-E20409B553A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15409380-F15E-4A61-8344-E20409B553A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15409380-F15E-4A61-8344-E20409B553A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{629CD6DF-5087-4A5D-BB84-340A7EB5358C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{629CD6DF-5087-4A5D-BB84-340A7EB5358C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{629CD6DF-5087-4A5D-BB84-340A7EB5358C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{629CD6DF-5087-4A5D-BB84-340A7EB5358C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

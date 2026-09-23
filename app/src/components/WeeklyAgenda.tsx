@@ -130,25 +130,52 @@ function toFullCalendarEvent(event: EventoAgendaApi): EventInput {
   }
 }
 
+function getEventDurationMinutes(start: Date | null, end: Date | null) {
+  if (!start || !end) {
+    return null
+  }
+
+  const durationMinutes = (end.getTime() - start.getTime()) / 60_000
+  return durationMinutes > 0 ? durationMinutes : null
+}
+
 function AppointmentCard({ event, view }: EventContentArg) {
   const details = event.extendedProps as AppointmentDetails
   const isMonthView = view.type === 'dayGridMonth'
+  const durationMinutes = getEventDurationMinutes(event.start, event.end)
+  const isVeryShortEvent = !isMonthView && durationMinutes !== null && durationMinutes <= 30
+  const isCompactEvent = !isMonthView && durationMinutes !== null && durationMinutes < 60
+  const accessibleLabel = `${details.patient}. ${details.procedure}`
+
+  const cardSpacing = isMonthView
+    ? 'border-l-2 px-1.5 py-1'
+    : isVeryShortEvent
+      ? 'flex items-center border-l-4 px-1.5 py-0.5'
+      : isCompactEvent
+        ? 'border-l-4 px-2 py-0.5'
+        : 'border-l-4 px-2 py-0.5'
+
+  const patientTypography = isMonthView
+    ? 'text-[10px]'
+    : isVeryShortEvent
+      ? 'text-[10px] leading-[14px]'
+      : isCompactEvent
+        ? 'text-[11px] leading-[14px]'
+        : 'text-xs'
 
   return (
     <div
-      className={`h-full min-h-0 overflow-hidden rounded border-agend-brand-700 bg-agend-brand-100 text-agend-brand-700 ring-1 ring-inset ring-agend-brand-500/15 ${
-        isMonthView
-          ? 'border-l-2 px-1.5 py-1'
-          : 'border-l-4 px-2 py-1.5'
-      }`}
+      aria-label={accessibleLabel}
+      title={accessibleLabel}
+      className={`h-full min-h-0 overflow-hidden rounded border-agend-brand-700 bg-agend-brand-100 text-agend-brand-700 ring-1 ring-inset ring-agend-brand-500/15 ${cardSpacing}`}
     >
-      <p
-        className={`truncate font-semibold text-agend-ink ${isMonthView ? 'text-[10px]' : 'text-xs'}`}
-      >
+      <p className={`truncate font-semibold text-agend-ink ${patientTypography}`}>
         {details.patient}
       </p>
-      {isMonthView ? null : (
-        <p className="truncate text-[10px] leading-4 text-agend-muted">
+      {isMonthView || isVeryShortEvent ? null : (
+        <p
+          className={`truncate text-agend-muted ${isCompactEvent ? 'text-[9px] leading-[12px]' : 'text-[10px] leading-4'}`}
+        >
           {details.procedure}
         </p>
       )}

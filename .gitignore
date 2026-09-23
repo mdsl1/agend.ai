@@ -21,3 +21,6 @@ n8n_data/
 *.sqlite
 
 agendai-dados.sql
+.codex-*/
+
+agendai-backup.sql

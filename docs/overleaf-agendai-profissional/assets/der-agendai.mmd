@@ -1,0 +1,95 @@
+erDiagram
+    CLINICAS ||--o{ USUARIOS : possui
+    CLINICAS ||--o{ ESPECIALIDADES : cataloga
+    CLINICAS ||--o{ PROCEDIMENTOS : cataloga
+    CLINICAS ||--o{ CLIENTES : atende
+    CLINICAS ||--o{ AGENDAMENTOS : organiza
+    USUARIOS ||--o| PROFISSIONAIS : especializa
+    ESPECIALIDADES ||--o{ PROFISSIONAIS : classifica
+    PROFISSIONAIS ||--o{ PROFISSIONAL_PROCEDIMENTOS : oferece
+    PROCEDIMENTOS ||--o{ PROFISSIONAL_PROCEDIMENTOS : referencia
+    PROFISSIONAIS ||--o{ AGENDAMENTOS : realiza
+    CLIENTES ||--o{ AGENDAMENTOS : solicita
+    PROCEDIMENTOS ||--o{ AGENDAMENTOS : define
+
+    CLINICAS {
+        bigint id PK
+        uuid uuid UK
+        string nome
+        string webhook_calendar
+        timestamptz deleted_at
+    }
+
+    USUARIOS {
+        bigint id PK
+        uuid uuid UK
+        bigint id_clinica FK
+        string nome
+        string email
+        string senha_hash
+        string cargo
+        timestamptz deleted_at
+    }
+
+    ESPECIALIDADES {
+        bigint id PK
+        uuid uuid UK
+        bigint id_clinica FK
+        string nome
+        timestamptz deleted_at
+    }
+
+    PROFISSIONAIS {
+        bigint id PK
+        bigint id_usuario FK
+        bigint id_especialidade FK
+        string id_google_calendar
+        string prefixo
+    }
+
+    PROCEDIMENTOS {
+        bigint id PK
+        uuid uuid UK
+        bigint id_clinica FK
+        string nome
+        decimal valor_base
+        int duracao_estimada_minutos
+        timestamptz deleted_at
+    }
+
+    PROFISSIONAL_PROCEDIMENTOS {
+        bigint id PK
+        uuid uuid UK
+        bigint id_clinica FK
+        bigint id_profissional FK
+        bigint id_procedimento FK
+        decimal valor
+        int duracao_minutos
+        timestamptz deleted_at
+    }
+
+    CLIENTES {
+        bigint id PK
+        uuid uuid UK
+        bigint id_clinica FK
+        string nome
+        string telefone
+        string id_telegram
+        timestamptz deleted_at
+    }
+
+    AGENDAMENTOS {
+        bigint id PK
+        uuid uuid UK
+        bigint id_clinica FK
+        bigint id_cliente FK
+        bigint id_profissional FK
+        bigint id_procedimento FK
+        string id_event_google_calendar
+        timestamptz timedate_inicio
+        timestamptz timedate_fim
+        decimal valor_total
+        string status
+        string status_pagamento
+        timestamptz deleted_at
+    }

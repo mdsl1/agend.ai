@@ -835,7 +835,7 @@ No `PATCH`, omitir um campo preserva o valor efetivo atual; enviar `null` copia 
 
 ---
 
-## 5. Receitas do profissional
+## 5. Receitas e visão geral do profissional
 
 ### `GET /api/me/receitas/resumo`
 
@@ -876,6 +876,55 @@ Saída `200 OK`:
 
 `valorAtendimentosConcluidos` soma atendimentos com status `concluido`; `receitaPrevista` soma agendamentos futuros ativos. Registros cancelados, faltas e soft deleted são desconsiderados.
 
+### `GET /api/me/overview`
+
+- **Projeto:** Mobile.
+- **Estado/acesso:** planejada; profissional autenticado.
+- **Descrição:** entrega um modelo de leitura enxuto para a tela Início, reunindo o próximo atendimento, a quantidade de atendimentos do dia e os principais indicadores financeiros do mês. A clínica e o profissional são inferidos do access token.
+
+Entrada:
+
+```http
+GET /api/me/overview?dataReferencia=2026-09-20
+Authorization: Bearer <access-token>
+```
+
+`dataReferencia` é opcional, usa o formato `AAAA-MM-DD` e assume a data atual no fuso da clínica quando omitida. Ela define o dia da agenda e o mês usados nos indicadores.
+
+Saída `200 OK`:
+
+```json
+{
+  "dataReferencia": "2026-09-20",
+  "agenda": {
+    "quantidadeAtendimentosHoje": 4,
+    "proximoAtendimento": {
+      "agendamentoUuid": "a3711381-e0f5-4ddd-828d-a35f45797ca4",
+      "inicio": "2026-09-20T10:30:00-03:00",
+      "fim": "2026-09-20T11:15:00-03:00",
+      "nomeCliente": "João Silva",
+      "nomeProcedimento": "Consulta inicial"
+    }
+  },
+  "financeiro": {
+    "periodo": {
+      "inicio": "2026-09-01",
+      "fim": "2026-10-01"
+    },
+    "valorRealizado": 9840.00,
+    "valorPrevisto": 2640.00,
+    "quantidadeConcluidos": 37,
+    "ticketMedio": 265.95
+  }
+}
+```
+
+`proximoAtendimento` é `null` quando não houver um atendimento ativo a partir da data de referência. A quantidade diária e os indicadores ignoram registros cancelados, faltas e soft deleted. `valorRealizado` considera atendimentos concluídos no mês; `valorPrevisto`, agendamentos futuros ativos do mesmo período.
+
+O caso de uso consulta os readers do PostgreSQL diretamente. Ele não chama internamente as rotas de agenda ou receitas e não depende do n8n nem do Google Calendar. As rotas específicas permanecem responsáveis pelas telas completas de agenda e receitas.
+
+Erros previstos: `400` para data inválida, `401` para token ausente ou inválido, `403` para perfil sem permissão e `404` quando o usuário autenticado não possuir vínculo profissional ativo.
+
 ---
 
 ## 6. Cobertura das telas e fluxos
@@ -897,6 +946,7 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 | Tela ou fluxo | Rotas principais |
 |---|---|
 | Login e perfil | `POST /api/auth/login`, `GET /api/me` |
+| Início | `GET /api/me/overview` |
 | Agenda e atendimento | `GET /api/agenda/{profissionalUuid}`, `GET /api/agendamentos/{agendamentoUuid}` |
 | Bloquear ou liberar horário | `POST /api/me/indisponibilidades`, `DELETE /api/me/indisponibilidades/{eventoId}` |
 | Procedimentos e preços | `GET /api/procedimentos`, `GET /api/me/procedimentos`, `POST /api/me/procedimentos`, `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` |
@@ -928,12 +978,13 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 9. **Bloqueios:** criar no n8n as operações de criar e excluir um evento `Indisponível`. A exclusão deve validar agenda, profissional e marcador do evento.
 10. **Idempotência da criação:** implementada por chave aleatória persistida e escopada pela clínica; retentativas idênticas concluídas devolvem o mesmo agendamento.
 11. **Receitas:** os valores representam atendimentos concluídos e receita prevista, não contabilidade, conciliação ou fluxo de caixa.
+12. **Overview do profissional:** criar uma consulta agregada ao PostgreSQL para alimentar a tela Início sem encadear chamadas HTTP internas nem consultar o Google Calendar.
 
 ## Resumo quantitativo
 
-- **21 contratos HTTP**;
+- **22 contratos HTTP**;
 - **6 rotas existentes que precisam receber autenticação e ajustes de escopo**;
-- **15 rotas planejadas**;
+- **16 rotas planejadas**;
 - nenhuma listagem com busca ou paginação.
 
 As rotas estão agrupadas por domínio para que controllers, handlers, validações e modelos possam ser reutilizados sem misturar responsabilidades.

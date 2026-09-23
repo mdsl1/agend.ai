@@ -1,3 +1,8 @@
+using System.Text;
+using AgendAi.Application.Auth.Ports;
+using AgendAi.Infrastructure.Auth;
+using AgendAi.Application.Auth.Login;
+
 using AgendAi.Application.Agenda.Services;
 using AgendAi.Application.Agenda.Ports;
 using AgendAi.Infrastructure.Integracoes.N8n;
@@ -32,9 +37,44 @@ if (string.IsNullOrWhiteSpace(n8nApiKey))
     );
 }
 
+builder.Services
+    .AddOptions<JwtOptions>()
+    .Bind(
+        builder.Configuration.GetSection(
+            JwtOptions.SectionName
+        )
+    )
+    .Validate(
+        options => !string.IsNullOrWhiteSpace(options.Secret),
+        "A configuração 'Jwt:Secret' é obrigatória."
+    )
+    .Validate(
+        options =>
+            Encoding.UTF8.GetByteCount(options.Secret) >= 32,
+        "A configuração 'Jwt:Secret' deve possuir pelo menos 32 bytes."
+    )
+    .Validate(
+        options => !string.IsNullOrWhiteSpace(options.Issuer),
+        "A configuração 'Jwt:Issuer' é obrigatória."
+    )
+    .Validate(
+        options => !string.IsNullOrWhiteSpace(options.Audience),
+        "A configuração 'Jwt:Audience' é obrigatória."
+    )
+    .Validate(
+        options => options.ExpirationMinutes > 0,
+        "A configuração 'Jwt:ExpirationMinutes' deve ser maior que zero."
+    )
+    .ValidateOnStart();
+
 builder.Services.AddSingleton(_ => NHibernateHelper.CreateSessionFactory(connectionString));
 builder.Services.AddScoped(sp => sp.GetRequiredService<NHibernate.ISessionFactory>().OpenSession());
 builder.Services.AddScoped<VerificarDisponibilidadeService>();
+
+builder.Services.AddScoped<IAutenticacaoUsuarioReader, AutenticacaoUsuarioReader>();
+builder.Services.AddScoped<IVerificadorSenha, VerificadorSenha>();
+builder.Services.AddScoped<IGeradorAccessToken, GeradorAccessToken>();
+builder.Services.AddScoped<LoginHandler>();
 
 builder.Services.AddScoped< IProfissionalAgendaReader, ProfissionalAgendaReader >();
 builder.Services.AddHttpClient<

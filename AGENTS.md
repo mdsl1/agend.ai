@@ -4,7 +4,7 @@
 
 Este arquivo é o guia operacional durável para agentes que trabalham no Agend.AI. Ele consolida a arquitetura, a stack, a configuração, a estrutura do repositório, o estado implementado, as pendências e as regras que não podem ser inferidas apenas pelo código.
 
-O inventário técnico foi revisado em **13 de agosto de 2026** e o estado das rotas de agenda, profissionais agendáveis, procedimentos por profissional, resolução de clientes, disponibilidade e criação de agendamentos no backend, das integrações n8n, do schema, da stack e dos consumidores foi atualizado em **15 de setembro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
+O inventário técnico foi revisado em **13 de agosto de 2026** e o estado das rotas de agenda, profissionais agendáveis, procedimentos por profissional, resolução de clientes, disponibilidade e criação de agendamentos no backend, das integrações n8n, do schema, da stack e dos consumidores foi atualizado em **23 de setembro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
 
 O Agend.AI é um CRM para clínicas com agenda, cadastros e automação de agendamentos. A solução combina uma SPA React, uma API ASP.NET Core, PostgreSQL com NHibernate e workflows n8n integrados, no desenho de destino, ao Telegram e ao Google Calendar.
 
@@ -494,6 +494,7 @@ agend.ai/
 - Localização `pt-BR` e fuso `America/Sao_Paulo`.
 - Tokens visuais teal e componentes acessíveis com foco visível e rótulos.
 - Eventos carregados por período via `GET /api/agenda/{profissionalUuid}`, com adaptação ao contrato do FullCalendar.
+- Cards da grade semanal adaptam a densidade visual à duração real: até 30 minutos exibem somente o paciente, de 31 a 59 minutos exibem paciente e procedimento em tipografia compacta, e a partir de 60 minutos preservam o card completo, sem ampliar artificialmente o intervalo ocupado.
 - O contrato de eventos distingue `agendamento` de `indisponibilidade`, expõe o UUID relacional apenas quando houver agendamento correspondente e aceita cliente/procedimento ausentes em indisponibilidades.
 - Requisições canceláveis e estados visuais de carregamento, erro, tentativa novamente e período vazio.
 - Proxy `/api` do Vite para evitar CORS no desenvolvimento local; o destino conteinerizado é configurado por `API_PROXY_TARGET`.
