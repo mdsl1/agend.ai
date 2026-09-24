@@ -1,7 +1,13 @@
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
+
 using AgendAi.Application.Auth.Ports;
 using AgendAi.Infrastructure.Auth;
 using AgendAi.Application.Auth.Login;
+using AgendAi.API.Infrastructure.Auth;
+using AgendAi.Application.Auth.MeuPerfil;
 
 using AgendAi.Application.Agenda.Services;
 using AgendAi.Application.Agenda.Ports;
@@ -66,6 +72,12 @@ builder.Services
         "A configuração 'Jwt:ExpirationMinutes' deve ser maior que zero."
     )
     .ValidateOnStart();
+var jwtOptions = builder.Configuration
+    .GetSection(JwtOptions.SectionName)
+    .Get<JwtOptions>()
+    ?? throw new InvalidOperationException(
+        "A configuração JWT não foi encontrada."
+    );
 
 builder.Services.AddSingleton(_ => NHibernateHelper.CreateSessionFactory(connectionString));
 builder.Services.AddScoped(sp => sp.GetRequiredService<NHibernate.ISessionFactory>().OpenSession());
@@ -75,6 +87,9 @@ builder.Services.AddScoped<IAutenticacaoUsuarioReader, AutenticacaoUsuarioReader
 builder.Services.AddScoped<IVerificadorSenha, VerificadorSenha>();
 builder.Services.AddScoped<IGeradorAccessToken, GeradorAccessToken>();
 builder.Services.AddScoped<LoginHandler>();
+
+builder.Services.AddScoped<IMeuPerfilReader, MeuPerfilReader>();
+builder.Services.AddScoped<MeuPerfilHandler>();
 
 builder.Services.AddScoped< IProfissionalAgendaReader, ProfissionalAgendaReader >();
 builder.Services.AddHttpClient<
@@ -133,9 +148,44 @@ builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+builder.Services
+    .AddAuthentication( JwtBearerDefaults.AuthenticationScheme )
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+
+                IssuerSigningKey = new SymmetricSecurityKey( Encoding.UTF8.GetBytes(jwtOptions.Secret)),
+
+                ValidateIssuer = true,
+                ValidIssuer = jwtOptions.Issuer,
+
+                ValidateAudience = true,
+                ValidAudience = jwtOptions.Audience,
+
+                ValidateLifetime = true,
+                RequireExpirationTime = true,
+
+                ClockSkew = TimeSpan.FromSeconds(30),
+
+                NameClaimType = JwtRegisteredClaimNames.Sub,
+                RoleClaimType = JwtClaims.Cargo
+            };
+    });
+builder.Services.AddAuthorization();
+
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<IContextUsuarioAtual, ContextUsuarioAtual>();
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
