@@ -26,6 +26,18 @@ public sealed class ApiExceptionHandler : IExceptionHandler
                 er.Codigo
             ),
 
+            NaoAutenticadoException er => (
+                StatusCodes.Status401Unauthorized,
+                "Não autorizado",
+                er.Codigo
+            ),
+
+            AcessoNegadoException er => (
+                StatusCodes.Status403Forbidden,
+                "Acesso negado",
+                er.Codigo
+            ),
+            
             ValidacaoException er => (
                 StatusCodes.Status400BadRequest,
                 "Requisição inválida",

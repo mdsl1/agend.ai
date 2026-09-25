@@ -20,13 +20,8 @@ public sealed class MeController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(
-        typeof(MeuPerfilResponse),
-        StatusCodes.Status200OK
-    )]
-    [ProducesResponseType(
-        StatusCodes.Status401Unauthorized
-    )]
+    [ProducesResponseType( typeof(MeuPerfilResponse), StatusCodes.Status200OK )]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized )]
     public async Task<ActionResult<MeuPerfilResponse>> ObterAsync(
         CancellationToken cancellationToken
     )

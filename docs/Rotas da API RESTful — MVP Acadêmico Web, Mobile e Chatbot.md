@@ -1,6 +1,6 @@
 # Rotas da API RESTful — MVP Acadêmico Web, Mobile e Chatbot
 
-> Última revisão: 15 de setembro de 2026.
+> Última revisão: 25 de setembro de 2026.
 
 Este documento define os contratos HTTP necessários para integrar os três projetos:
 
@@ -12,14 +12,16 @@ Este documento define os contratos HTTP necessários para integrar os três proj
 
 As seguintes rotas já existem na PoC:
 
+- `POST /api/auth/login`;
+- `GET /api/me`;
 - `GET /api/agenda/{profissionalUuid}?inicio={iso}&fim={iso}`;
-- `GET /api/profissionais?clinicaUuid={clinicaUuid}&especialidadeUuid={uuid-opcional}`;
+- `GET /api/profissionais?especialidadeUuid={uuid-opcional}`;
 - `GET /api/profissionais/{profissionalUuid}/procedimentos`;
 - `GET /api/profissionais/{profissionalUuid}/disponibilidade?profissionalProcedimentoUuid={uuid}&inicio={iso}&limite={1-3}`;
-- `POST /api/clientes/resolver?clinicaUuid={clinicaUuid}`;
+- `POST /api/clientes/resolver`;
 - `POST /api/agendamentos`.
 
-Elas ainda não possuem autenticação. Os demais contratos estão planejados e todos devem respeitar o escopo da clínica e o RBAC. Na PoC, a criação já rejeita cliente e associação profissional/procedimento pertencentes a clínicas diferentes.
+`POST /api/auth/login` é pública por definição. Todas as demais rotas implementadas exigem JWT Bearer e derivam do token a clínica, o usuário, o cargo, o indicador administrativo e, quando houver, o vínculo profissional. Os casos de uso aplicam o escopo da clínica e diferenciam acesso próprio de acesso à clínica; os demais contratos deste documento permanecem planejados.
 
 ## Convenções gerais
 
@@ -29,10 +31,20 @@ Elas ainda não possuem autenticação. Os demais contratos estão planejados e 
 - O login retorna somente um access token JWT, com duração sugerida de 2 a 4 horas.
 - O Mobile armazena o token no Expo SecureStore. O Web pode mantê-lo em memória ou `sessionStorage` durante o MVP.
 - O logout é local: o cliente remove o token e o estado da sessão. Não existe rota de logout neste contrato.
-- O chatbot usa uma credencial de serviço exclusiva para o sentido **n8n → API**.
+- Na PoC, o chatbot usa no sentido **n8n → API** um JWT anual emitido para um usuário da clínica com `cargo = Recepcionista` e `isAdmin = true`, armazenado nas Credentials do n8n. Esse token reaproveita o mesmo esquema Bearer dos usuários e não é incluído nos workflows exportados.
 - Nas rotas autenticadas, a clínica é obtida do token. O cliente não envia `idClinica`.
 - O profissional acessa somente os próprios dados. A API deve retornar `403` ao tentar acessar recursos de outro profissional.
-- `isAdmin = true` é a fonte de autoridade administrativa; o campo `cargo` não concede permissão sozinho.
+- `cargo` define as permissões operacionais e `isAdmin = true` acrescenta somente administração da clínica e de usuários. Administração não concede automaticamente acesso operacional às agendas.
+- Na configuração atual, um superusuário que precise acumular operações da recepção e administração usa `cargo = Recepcionista` com `isAdmin = true`.
+- O JWT anual do chatbot é uma simplificação consciente da PoC: não possui revogação individual antes da expiração. Não se deve aumentar globalmente a validade dos tokens humanos; a emissão anual é pontual e o valor padrão deve ser restaurado em seguida.
+- Os controllers atuais usam `[Authorize]` explicitamente. Uma fallback policy global para proteger automaticamente rotas futuras ainda está pendente.
+- O JWT implementado valida assinatura HMAC, emissor, audiência, expiração obrigatória e usa tolerância de relógio de 30 segundos. As claims atuais são `sub`, `jti`, `clinica_uuid`, `cargo`, `is_admin` e `profissional_uuid` opcional.
+
+Permissões operacionais atualmente emitidas por `GET /api/me`:
+
+- profissional vinculado: `agenda:visualizar:propria`, `agendamentos:gerenciar:proprios`, `indisponibilidades:gerenciar:proprias`, `procedimentos:gerenciar:proprios` e `receitas:visualizar:proprias`;
+- recepcionista: `agenda:visualizar:clinica`, `agendamentos:gerenciar:clinica`, `clientes:gerenciar:clinica`, `procedimentos:gerenciar:clinica`, `especialidades:gerenciar:clinica` e `profissionais:gerenciar:clinica`;
+- administrador (`isAdmin = true`): `clinica:gerenciar` e `usuarios:gerenciar:clinica`, somadas às permissões do cargo.
 
 ### Datas, identificadores e exclusões
 
@@ -88,7 +100,7 @@ Códigos usuais: `400` para entrada inválida, `401` para não autenticado, `403
 ### `POST /api/auth/login`
 
 - **Projeto:** Web e Mobile.
-- **Estado/acesso:** planejada; pública.
+- **Estado/acesso:** implementada; pública por `[AllowAnonymous]`.
 - **Descrição:** valida clínica, e-mail e senha, e retorna um access token com o contexto do usuário.
 
 Entrada:
@@ -123,7 +135,7 @@ Credenciais inválidas retornam uma mensagem genérica com `401`, sem revelar qu
 ### `GET /api/me`
 
 - **Projeto:** Web e Mobile.
-- **Estado/acesso:** planejada; usuário autenticado.
+- **Estado/acesso:** implementada; usuário autenticado.
 - **Descrição:** valida o token salvo e recupera o perfil atual, o vínculo com a clínica e o contexto de RBAC. Ao receber `401`, o cliente remove o token e volta ao login.
 
 Entrada:
@@ -150,9 +162,17 @@ Saída `200 OK`:
     "uuid": "20d84992-1f87-42cc-a251-92cac362f41f",
     "nome": "Clínica Vida"
   },
-  "permissoes": ["agenda:propria", "procedimentos:proprios", "receitas:proprias"]
+  "permissoes": [
+    "agenda:visualizar:propria",
+    "agendamentos:gerenciar:proprios",
+    "indisponibilidades:gerenciar:proprias",
+    "procedimentos:gerenciar:proprios",
+    "receitas:visualizar:proprias"
+  ]
 }
 ```
+
+Além de carregar o perfil ativo, o caso de uso compara usuário, clínica, cargo, `isAdmin` e vínculo profissional persistidos com as claims do JWT. Ausência do usuário, clínica inativa ou divergência de contexto resulta em `401`.
 
 ---
 
@@ -161,7 +181,7 @@ Saída `200 OK`:
 ### `GET /api/agenda/{profissionalUuid}`
 
 - **Projeto:** Web e Mobile.
-- **Estado/acesso:** implementada na PoC sem autenticação; deverá aplicar RBAC.
+- **Estado/acesso:** implementada; JWT obrigatório. Profissional acessa somente a própria agenda, enquanto recepcionista acessa as agendas da clínica.
 - **Descrição:** consulta, em uma única resposta, os agendamentos e as indisponibilidades existentes no Google Calendar do profissional.
 
 Entrada:
@@ -202,18 +222,19 @@ Saída `200 OK`:
 }
 ```
 
-O campo `tipo` define o componente visual usado pelo Web e pelo Mobile. Um profissional só pode consultar seu próprio UUID.
+O campo `tipo` define o componente visual usado pelo Web e pelo Mobile. Um profissional só pode consultar seu próprio UUID; uma recepcionista pode consultar qualquer profissional da mesma clínica. Token ausente ou inválido resulta em `401`, e tentativa autenticada fora do escopo resulta em `403` antes da chamada ao n8n.
 
 ### `GET /api/profissionais/{profissionalUuid}/disponibilidade`
 
 - **Projeto:** Chatbot.
-- **Estado/acesso:** implementada na PoC sem autenticação; deverá aceitar somente a identidade de serviço do chatbot.
+- **Estado/acesso:** implementada; JWT obrigatório e escopo do profissional validado. Destinada ao chatbot, que usa o JWT anual da clínica na PoC.
 - **Descrição:** responde se um horário específico está disponível e, quando estiver ocupado, retorna até três alternativas próximas. Considera a duração efetiva do procedimento, as janelas semanais da clínica e os eventos existentes no Google Calendar. Web e Mobile não usam esta rota.
 
 Entrada:
 
 ```http
 GET /api/profissionais/abf43724-5590-4475-a11f-b679e285477d/disponibilidade?profissionalProcedimentoUuid=9528014c-5161-4e5e-a8a1-ebf1c26f7417&inicio=2026-09-03T09:00:00-03:00&limite=3
+Authorization: Bearer <access-token>
 ```
 
 Parâmetros:
@@ -270,6 +291,8 @@ O contrato privado da chamada API → workflow de agenda não é devolvido ao fl
 Falhas esperadas:
 
 - `400 Bad Request`: UUID, início ou limite inválido, ou período fora da janela de atendimento;
+- `401 Unauthorized`: token ausente, inválido ou sem as claims obrigatórias;
+- `403 Forbidden`: usuário autenticado sem acesso ao profissional ou pertencente a outra clínica;
 - `404 Not Found`: associação ativa entre profissional e procedimento não encontrada;
 - `409 Conflict`: duração, agenda externa, janelas ou webhook não configurados;
 - `502 Bad Gateway`: timeout, erro HTTP, JSON inválido ou resposta incoerente do n8n.
@@ -320,13 +343,14 @@ Saída `200 OK`:
 ### `POST /api/agendamentos`
 
 - **Projeto:** Web e Chatbot.
-- **Estado/acesso:** implementada na PoC; ainda sem autenticação.
+- **Estado/acesso:** implementada; JWT obrigatório. Profissional cria somente na própria agenda e recepcionista cria para profissionais da mesma clínica.
 - **Descrição:** revalida o horário, reserva o intervalo no PostgreSQL e cria o evento correspondente no Google Calendar por meio do n8n. A API deriva profissional, procedimento, duração, fim e valor da associação `profissional_procedimentos`.
 
 Entrada:
 
 ```http
 POST /api/agendamentos
+Authorization: Bearer <access-token>
 Idempotency-Key: 8ab27468-482f-46fb-8c4c-8acf90e773a1
 Content-Type: application/json
 ```
@@ -361,15 +385,18 @@ Fluxo confirmado na PoC:
 
 1. O controller exige `Idempotency-Key` e transforma o header e o corpo em comando.
 2. O caso de uso valida a entrada e carrega cliente, associação ativa, profissional, procedimento, clínica, duração, valor, agenda externa e janelas de atendimento.
-3. A chave é pesquisada dentro da clínica. Uma repetição idêntica já concluída retorna novamente `201` com o mesmo UUID, sem consultar disponibilidade nem criar outro evento. A mesma chave com corpo diferente, ainda pendente ou já marcada como falha retorna `409`.
-4. O serviço compartilhado de disponibilidade valida o intervalo e consulta o n8n. A rota não chama internamente outro controller ou handler HTTP.
-5. O agendamento é persistido como `pendente_integracao`; a constraint de sobreposição do banco é a barreira final contra concorrência.
-6. A API solicita ao n8n a criação de um evento com ID determinístico derivado do UUID do agendamento. Há timeout de 10 segundos e, para falhas transitórias, no máximo duas tentativas totais.
-7. Em sucesso, a API registra o ID externo e altera o status para `agendado`. Em falha externa, persiste `falha_integracao` e retorna `502`.
+3. Antes de consultar idempotência, disponibilidade ou integrações, o caso de uso valida o contexto autenticado: profissional somente na própria agenda; recepcionista somente dentro da clínica do token.
+4. A chave é pesquisada dentro da clínica. Uma repetição idêntica já concluída retorna novamente `201` com o mesmo UUID, sem consultar disponibilidade nem criar outro evento. A mesma chave com corpo diferente, ainda pendente ou já marcada como falha retorna `409`.
+5. O serviço compartilhado de disponibilidade valida o intervalo e consulta o n8n. A rota não chama internamente outro controller ou handler HTTP.
+6. O agendamento é persistido como `pendente_integracao`; a constraint de sobreposição do banco é a barreira final contra concorrência.
+7. A API solicita ao n8n a criação de um evento com ID determinístico derivado do UUID do agendamento. Há timeout de 10 segundos e, para falhas transitórias, no máximo duas tentativas totais.
+8. Em sucesso, a API registra o ID externo e altera o status para `agendado`. Em falha externa, persiste `falha_integracao` e retorna `502`.
 
 Falhas esperadas:
 
 - `400`: entrada inválida, chave ausente/inválida ou intervalo fora da janela de atendimento;
+- `401`: token ausente, inválido ou sem as claims obrigatórias;
+- `403`: usuário autenticado sem acesso ao profissional ou pertencente a outra clínica;
 - `404`: cliente ou associação profissional/procedimento inexistente, inativa ou fora do mesmo escopo de clínica;
 - `409`: horário indisponível, configuração ausente, reutilização incompatível da chave, operação pendente ou falha, ou conflito concorrente protegido pelo banco;
 - `502`: timeout, falha HTTP ou resposta inválida do n8n;
@@ -457,7 +484,7 @@ Eventos de agendamento não podem ser removidos por esta rota.
 ### `GET /api/clientes`
 
 - **Projeto:** Web.
-- **Estado/acesso:** planejada; usuário autorizado da clínica.
+- **Estado/acesso:** planejada; é a próxima dependência do modal de novo agendamento no Web.
 - **Descrição:** lista todos os clientes ativos da clínica, ordenados por nome, sem busca e sem paginação.
 
 Entrada:
@@ -481,6 +508,8 @@ Saída `200 OK`:
   ]
 }
 ```
+
+Na PoC, essa listagem alimentará o select de clientes existentes do modal. Inicialmente poderá exigir `clientes:gerenciar:clinica`, concedida à recepção. Se profissionais também precisarem pesquisar clientes para criar agendamentos gerais, deverá ser criada uma permissão separada de leitura, como `clientes:visualizar:clinica`, sem conceder CRUD de clientes.
 
 ### `POST /api/clientes`
 
@@ -546,21 +575,15 @@ Saída `200 OK`:
 ### `POST /api/clientes/resolver`
 
 - **Projeto:** Web e Chatbot.
-- **Estado/acesso:** implementada na PoC sem autenticação; deverá aceitar usuário autorizado ou identidade de serviço e obter a clínica desse contexto.
+- **Estado/acesso:** implementada; JWT obrigatório e permissão `clientes:gerenciar:clinica`.
 - **Descrição:** procura atomicamente um cliente ativo pelo telefone normalizado dentro da clínica. Se não existir, cria; se existir, reutiliza o cadastro e vincula o identificador do Telegram quando permitido.
 
-Entrada atual da PoC:
-
-```http
-POST /api/clientes/resolver?clinicaUuid=20d84992-1f87-42cc-a251-92cac362f41f
-Content-Type: application/json
-```
-
-Entrada desejada:
+Entrada:
 
 ```http
 POST /api/clientes/resolver
-Authorization: Bearer <access-token-ou-token-de-servico>
+Authorization: Bearer <access-token>
+Content-Type: application/json
 ```
 
 ```json
@@ -592,8 +615,10 @@ Regras implementadas:
 - telefone e Telegram que apontem para clientes distintos resultam em `409 Conflict`;
 - clientes em soft delete não são considerados;
 - telefone e Telegram ativos são protegidos por unicidade dentro da clínica, inclusive sob concorrência.
+- a clínica é obtida exclusivamente do JWT; não existe mais `clinicaUuid` na query string ou no command;
+- token ausente/inválido resulta em `401`, e usuário sem `clientes:gerenciar:clinica` resulta em `403`.
 
-Falhas tratadas: `400 Bad Request` para entrada inválida, `404 Not Found` para clínica inexistente ou inativa, `409 Conflict` para identidade divergente ou colisão concorrente e `500 Internal Server Error` para falha inesperada. Os cenários de criação, reutilização por telefone, vínculo e repetição do Telegram, conflitos, validações e concorrência foram testados manualmente.
+Falhas tratadas: `400 Bad Request` para entrada inválida, `401 Unauthorized` para token/contexto inválido ou clínica do token inativa, `403 Forbidden` para falta de permissão, `409 Conflict` para identidade divergente ou colisão concorrente e `500 Internal Server Error` para falha inesperada. Os cenários de criação, reutilização por telefone, vínculo e repetição do Telegram, conflitos, validações e concorrência foram testados manualmente.
 
 ---
 
@@ -602,16 +627,17 @@ Falhas tratadas: `400 Bad Request` para entrada inválida, `404 Not Found` para 
 ### `GET /api/especialidades`
 
 - **Projeto:** Chatbot.
-- **Estado/acesso:** planejada; identidade de serviço do n8n.
+- **Estado/acesso:** planejada; JWT anual do usuário responsável pelo chatbot na clínica.
 - **Descrição:** lista todas as especialidades ativas da clínica para a etapa de seleção do chatbot.
 
 Entrada:
 
 ```http
 GET /api/especialidades
-Authorization: Bearer <token-de-servico>
-X-AgendAi-Clinic-Uuid: 20d84992-1f87-42cc-a251-92cac362f41f
+Authorization: Bearer <access-token>
 ```
+
+A clínica será obtida da claim `clinica_uuid`; o n8n não enviará um identificador de clínica separado.
 
 Saída `200 OK`:
 
@@ -633,20 +659,14 @@ Saída `200 OK`:
 ### `GET /api/profissionais`
 
 - **Projeto:** Web e Chatbot.
-- **Estado/acesso:** implementada na PoC sem autenticação; deverá aceitar usuário autorizado ou identidade de serviço e obter a clínica desse contexto.
+- **Estado/acesso:** implementada; JWT obrigatório e clínica derivada do token.
 - **Descrição:** lista os profissionais agendáveis da clínica que possuem agenda configurada, com filtro opcional por especialidade ativa.
 
-Entrada atual da PoC:
-
-```http
-GET /api/profissionais?clinicaUuid=20d84992-1f87-42cc-a251-92cac362f41f&especialidadeUuid=443445f5-3922-4238-b83e-ef8b083110d2
-```
-
-Entrada desejada:
+Entrada:
 
 ```http
 GET /api/profissionais?especialidadeUuid=443445f5-3922-4238-b83e-ef8b083110d2
-Authorization: Bearer <access-token-ou-token-de-servico>
+Authorization: Bearer <access-token>
 ```
 
 Saída `200 OK`:
@@ -666,18 +686,19 @@ Saída `200 OK`:
 }
 ```
 
-`especialidadeUuid` é opcional. Sem o filtro, a rota retorna todos os profissionais agendáveis da clínica; `especialidade` pode ser `null` quando o profissional não possuir uma especialidade ativa. O ID externo do Google Calendar é usado apenas como filtro interno de elegibilidade e nunca é exposto. Clínica ou especialidade sem profissionais correspondentes resulta em `200 OK` com coleção vazia; UUIDs vazios resultam em `400 Bad Request`.
+`especialidadeUuid` é opcional. Uma recepcionista com `agenda:visualizar:clinica` recebe todos os profissionais agendáveis da clínica; um profissional com `agenda:visualizar:propria` recebe somente a si mesmo. `especialidade` pode ser `null` quando o profissional não possuir uma especialidade ativa. O ID externo do Google Calendar é usado apenas como filtro interno de elegibilidade e nunca é exposto. Ausência de correspondências resulta em `200 OK` com coleção vazia; UUID vazio de especialidade resulta em `400`, token ausente ou inválido em `401` e falta de permissão em `403`.
 
 ### `GET /api/profissionais/{profissionalUuid}/procedimentos`
 
 - **Projeto:** Web e Chatbot.
-- **Estado/acesso:** implementada na PoC sem autenticação; deverá aceitar usuário autorizado ou identidade de serviço e validar o escopo da clínica.
+- **Estado/acesso:** implementada; JWT obrigatório. Profissional acessa os próprios vínculos e recepcionista acessa profissionais da mesma clínica.
 - **Descrição:** lista somente os procedimentos oferecidos pelo profissional, com preço e duração efetivos.
 
 Entrada:
 
 ```http
 GET /api/profissionais/abf43724-5590-4475-a11f-b679e285477d/procedimentos
+Authorization: Bearer <access-token>
 ```
 
 Saída `200 OK`:
@@ -696,7 +717,7 @@ Saída `200 OK`:
 }
 ```
 
-O `profissionalProcedimentoUuid` deve ser enviado ao consultar disponibilidade e criar um agendamento, garantindo que preço e duração pertencem àquele profissional. Um profissional existente sem associações ativas retorna `200 OK` com `procedimentos: []`; profissional inexistente, clínica inativa ou usuário inativo retorna `404 Not Found`. `Guid.Empty` retorna `400 Bad Request`, enquanto um segmento que não seja um GUID não satisfaz a restrição da rota e recebe o `404` do roteamento.
+O `profissionalProcedimentoUuid` deve ser enviado ao consultar disponibilidade e criar um agendamento, garantindo que preço e duração pertencem àquele profissional. Um profissional existente sem associações ativas retorna `200 OK` com `procedimentos: []`; profissional inexistente, clínica inativa ou usuário inativo retorna `404 Not Found`. `Guid.Empty` retorna `400 Bad Request`, enquanto um segmento que não seja um GUID não satisfaz a restrição da rota e recebe o `404` do roteamento. Token ausente ou inválido retorna `401`; acesso a profissional de outra clínica ou fora do escopo próprio retorna `403`.
 
 Somente associações e procedimentos sem soft delete são retornados, em ordem alfabética pelo nome. IDs internos, ID do Google Calendar e dados privados da clínica não integram a resposta. Foram testados manualmente profissional com procedimentos, profissional existente sem vínculos e UUID inválido.
 
@@ -936,10 +957,10 @@ Erros previstos: `400` para data inválida, `401` para token ausente ou inválid
 | Login e sessão | `POST /api/auth/login`, `GET /api/me` |
 | Agenda da clínica | `GET /api/profissionais`, `GET /api/agenda/{profissionalUuid}` |
 | Detalhes e status do atendimento | `GET /api/agendamentos/{agendamentoUuid}`, `PATCH /api/agendamentos/{agendamentoUuid}/status` |
-| Novo agendamento | `POST /api/clientes/resolver`, `GET /api/profissionais`, `GET /api/profissionais/{profissionalUuid}/procedimentos`, `POST /api/agendamentos` |
+| Novo agendamento | `GET /api/clientes`, `POST /api/clientes/resolver`, `GET /api/profissionais`, `GET /api/profissionais/{profissionalUuid}/procedimentos`, `POST /api/agendamentos` |
 | Ficha do cliente | `GET /api/clientes/{clienteUuid}` |
 
-No Web, atendentes e profissionais iniciam o novo agendamento selecionando diretamente um intervalo livre visível no calendário. A interface não chama a rota de disponibilidade. Como a agenda exibida é apenas uma fotografia, `POST /api/agendamentos` deve revalidar o intervalo no backend antes de confirmar a gravação, protegendo o fluxo contra atualizações concorrentes.
+No Web, atendentes e profissionais iniciam o novo agendamento selecionando diretamente um intervalo livre visível no calendário. A interface não chama a rota de disponibilidade. `GET /api/clientes`, ainda planejada, alimentará o select de clientes existentes; `POST /api/clientes/resolver` poderá criar ou reaproveitar um cliente por telefone quando a permissão do usuário permitir. Como a agenda exibida é apenas uma fotografia, `POST /api/agendamentos` revalida o intervalo no backend antes de confirmar a gravação, protegendo o fluxo contra atualizações concorrentes. O frontend gera uma `Idempotency-Key` aleatória por intenção e conserva a mesma chave apenas nas retentativas daquela confirmação.
 
 ### Mobile — Agend.AI Profissional
 
@@ -967,8 +988,8 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 
 ## 7. Dependências antes da implementação
 
-1. **Autenticação:** adicionar JWT Bearer à API, validar assinatura, emissor, público e expiração, e armazenar a chave somente em variável de ambiente.
-2. **Senha:** gerar e validar hashes seguros; nunca armazenar ou registrar a senha original.
+1. **Autenticação:** JWT Bearer, validação de assinatura, emissor, público e expiração já estão implementados. O Web ainda precisa implementar a tela de login, armazenamento de sessão, envio do header Bearer, restauração por `GET /api/me` e tratamento de `401`/`403`. Uma fallback policy global para proteger novas rotas por padrão permanece pendente.
+2. **Senha:** hashing e verificação estão implementados com `PasswordHasher`; nunca armazenar ou registrar a senha original.
 3. **Identificação da clínica no login:** o e-mail é único apenas dentro de uma clínica. O `clinicaUuid` deve vir de configuração, convite ou informação conhecida pela interface.
 4. **Dados iniciais:** clínica, usuários, horários de funcionamento, especialidades e catálogo de procedimentos precisam existir previamente no ambiente acadêmico.
 5. **Clientes e Telegram:** `clientes.id_telegram` aceita `NULL` no schema, na entidade e no mapping. A rota de resolução mantém o campo opcional e índices parciais únicos impedem que telefone ou Telegram ativos sejam compartilhados por clientes da mesma clínica.
@@ -983,8 +1004,10 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 ## Resumo quantitativo
 
 - **22 contratos HTTP**;
-- **6 rotas existentes que precisam receber autenticação e ajustes de escopo**;
-- **16 rotas planejadas**;
-- nenhuma listagem com busca ou paginação.
+- **8 rotas implementadas**, incluindo login e perfil;
+- **14 rotas planejadas**;
+- as oito rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
+- nenhuma listagem com busca ou paginação;
+- `GET /api/clientes` é a próxima rota necessária para o select de clientes do modal Web.
 
 As rotas estão agrupadas por domínio para que controllers, handlers, validações e modelos possam ser reutilizados sem misturar responsabilidades.

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
+using AgendAi.Application.Auth.Services;
 using AgendAi.Application.Auth.Ports;
 using AgendAi.Infrastructure.Auth;
 using AgendAi.Application.Auth.Login;
@@ -82,6 +83,7 @@ var jwtOptions = builder.Configuration
 builder.Services.AddSingleton(_ => NHibernateHelper.CreateSessionFactory(connectionString));
 builder.Services.AddScoped(sp => sp.GetRequiredService<NHibernate.ISessionFactory>().OpenSession());
 builder.Services.AddScoped<VerificarDisponibilidadeService>();
+builder.Services.AddScoped<AutorizacaoService>();
 
 builder.Services.AddScoped<IAutenticacaoUsuarioReader, AutenticacaoUsuarioReader>();
 builder.Services.AddScoped<IVerificadorSenha, VerificadorSenha>();

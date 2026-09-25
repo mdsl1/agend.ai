@@ -2,10 +2,11 @@ namespace AgendAi.API.Controllers;
 
 using AgendAi.API.Contracts.Disponibilidade;
 using AgendAi.Application.Agenda.ConsultarDisponibilidade;
-using FluentNHibernate.Utils;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
+[Authorize]
 [Route("/api/profissionais/{profissionalUuid:guid}/disponibilidade")]
 public sealed class DisponibilidadeController : ControllerBase
 {
@@ -17,26 +18,13 @@ public sealed class DisponibilidadeController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(
-        typeof(ConsultarDisponibilidadeResponse),
-        StatusCodes.Status200OK
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status400BadRequest
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status404NotFound
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status409Conflict
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status502BadGateway
-    )]
+    [ProducesResponseType( typeof(ConsultarDisponibilidadeResponse), StatusCodes.Status200OK )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status400BadRequest )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status404NotFound )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status409Conflict )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status502BadGateway )]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
     public async Task<ActionResult<ConsultarDisponibilidadeResponse>> ConsultarAsync(
         [FromRoute] Guid profissionalUuid,
         [FromQuery] ConsultarDisponibilidadeRequest req,

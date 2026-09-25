@@ -1,6 +1,9 @@
 namespace AgendAi.Application.Agenda.ConsultarAgenda;
 using AgendAi.Application.Agenda.Ports;
 using AgendAi.Application.Common.Exceptions;
+using AgendAi.Application.Auth.Permissions;
+using AgendAi.Application.Auth.Ports;
+using AgendAi.Application.Auth.Services;
 
 public sealed class ConsultarAgendaHandler
 {
@@ -8,16 +11,22 @@ public sealed class ConsultarAgendaHandler
     private readonly IProfissionalAgendaReader _profissionalAgendaReader;
     private readonly IAgendaExternaGateway _agendaExternaGateway;
     private readonly IAgendamentoAgendaReader _agendamentoAgendaReader;
+    private readonly IContextUsuarioAtual _context;
+    private readonly AutorizacaoService _autorizacaoService;
 
     public ConsultarAgendaHandler (
         IProfissionalAgendaReader profissionalAgendaReader,
         IAgendaExternaGateway agendaExternaGateway,
-        IAgendamentoAgendaReader agendamentoAgendaReader
+        IAgendamentoAgendaReader agendamentoAgendaReader,
+        IContextUsuarioAtual context,
+        AutorizacaoService autorizacaoService
     )
     {
         _profissionalAgendaReader = profissionalAgendaReader;
         _agendaExternaGateway = agendaExternaGateway;
         _agendamentoAgendaReader = agendamentoAgendaReader;
+        _context = context;
+        _autorizacaoService = autorizacaoService;
     }
 
     public async Task<ConsultarAgendaResult> HandleAsync(
@@ -28,12 +37,22 @@ public sealed class ConsultarAgendaHandler
         ArgumentNullException.ThrowIfNull(query);
         ValidarQuery(query);
 
+        var usuarioAtual = _context.Obter();
+
         var dadosProfissional = 
             await _profissionalAgendaReader.ObterPorUuidAsync(query.ProfissionalUuid, cancellationToken) 
             ?? throw new RecursoNaoEncontradoException(
                 codigo: "profissional_nao_encontrado",
                 mensagem: "O profissional informado não foi encontrado"
             );
+
+        _autorizacaoService.ExigirAcessoAoProfissional(
+            usuario: usuarioAtual,
+            clinicaUuid: dadosProfissional.ClinicaUuid,
+            profissionalUuid: dadosProfissional.ProfissionalUuid,
+            permissaoPropria: PermissoesUsuario.AgendaPropriaVisualizar,
+            permissaoClinica: PermissoesUsuario.AgendaClinicaVisualizar
+        );
 
         var idAgendaExterna = dadosProfissional.IdAgendaExterna;
         if(string.IsNullOrWhiteSpace(idAgendaExterna))

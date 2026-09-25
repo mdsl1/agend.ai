@@ -20,17 +20,21 @@ public sealed class ProcedimentosProfissionalReader : IProcedimentosProfissional
         CancellationToken cancellationToken
     )
     {
-        var profissionalUuidEncontrado = await _session
+        var profissionalEncontrado = await _session
             .Query<Profissional>()
             .Where(profissional =>
                 profissional.Uuid == profissionalUuid
+                && profissional.DeletedAt == null
                 && profissional.Clinica.DeletedAt == null
                 && profissional.Usuario.DeletedAt == null    
             )
-            .Select(profissional => (Guid?)profissional.Uuid)
-            .SingleOrDefaultAsync(cancellationToken);
+            .Select(profissional => new
+            {
+                ProfissionalUuid = profissional.Uuid,
+                ClinicaUuid = profissional.Clinica.Uuid
+            }).SingleOrDefaultAsync(cancellationToken);
 
-        if (!profissionalUuidEncontrado.HasValue)
+        if (profissionalEncontrado is null)
         {
             return null;
         }
@@ -39,6 +43,7 @@ public sealed class ProcedimentosProfissionalReader : IProcedimentosProfissional
             .Query<ProfissionalProcedimento>()
             .Where(vinculo => 
                 vinculo.Profissional.Uuid == profissionalUuid
+                && vinculo.Profissional.DeletedAt == null
                 && vinculo.DeletedAt == null
                 && vinculo.Procedimento.DeletedAt == null
                 && vinculo.Clinica.DeletedAt == null
@@ -54,7 +59,8 @@ public sealed class ProcedimentosProfissionalReader : IProcedimentosProfissional
             )).ToListAsync(cancellationToken);
 
         return new DadosListagemProcedimentosProfissional(
-            ProfissionalUuid: profissionalUuidEncontrado.Value,
+            ProfissionalUuid: profissionalEncontrado.ProfissionalUuid,
+            ClinicaUuid: profissionalEncontrado.ClinicaUuid,
             Procedimentos: procedimentos
         );
     }

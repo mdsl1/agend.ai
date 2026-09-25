@@ -1,10 +1,12 @@
 using AgendAi.API.Contracts.Agenda;
 using AgendAi.Application.Agenda.ConsultarAgenda;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AgendAi.API.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/agenda")]
 public sealed class AgendaController : ControllerBase
 {
@@ -23,6 +25,8 @@ public sealed class AgendaController : ControllerBase
     [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status404NotFound )]
     [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status409Conflict )]
     [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status502BadGateway )]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
     public async Task<ActionResult<ConsultarAgendaResponse>> ConsultarAsync(
         [FromRoute] Guid profissionalUuid,
         [FromQuery] ConsultarAgendaRequest req,

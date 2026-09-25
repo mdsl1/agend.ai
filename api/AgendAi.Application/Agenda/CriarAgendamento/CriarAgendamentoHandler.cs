@@ -5,6 +5,9 @@ using AgendAi.Application.Common.Exceptions;
 using AgendAi.Application.Agenda.Services;
 using AgendAi.Domain.Agendamentos;
 using AgendAi.Application.Agenda.Models;
+using AgendAi.Application.Auth.Permissions;
+using AgendAi.Application.Auth.Ports;
+using AgendAi.Application.Auth.Services;
 
 public sealed class CriarAgendamentoHandler
 {
@@ -14,18 +17,24 @@ public sealed class CriarAgendamentoHandler
     private readonly IAgendamentoWriter _agendamentoWriter;
     private readonly ICriacaoAgendamentoExternoGateway _criacaoAgendamentoExternoGateway;
     private readonly VerificarDisponibilidadeService _verificarDisponibilidadeService;
+    private readonly IContextUsuarioAtual _context;
+    private readonly AutorizacaoService _autorizacaoService;
 
     public CriarAgendamentoHandler(
         ICriacaoAgendamentoReader criacaoAgendamentoReader,
         IAgendamentoWriter agendamentoWriter,
         ICriacaoAgendamentoExternoGateway criacaoAgendamentoExternoGateway,
-        VerificarDisponibilidadeService verificarDisponibilidadeService
+        VerificarDisponibilidadeService verificarDisponibilidadeService,
+        IContextUsuarioAtual context,
+        AutorizacaoService autorizacaoService
     )
     {
         _criacaoAgendamentoReader = criacaoAgendamentoReader;
         _agendamentoWriter = agendamentoWriter;
         _criacaoAgendamentoExternoGateway = criacaoAgendamentoExternoGateway;
         _verificarDisponibilidadeService = verificarDisponibilidadeService;
+        _context = context;
+        _autorizacaoService = autorizacaoService;
     }
 
     public async Task<CriarAgendamentoResult> HandleAsync(
@@ -37,6 +46,8 @@ public sealed class CriarAgendamentoHandler
 
         ValidarCommand(command);
 
+        var usuarioAtual = _context.Obter();
+
         var dados = await _criacaoAgendamentoReader.ObterAsync(
             command.ClienteUuid,
             command.ProfissionalProcedimentoUuid,
@@ -44,6 +55,14 @@ public sealed class CriarAgendamentoHandler
         ) ?? throw new RecursoNaoEncontradoException(
             codigo: "dados_criacao_agendamento_nao_encontrados",
             mensagem: "O cliente ou a associação entre profissional e procedimento não foi encontrada."
+        );
+
+        _autorizacaoService.ExigirAcessoAoProfissional(
+            usuario: usuarioAtual,
+            clinicaUuid: dados.ProfissionalProcedimento.Clinica.Uuid,
+            profissionalUuid: dados.ProfissionalProcedimento.Profissional.Uuid,
+            permissaoPropria: PermissoesUsuario.AgendamentosPropriosGerenciar,
+            permissaoClinica: PermissoesUsuario.AgendamentosClinicaGerenciar
         );
 
         var idempotencyKey = command.IdempotencyKey.Trim();

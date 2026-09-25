@@ -4,6 +4,9 @@ using AgendAi.Application.Agenda.Models;
 using AgendAi.Application.Agenda.Ports;
 using AgendAi.Application.Common.Exceptions;
 using AgendAi.Application.Agenda.Services;
+using AgendAi.Application.Auth.Permissions;
+using AgendAi.Application.Auth.Ports;
+using AgendAi.Application.Auth.Services;
 
 public sealed class ConsultarDisponibilidadeHandler
 {
@@ -15,14 +18,20 @@ public sealed class ConsultarDisponibilidadeHandler
 
     private readonly IDisponibilidadeReader _disponibilidadeReader;
     private readonly VerificarDisponibilidadeService _verificarDisponibilidadeService;
+    private readonly IContextUsuarioAtual _context;
+    private readonly AutorizacaoService _autorizacaoService;
     
     public ConsultarDisponibilidadeHandler(
         IDisponibilidadeReader disponibilidadeReader,
-        VerificarDisponibilidadeService verificarDisponibilidadeService
+        VerificarDisponibilidadeService verificarDisponibilidadeService,
+        IContextUsuarioAtual context,
+        AutorizacaoService autorizacaoService
     )
     {
         _disponibilidadeReader = disponibilidadeReader;
         _verificarDisponibilidadeService = verificarDisponibilidadeService;
+        _context = context;
+        _autorizacaoService = autorizacaoService;
     }
 
     public async Task<ConsultarDisponibilidadeResult> HandleAsync(
@@ -34,6 +43,8 @@ public sealed class ConsultarDisponibilidadeHandler
 
         ValidarQuery(query);
 
+        var usuarioAtual = _context.Obter();
+
         var dados = await _disponibilidadeReader.ObterAsync(
             query.ProfissionalUuid,
             query.ProfissionalProcedimentoUuid,
@@ -41,6 +52,14 @@ public sealed class ConsultarDisponibilidadeHandler
         ) ?? throw new RecursoNaoEncontradoException(
             codigo: "profissional_procedimento_nao_encontrado",
             mensagem: "O procedimento informado não está disponivel para este profissional."
+        );
+
+        _autorizacaoService.ExigirAcessoAoProfissional(
+            usuario: usuarioAtual,
+            clinicaUuid: dados.ClinicaUuid,
+            profissionalUuid: dados.ProfissionalUuid,
+            permissaoPropria: PermissoesUsuario.AgendaPropriaVisualizar,
+            permissaoClinica: PermissoesUsuario.AgendaClinicaVisualizar
         );
 
         var resultExterno = await _verificarDisponibilidadeService.VerificarAsync(

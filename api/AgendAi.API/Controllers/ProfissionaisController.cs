@@ -4,8 +4,10 @@ using AgendAi.API.Contracts.Profissionais;
 using AgendAi.Application.Profissionais.ListarProcedimentosProfissional;
 using AgendAi.Application.Profissionais.ListarProfissionais;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
+[Authorize]
 [Route("api/profissionais")]
 public sealed class ProfissionaisController : ControllerBase
 {
@@ -22,23 +24,16 @@ public sealed class ProfissionaisController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(
-        typeof(ListarProfissionaisResponse),
-        StatusCodes.Status200OK
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status400BadRequest
-    )]
+    [ProducesResponseType( typeof(ListarProfissionaisResponse), StatusCodes.Status200OK )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status400BadRequest )]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
     public async Task<ActionResult<ListarProfissionaisResponse>> ListarAsync(
         [FromQuery] ListarProfissionaisRequest req,
         CancellationToken cancellationToken
     )
     {
-        var query = new ListarProfissionaisQuery(
-            ClinicaUuid: req.ClinicaUuid,
-            EspecialidadeUuid: req.EspecialidadeUuid
-        );
+        var query = new ListarProfissionaisQuery( EspecialidadeUuid: req.EspecialidadeUuid );
 
         var result = await _listarProfissionaisHandler.HandleAsync(
             query,
@@ -63,18 +58,11 @@ public sealed class ProfissionaisController : ControllerBase
     }
 
     [HttpGet("{profissionalUuid:guid}/procedimentos")]
-    [ProducesResponseType(
-        typeof(ListarProcedimentosProfissionalResponse),
-        StatusCodes.Status200OK
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status400BadRequest
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status404NotFound
-    )]
+    [ProducesResponseType( typeof(ListarProcedimentosProfissionalResponse), StatusCodes.Status200OK )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status400BadRequest )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status404NotFound )]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
     public async Task<ActionResult<ListarProcedimentosProfissionalResponse>> ListarProcedimentosAsync(
         [FromRoute] Guid profissionalUuid,
         CancellationToken cancellationToken

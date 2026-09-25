@@ -3,8 +3,10 @@ namespace AgendAi.API.Controllers;
 using AgendAi.API.Contracts.Clientes;
 using AgendAi.Application.Clientes.ResolverCliente;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
+[Authorize]
 [Route("api/clientes")]
 public sealed class ClientesController : ControllerBase
 {
@@ -16,34 +18,19 @@ public sealed class ClientesController : ControllerBase
     }
 
     [HttpPost("resolver")]
-    [ProducesResponseType(
-        typeof(ResolverClienteResponse),
-        StatusCodes.Status200OK
-    )]
-    [ProducesResponseType(
-        typeof(ResolverClienteResponse),
-        StatusCodes.Status201Created
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status400BadRequest
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status404NotFound
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status409Conflict
-    )]
+    [ProducesResponseType( typeof(ResolverClienteResponse), StatusCodes.Status200OK )]
+    [ProducesResponseType( typeof(ResolverClienteResponse), StatusCodes.Status201Created )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status400BadRequest )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status404NotFound )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status409Conflict )]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
     public async Task<ActionResult<ResolverClienteResponse>> ResolverAsync(
-        [FromQuery] Guid clinicaUuid,
         [FromBody] ResolverClienteRequest req,
         CancellationToken cancellationToken
     )
     {
         var command = new ResolverClienteCommand(
-            ClinicaUuid: clinicaUuid,
             Nome: req.Nome,
             Telefone: req.Telefone,
             TelegramUserId: req.TelegramUserId

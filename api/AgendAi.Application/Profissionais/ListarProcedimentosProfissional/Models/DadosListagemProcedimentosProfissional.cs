@@ -2,5 +2,6 @@ namespace AgendAi.Application.Profissionais.ListarProcedimentosProfissional.Mode
 
 public sealed record DadosListagemProcedimentosProfissional(
     Guid ProfissionalUuid,
+    Guid ClinicaUuid,
     IReadOnlyCollection<DadosProcedimentoProfissional> Procedimentos
 );

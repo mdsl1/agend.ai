@@ -2,13 +2,24 @@ namespace AgendAi.Application.Profissionais.ListarProfissionais;
 
 using AgendAi.Application.Profissionais.Ports;
 using AgendAi.Application.Common.Exceptions;
+using AgendAi.Application.Auth.Permissions;
+using AgendAi.Application.Auth.Ports;
+using AgendAi.Application.Auth.Services;
 
 public sealed class ListarProfissionaisHandler {
     private readonly IProfissionaisReader _profissionaisReader;
+    private readonly IContextUsuarioAtual _context;
+    private readonly AutorizacaoService _autorizacaoService;
 
-    public ListarProfissionaisHandler(IProfissionaisReader profissionaisReader)
+    public ListarProfissionaisHandler(
+        IProfissionaisReader profissionaisReader,
+        IContextUsuarioAtual context,
+        AutorizacaoService autorizacaoService
+    )
     {
         _profissionaisReader = profissionaisReader;
+        _context = context;
+        _autorizacaoService = autorizacaoService;
     }
 
     public async Task<ListarProfissionaisResult> HandleAsync(
@@ -20,9 +31,25 @@ public sealed class ListarProfissionaisHandler {
 
         ValidarQuery(query);
 
+        var usuarioAtual = _context.Obter();
+
+        var podeListarClinica = _autorizacaoService.PossuiPermissao( usuarioAtual, PermissoesUsuario.AgendaClinicaVisualizar );
+
+        var podeListarProprio = 
+            usuarioAtual.ProfissionalUuid.HasValue
+            && _autorizacaoService.PossuiPermissao( usuarioAtual, PermissoesUsuario.AgendaPropriaVisualizar );
+
+        if (!podeListarClinica && !podeListarProprio)
+        {
+            throw new AcessoNegadoException();
+        }
+
+        Guid? profissionalUuidFiltro = podeListarClinica ? null : usuarioAtual.ProfissionalUuid;
+
         var dadosProfissionais = await _profissionaisReader.ListarAsync(
-            query.ClinicaUuid,
+            usuarioAtual.ClinicaUuid,
             query.EspecialidadeUuid,
+            profissionalUuidFiltro,
             cancellationToken
         );
 
@@ -45,14 +72,6 @@ public sealed class ListarProfissionaisHandler {
 
     private static void ValidarQuery(ListarProfissionaisQuery query)
     {
-        if(query.ClinicaUuid ==Guid.Empty)
-        {
-            throw new ValidacaoException(
-                codigo: "clinica_uuid_invalido",
-                mensagem: "O UUID da clínica é obrigatório."
-            );
-        }
-
         if (query.EspecialidadeUuid.HasValue && query.EspecialidadeUuid.Value == Guid.Empty)
         {
             throw new ValidacaoException(

@@ -19,12 +19,14 @@ public sealed class ProfissionaisReader : IProfissionaisReader
     public async Task<IReadOnlyCollection<DadosProfissionalAgendavel>> ListarAsync (
         Guid clinicaUuid,
         Guid? especialidadeUuid,
+        Guid? profissionalUuid,
         CancellationToken cancellationToken
     )
     {
         var query = _session.Query<Profissional>()
             .Where(profissional => 
                 profissional.Clinica.Uuid == clinicaUuid
+                && profissional.DeletedAt == null
                 && profissional.Clinica.DeletedAt == null
                 && profissional.Usuario.DeletedAt == null
                 && profissional.IdGoogleCalendar != null 
@@ -41,6 +43,11 @@ public sealed class ProfissionaisReader : IProfissionaisReader
                 profissional.Especialidade != null
                 && profissional.Especialidade.Uuid == especialidadeUuid.Value
             );
+        }
+
+        if (profissionalUuid.HasValue)
+        {
+            query = query.Where(profissional => profissional.Uuid == profissionalUuid.Value);
         }
 
         return await query

@@ -3,6 +3,9 @@ namespace AgendAi.Application.Clientes.ResolverCliente;
 using AgendAi.Application.Clientes.Ports;
 using AgendAi.Application.Common.Exceptions;
 using AgendAi.Domain.Clientes;
+using AgendAi.Application.Auth.Permissions;
+using AgendAi.Application.Auth.Ports;
+using AgendAi.Application.Auth.Services;
 
 public sealed class ResolverClienteHandler
 {
@@ -13,14 +16,20 @@ public sealed class ResolverClienteHandler
 
     private readonly IResolucaoClienteReader _resolucaoClienteReader;
     private readonly IClienteWriter _clienteWriter;
+    private readonly IContextUsuarioAtual _context;
+    private readonly AutorizacaoService _autorizacaoService;
 
     public ResolverClienteHandler(
         IResolucaoClienteReader resolucaoClienteReader,
-        IClienteWriter clienteWriter
+        IClienteWriter clienteWriter,
+        IContextUsuarioAtual context,
+        AutorizacaoService autorizacaoService
     )
     {
         _resolucaoClienteReader = resolucaoClienteReader;
         _clienteWriter = clienteWriter;
+        _context = context;
+        _autorizacaoService = autorizacaoService;
     }
 
     public async Task<ResolverClienteResult> HandleAsync(
@@ -29,6 +38,12 @@ public sealed class ResolverClienteHandler
     )
     {
         ArgumentNullException.ThrowIfNull(command);
+
+        var usuarioAtual = _context.Obter();
+
+        _autorizacaoService.ExigirPermissao(
+            usuarioAtual, PermissoesUsuario.ClientesClinicaGerenciar
+        );
 
         ValidarCommand(command);
 
@@ -42,14 +57,11 @@ public sealed class ResolverClienteHandler
         );
 
         var dados = await _resolucaoClienteReader.ObterAsync(
-            command.ClinicaUuid,
+            usuarioAtual.ClinicaUuid,
             telefone,
             telegramUserId,
             cancellationToken
-        ) ?? throw new RecursoNaoEncontradoException(
-            codigo: "clinica_nao_encontrada",
-            mensagem: "A clínica informada não foi encontrada."
-        );
+        ) ?? throw new NaoAutenticadoException();
 
         if (dados.ClientePorTelefone is not null)
         {
@@ -114,14 +126,6 @@ public sealed class ResolverClienteHandler
 
     private static void ValidarCommand(ResolverClienteCommand command)
     {
-        if (command.ClinicaUuid == Guid.Empty)
-        {
-            throw new ValidacaoException(
-                codigo: "clinica_uuid_invalido",
-                mensagem: "O UUID da clínica é obrigatório."
-            );
-        }
-
         if (string.IsNullOrWhiteSpace(command.Nome))
         {
             throw new ValidacaoException(

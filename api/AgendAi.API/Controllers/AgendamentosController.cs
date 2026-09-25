@@ -3,8 +3,10 @@ namespace AgendAi.API.Controllers;
 using AgendAi.API.Contracts.Agendamentos;
 using AgendAi.Application.Agenda.CriarAgendamento;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
+[Authorize]
 [Route("api/agendamentos")]
 public sealed class AgendamentosController : ControllerBase
 {
@@ -16,26 +18,13 @@ public sealed class AgendamentosController : ControllerBase
     }
 
     [HttpPost]
-    [ProducesResponseType(
-        typeof(CriarAgendamentoResponse),
-        StatusCodes.Status201Created
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status400BadRequest
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status404NotFound
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status409Conflict
-    )]
-    [ProducesResponseType(
-        typeof(ProblemDetails),
-        StatusCodes.Status502BadGateway
-    )]
+    [ProducesResponseType( typeof(CriarAgendamentoResponse), StatusCodes.Status201Created )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status400BadRequest )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status404NotFound )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status409Conflict )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status502BadGateway )]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
     public async Task<ActionResult<CriarAgendamentoResponse>> CriarAsync(
         [FromBody] CriarAgendamentoRequest req,
         [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,

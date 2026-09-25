@@ -7,6 +7,7 @@ public interface IProfissionaisReader
     Task<IReadOnlyCollection<DadosProfissionalAgendavel>> ListarAsync(
         Guid clinicaUuid,
         Guid? especialidadeUuid,
+        Guid? profissionalUuid,
         CancellationToken cancellationToken
     );
 }
