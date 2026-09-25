@@ -20,9 +20,16 @@ const navigationItems = [
 type AppSidebarProps = {
   isOpen: boolean
   onToggle: () => void
+  userName: string
+  userRole: string
 }
 
-export function AppSidebar({ isOpen, onToggle }: AppSidebarProps) {
+export function AppSidebar({
+  isOpen,
+  onToggle,
+  userName,
+  userRole,
+}: AppSidebarProps) {
   const toggleLabel = isOpen
     ? 'Recolher barra lateral'
     : 'Expandir barra lateral'
@@ -75,9 +82,9 @@ export function AppSidebar({ isOpen, onToggle }: AppSidebarProps) {
         {isOpen ? (
           <div className="min-w-0">
             <p className="truncate text-[13px] font-semibold text-agend-ink">
-              Marina Silva
+              {userName}
             </p>
-            <p className="text-xs text-agend-muted">Atendente</p>
+            <p className="truncate text-xs text-agend-muted">{userRole}</p>
           </div>
         ) : null}
       </div>

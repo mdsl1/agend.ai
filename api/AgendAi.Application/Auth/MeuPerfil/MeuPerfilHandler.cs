@@ -55,7 +55,8 @@ public sealed class MeuPerfilHandler
             Especialidade: dados.Especialidade,
             Clinica: new ClinicaMeuPerfilResult(
                 Uuid: dados.ClinicaUuid,
-                Nome: dados.ClinicaNome
+                Nome: dados.ClinicaNome,
+                TipoClinica: dados.TipoClinica
             ),
             Permissoes: permissoes
         );

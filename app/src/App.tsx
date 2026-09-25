@@ -1,33 +1,68 @@
-import { useState } from 'react'
+import { LoaderCircle } from 'lucide-react'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'sonner'
-import { AppSidebar } from './components/AppSidebar'
-import { Header } from './components/Header'
-import { WeeklyAgenda } from './components/WeeklyAgenda'
+import { useAuth } from './features/auth/useAuth'
+import { Agenda } from './pages/Agenda'
+import { Login } from './pages/Login'
+
+function SessionLoading() {
+  return (
+    <main
+      className="grid min-h-screen place-items-center bg-agend-canvas text-agend-muted"
+      aria-busy="true"
+      aria-label="Validando sessão"
+    >
+      <div className="flex items-center gap-3 text-sm font-medium">
+        <LoaderCircle
+          aria-hidden="true"
+          className="animate-spin text-agend-brand-500"
+          size={20}
+        />
+        Validando sua sessão...
+      </div>
+    </main>
+  )
+}
 
 function App() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() =>
-    window.matchMedia('(min-width: 1024px)').matches,
-  )
+  const { status } = useAuth()
+
+  if (status === 'loading') {
+    return (
+      <>
+        <SessionLoading />
+        <Toaster position="top-right" richColors closeButton />
+      </>
+    )
+  }
+
+  const isAuthenticated = status === 'authenticated'
 
   return (
-    <div className="flex min-h-screen min-w-0 overflow-hidden bg-agend-canvas text-agend-ink">
-      <AppSidebar
-        isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen((isOpen) => !isOpen)}
-      />
-
-      <div className="flex h-screen min-w-0 flex-1 flex-col">
-        <Header />
-
-        <main className="min-h-0 flex-1 overflow-auto px-6 py-4 sm:py-6 lg:px-8 2xl:px-10">
-          <div className="flex min-h-full w-full min-w-0 flex-col gap-6">
-            <WeeklyAgenda />
-          </div>
-        </main>
-      </div>
+    <>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? <Navigate replace to="/agenda" /> : <Login />
+          }
+        />
+        <Route
+          path="/agenda"
+          element={
+            isAuthenticated ? <Agenda /> : <Navigate replace to="/login" />
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <Navigate replace to={isAuthenticated ? '/agenda' : '/login'} />
+          }
+        />
+      </Routes>
 
       <Toaster position="top-right" richColors closeButton />
-    </div>
+    </>
   )
 }
 

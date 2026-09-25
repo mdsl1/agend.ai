@@ -155,6 +155,7 @@ Não crie migrations incrementais sem nova decisão explícita. Um agente nunca 
 | Node.js | imagem `node:20-alpine` | runtime de desenvolvimento; patch não fixado |
 | React | `^19.2.7` | SPA e componentes funcionais |
 | React DOM | `^19.2.7` | montagem da SPA |
+| React Router DOM | `^7.18.4` | rotas públicas/protegidas e redirecionamento entre login e agenda |
 | TypeScript | `~6.0.2` | tipagem e build |
 | Vite | `^8.1.1` | dev server e bundling |
 | `@vitejs/plugin-react` | `^6.0.3` | integração React/Vite |
@@ -170,7 +171,7 @@ Não crie migrations incrementais sem nova decisão explícita. Um agente nunca 
 
 O `package-lock.json` é a fonte das versões resolvidas. Na revisão de 13/08/2026, as principais resoluções eram React/React DOM 19.2.8, TypeScript 6.0.3, Vite 8.1.5 e ESLint 10.8.0. Não edite o lockfile manualmente.
 
-Fontes Inter e Hanken Grotesk são carregadas pelo Google Fonts em `app/src/index.css`. Não há React Router, React Query, Axios nem Zustand instalados atualmente, embora apareçam na stack planejada.
+Fontes Inter e Hanken Grotesk são carregadas pelo Google Fonts em `app/src/index.css`. React Router foi adotado para a entrada pública e as páginas protegidas; React Query, Axios e Zustand ainda não estão instalados, embora apareçam na stack planejada.
 
 ### Backend (`api/`)
 
@@ -233,7 +234,7 @@ O `.env` da raiz existe localmente, é ignorado pelo Git e atualmente não possu
 | `JWT_ISSUER` | Compose, convertido em `Jwt__Issuer` na `api` | emissor aceito nos JWTs | obrigatória |
 | `JWT_AUDIENCE` | Compose, convertido em `Jwt__Audience` na `api` | público aceito nos JWTs | obrigatória |
 | `JWT_EXPIRATION_MINUTES` | Compose, convertido em `Jwt__ExpirationMinutes` na `api` | duração padrão dos tokens humanos | obrigatória e maior que zero |
-| `VITE_POC_CLINIC_UUID` | `app`; Compose/Vite | UUID temporário da clínica conhecido pela interface da PoC | usado atualmente pelo frontend legado e planejado para o payload de login |
+| `VITE_POC_CLINIC_UUID` | `app`; Compose/Vite | UUID temporário da clínica conhecido pela interface da PoC | usado atualmente no payload de login; deverá vir do contexto da clínica em uma etapa futura |
 
 ### Variáveis injetadas nos serviços
 
@@ -509,20 +510,36 @@ agend.ai/
 |   |-- tsconfig.json
 |   |-- tsconfig.node.json
 |   |-- vite.config.ts
-|   |-- public/
-|   |   |-- favicon.svg
-|   |   `-- icons.svg
+|   |-- public/                           # vazio
 |   `-- src/
 |       |-- App.tsx
 |       |-- index.css
 |       |-- main.tsx
+|       |-- assets/
+|       |   |-- login_hero_background_v2.png
+|       |   `-- login_hero_img.png
 |       |-- components/
 |       |   |-- AppSidebar.tsx
 |       |   |-- Header.tsx
+|       |   |-- LoginHero.tsx
 |       |   `-- WeeklyAgenda.tsx
-|       `-- features/
-|           `-- agenda/
-|               `-- agendaApi.ts
+|       |-- config/
+|       |   `-- appConfig.ts
+|       |-- features/
+|       |   |-- agenda/
+|       |   |   `-- agendaApi.ts
+|       |   |-- api/
+|       |   |   `-- apiClient.ts
+|       |   `-- auth/
+|       |       |-- authApi.ts
+|       |       |-- AuthContext.tsx
+|       |       |-- authContextValue.ts
+|       |       |-- authSession.ts
+|       |       |-- profilePresentation.ts
+|       |       `-- useAuth.ts
+|       `-- pages/
+|           |-- Agenda.tsx
+|           `-- Login.tsx
 |-- database/
 |   `-- init.sql
 |-- docs/
@@ -544,11 +561,16 @@ agend.ai/
 
 ### Frontend da PoC
 
-- SPA React responsiva, sem roteamento.
+- SPA React responsiva com React Router; `/login` é a entrada pública, `/agenda` é protegida e caminhos desconhecidos são redirecionados conforme o estado da sessão.
+- Tela de login baseada na referência do Figma, com hero dinâmica separada em componente próprio: foto de fundo gerada e versionada em `app/src/assets/login_hero_background_v2.png`, título e mensagem do ecossistema em HTML e cards decorativos que reutilizam a linguagem visual dos eventos da agenda semanal. A tela também possui validação de e-mail, senha mínima de oito caracteres, alternância de visibilidade, estados de envio e toasts para validações e falhas da API.
+- O login consome `POST /api/auth/login` com a clínica da PoC vinda de `VITE_POC_CLINIC_UUID`, armazena somente o access token em `sessionStorage` e valida/carrega o usuário ativo por `GET /api/me` antes de liberar a agenda.
+- A sessão é restaurada por `GET /api/me` ao recarregar a SPA; `401` remove o token e redireciona para o login. O logout atual é local porque não existe endpoint de logout nem refresh token.
 - Cabeçalho e sidebar recolhível.
+- Nome, prefixo e contexto de cargo exibidos no shell da agenda vêm do perfil retornado por `GET /api/me`, sem dados estáticos de usuário. Para usuários com cargo técnico `Profissional`, clínicas `medica` e `odontologica` exibem `Doutor` quando o prefixo é `Dr.` e `Doutora` quando é `Dra.`; clínicas `estetica` exibem `Profissional`. Prefixo ausente/desconhecido mantém `Profissional`, e os demais cargos permanecem inalterados.
 - Tela de agenda baseada em FullCalendar.
 - Visões de semana, semana útil e mês.
-- O seletor de profissionais ainda chama `GET /api/profissionais?clinicaUuid={clinicaUuid}` com o UUID da PoC vindo de `VITE_POC_CLINIC_UUID`. A API autenticada atual ignora esse parâmetro legado e deriva a clínica do JWT; o frontend ainda precisa remover a query redundante e enviar o Bearer token.
+- O seletor de profissionais chama `GET /api/profissionais` sem o parâmetro legado de clínica; a API deriva a clínica do JWT.
+- O cliente HTTP compartilhado envia `Authorization: Bearer <access-token>` nas rotas protegidas e trata Problem Details sem registrar o token.
 - Navegação por período, data selecionada e botão “Hoje”.
 - Localização `pt-BR` e fuso `America/Sao_Paulo`.
 - Tokens visuais teal e componentes acessíveis com foco visível e rótulos.
@@ -559,7 +581,6 @@ agend.ai/
 - Proxy `/api` do Vite para evitar CORS no desenvolvimento local; o destino conteinerizado é configurado por `API_PROXY_TARGET`.
 - Botão “Novo agendamento” visível, porém intencionalmente desabilitado.
 - O fluxo Web planejado inicia a criação ao selecionar diretamente um intervalo livre visível no calendário; o Web não consome a rota de disponibilidade usada pelo chatbot. A criação ainda deve revalidar o horário no backend porque a agenda exibida é apenas uma fotografia e pode ficar desatualizada.
-- Login e gerenciamento de sessão ainda não foram implementados no React. Como as rotas atuais da agenda já exigem JWT, o frontend permanecerá recebendo `401` até integrar `POST /api/auth/login`, `GET /api/me` e o header `Authorization`.
 
 ### Backend e persistência
 
@@ -600,7 +621,7 @@ Falhas de entrada resultam em `400`; clínica, e-mail ou senha inválidos result
 
 #### `GET /api/me`
 
-Rota autenticada que lê as claims por `IContextUsuarioAtual`, consulta usuário, clínica e vínculo profissional ativos e rejeita com `401` qualquer divergência entre token e banco. Retorna perfil, clínica e a coleção de permissões calculada por `AutorizacaoService`.
+Rota autenticada que lê as claims por `IContextUsuarioAtual`, consulta usuário, clínica e vínculo profissional ativos e rejeita com `401` qualquer divergência entre token e banco. Retorna perfil, clínica — incluindo `tipoClinica` (`medica`, `odontologica` ou `estetica`) — e a coleção de permissões calculada por `AutorizacaoService`.
 
 O cargo concede permissões operacionais e `isAdmin` acrescenta apenas `clinica:gerenciar` e `usuarios:gerenciar:clinica`. O Web ainda precisa usar essa rota para restaurar a sessão e decidir a apresentação de controles; essas permissões visuais não substituem a autorização dos handlers.
 
@@ -735,7 +756,7 @@ Não trate os itens abaixo como implementados apenas porque constam na documenta
 - Completar a política de retenção no schema para `horario_funcionamento` e revisar FKs `ON DELETE CASCADE` antes de fluxos de exclusão.
 - Exportar workflows n8n importáveis para disponibilidade, criação e consulta de agenda.
 - Implementar o fluxo Telegram -> n8n -> API.
-- Integrar autenticação no React: tela de login, sessão, `GET /api/me`, header Bearer, tratamento de `401`/`403` e remoção do `clinicaUuid` redundante da listagem de profissionais. O backend já deriva a clínica do JWT, mas o frontend ainda usa o contrato antigo e não envia token.
+- Antes de produção, definir a estratégia definitiva de renovação/revogação da sessão Web e reavaliar o armazenamento do access token; a PoC segue a decisão documentada de usar `sessionStorage` sem refresh token.
 - Implementar `GET /api/clientes` para alimentar o select de clientes existentes no modal Web. Inicialmente pode exigir `clientes:gerenciar:clinica`; se profissionais precisarem pesquisar clientes, criar permissão separada de leitura sem conceder CRUD.
 - Habilitar a criação real de agendamento na interface a partir da seleção direta de um intervalo livre no calendário, com revalidação no backend no momento da gravação.
 - Verificar os fluxos ponta a ponta ainda não cobertos a partir dos consumidores React e Telegram; disponibilidade e criação já foram validadas manualmente entre API, PostgreSQL, n8n e Google Calendar.

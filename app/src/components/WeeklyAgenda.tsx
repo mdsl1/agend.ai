@@ -41,12 +41,6 @@ type AppointmentDetails = {
 type CalendarView = 'timeGridWeek' | 'timeGridWorkWeek' | 'dayGridMonth'
 
 const MIN_CALENDAR_HEIGHT = 608
-const POC_CLINIC_UUID = import.meta.env.VITE_POC_CLINIC_UUID;
-
-if (!POC_CLINIC_UUID) {
-  throw new Error('A variável VITE_POC_CLINIC_UUID não foi configurada.');
-}
-
 const calendarViews: Array<{
   id: CalendarView
   label: string
@@ -249,7 +243,6 @@ export function WeeklyAgenda() {
 
       try {
         const response = await listarProfissionaisAgendaveis({
-          clinicaUuid: POC_CLINIC_UUID,
           signal: abortController.signal,
         })
 

@@ -4,6 +4,7 @@ public sealed record DadosMeuPerfil(
     Guid UsuarioUuid,
     Guid ClinicaUuid,
     string ClinicaNome,
+    string TipoClinica,
     string Nome,
     string Email,
     string Cargo,

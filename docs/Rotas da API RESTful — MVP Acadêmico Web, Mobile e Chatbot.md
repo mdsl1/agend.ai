@@ -160,7 +160,8 @@ Saída `200 OK`:
   "especialidade": "Dermatologia",
   "clinica": {
     "uuid": "20d84992-1f87-42cc-a251-92cac362f41f",
-    "nome": "Clínica Vida"
+    "nome": "Clínica Vida",
+    "tipoClinica": "medica"
   },
   "permissoes": [
     "agenda:visualizar:propria",

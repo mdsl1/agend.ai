@@ -42,7 +42,8 @@ public sealed class MeController : ControllerBase
             Especialidade: result.Especialidade,
             Clinica: new ClinicaUsuarioResponse(
                 Uuid: result.Clinica.Uuid,
-                Nome: result.Clinica.Nome
+                Nome: result.Clinica.Nome,
+                TipoClinica: result.Clinica.TipoClinica
             ),
             Permissoes: result.Permissoes
         );
