@@ -18,6 +18,7 @@ As seguintes rotas já existem na PoC:
 - `GET /api/profissionais?especialidadeUuid={uuid-opcional}`;
 - `GET /api/profissionais/{profissionalUuid}/procedimentos`;
 - `GET /api/profissionais/{profissionalUuid}/disponibilidade?profissionalProcedimentoUuid={uuid}&inicio={iso}&limite={1-3}`;
+- `GET /api/clientes`;
 - `POST /api/clientes/resolver`;
 - `POST /api/agendamentos`.
 
@@ -485,7 +486,7 @@ Eventos de agendamento não podem ser removidos por esta rota.
 ### `GET /api/clientes`
 
 - **Projeto:** Web.
-- **Estado/acesso:** planejada; é a próxima dependência do modal de novo agendamento no Web.
+- **Estado/acesso:** implementada; requer JWT Bearer e a permissão `clientes:gerenciar:clinica`.
 - **Descrição:** lista todos os clientes ativos da clínica, ordenados por nome, sem busca e sem paginação.
 
 Entrada:
@@ -504,13 +505,17 @@ Saída `200 OK`:
       "uuid": "438d71b4-197c-44d9-bf1e-e6e84e983e67",
       "nome": "João Silva",
       "telefone": "+5511999991234",
-      "email": "joao@email.com"
+      "email": "joao@email.com",
+      "dataNascimento": "1990-05-10",
+      "genero": "masculino"
     }
   ]
 }
 ```
 
-Na PoC, essa listagem alimentará o select de clientes existentes do modal. Inicialmente poderá exigir `clientes:gerenciar:clinica`, concedida à recepção. Se profissionais também precisarem pesquisar clientes para criar agendamentos gerais, deverá ser criada uma permissão separada de leitura, como `clientes:visualizar:clinica`, sem conceder CRUD de clientes.
+Não há parâmetros públicos: a clínica é derivada exclusivamente do JWT. A rota retorna somente clientes e clínica ativos, ordenados por nome sem diferenciar maiúsculas de minúsculas; uma clínica sem clientes recebe `200 OK` com `clientes: []`. `email`, `dataNascimento` (no formato `YYYY-MM-DD`) e `genero` podem ser `null`. A projeção não expõe CPF, identidade do Telegram, anamnese ou IDs internos.
+
+Na PoC, a listagem alimenta o select de clientes existentes do modal Web. Se profissionais precisarem pesquisar clientes em um fluxo futuro sem receber permissão de CRUD, deverá ser criada uma permissão de leitura separada, como `clientes:visualizar:clinica`.
 
 ### `POST /api/clientes`
 
@@ -961,7 +966,7 @@ Erros previstos: `400` para data inválida, `401` para token ausente ou inválid
 | Novo agendamento | `GET /api/clientes`, `POST /api/clientes/resolver`, `GET /api/profissionais`, `GET /api/profissionais/{profissionalUuid}/procedimentos`, `POST /api/agendamentos` |
 | Ficha do cliente | `GET /api/clientes/{clienteUuid}` |
 
-No Web, atendentes e profissionais iniciam o novo agendamento selecionando diretamente um intervalo livre visível no calendário. A interface não chama a rota de disponibilidade. `GET /api/clientes`, ainda planejada, alimentará o select de clientes existentes; `POST /api/clientes/resolver` poderá criar ou reaproveitar um cliente por telefone quando a permissão do usuário permitir. Como a agenda exibida é apenas uma fotografia, `POST /api/agendamentos` revalida o intervalo no backend antes de confirmar a gravação, protegendo o fluxo contra atualizações concorrentes. O frontend gera uma `Idempotency-Key` aleatória por intenção e conserva a mesma chave apenas nas retentativas daquela confirmação.
+No Web, atendentes e profissionais iniciam o novo agendamento selecionando diretamente um intervalo livre visível no calendário. A interface não chama a rota de disponibilidade. `GET /api/clientes` alimenta o select de clientes existentes; `POST /api/clientes/resolver` pode criar ou reaproveitar um cliente por telefone quando a permissão do usuário permitir. Como a agenda exibida é apenas uma fotografia, `POST /api/agendamentos` revalida o intervalo no backend antes de confirmar a gravação, protegendo o fluxo contra atualizações concorrentes. O frontend gera uma `Idempotency-Key` aleatória por intenção e conserva a mesma chave apenas nas retentativas daquela confirmação.
 
 ### Mobile — Agend.AI Profissional
 
@@ -989,7 +994,7 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 
 ## 7. Dependências antes da implementação
 
-1. **Autenticação:** JWT Bearer, validação de assinatura, emissor, público e expiração já estão implementados. O Web ainda precisa implementar a tela de login, armazenamento de sessão, envio do header Bearer, restauração por `GET /api/me` e tratamento de `401`/`403`. Uma fallback policy global para proteger novas rotas por padrão permanece pendente.
+1. **Autenticação:** JWT Bearer, validação de assinatura, emissor, público e expiração já estão implementados. O Web já possui tela de login, sessão em `sessionStorage`, envio do header Bearer, restauração por `GET /api/me` e tratamento de `401`/`403`. Uma fallback policy global para proteger novas rotas por padrão permanece pendente.
 2. **Senha:** hashing e verificação estão implementados com `PasswordHasher`; nunca armazenar ou registrar a senha original.
 3. **Identificação da clínica no login:** o e-mail é único apenas dentro de uma clínica. O `clinicaUuid` deve vir de configuração, convite ou informação conhecida pela interface.
 4. **Dados iniciais:** clínica, usuários, horários de funcionamento, especialidades e catálogo de procedimentos precisam existir previamente no ambiente acadêmico.
@@ -1005,10 +1010,10 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 ## Resumo quantitativo
 
 - **22 contratos HTTP**;
-- **8 rotas implementadas**, incluindo login e perfil;
-- **14 rotas planejadas**;
-- as oito rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
+- **9 rotas implementadas**, incluindo login e perfil;
+- **13 rotas planejadas**;
+- as nove rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
 - nenhuma listagem com busca ou paginação;
-- `GET /api/clientes` é a próxima rota necessária para o select de clientes do modal Web.
+- `GET /api/clientes` já fornece os clientes ativos para o select do modal Web; a integração visual desse fluxo permanece uma etapa do frontend.
 
 As rotas estão agrupadas por domínio para que controllers, handlers, validações e modelos possam ser reutilizados sem misturar responsabilidades.

@@ -2,6 +2,7 @@ namespace AgendAi.API.Controllers;
 
 using AgendAi.API.Contracts.Clientes;
 using AgendAi.Application.Clientes.ResolverCliente;
+using AgendAi.Application.Clientes.ListarClientes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
@@ -11,11 +12,42 @@ using Microsoft.AspNetCore.Authorization;
 public sealed class ClientesController : ControllerBase
 {
     private readonly ResolverClienteHandler _resolverClienteHandler;
+    private readonly ListarClientesHandler _listarClientesHandler;
 
-    public ClientesController( ResolverClienteHandler resolverClienteHandler)
+    public ClientesController( 
+        ResolverClienteHandler resolverClienteHandler,
+        ListarClientesHandler listarClientesHandler
+    )
     {
         _resolverClienteHandler = resolverClienteHandler;
+        _listarClientesHandler = listarClientesHandler;
     }
+
+    [HttpGet]
+    [ProducesResponseType( typeof(ListarClientesResponse), StatusCodes.Status200OK )]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
+    public async Task<ActionResult<ListarClientesResponse>> ListarAsync(
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await _listarClientesHandler.HandleAsync( new ListarClientesQuery(), cancellationToken );
+        
+        var res = new ListarClientesResponse(
+            result.Clientes
+                .Select(cliente => new ClienteResponse(
+                    Uuid: cliente.Uuid,
+                    Nome: cliente.Nome,
+                    Telefone: cliente.Telefone,
+                    Email: cliente.Email,
+                    DataNascimento: cliente.DataNascimento,
+                    Genero: cliente.Genero
+                )).ToArray()
+        );
+
+        return Ok(res);
+    }
+
 
     [HttpPost("resolver")]
     [ProducesResponseType( typeof(ResolverClienteResponse), StatusCodes.Status200OK )]

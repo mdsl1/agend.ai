@@ -101,7 +101,7 @@ AgendAi.API -+-- também referencia AgendAi.Application
 - `AgendAi.Domain`: contém as entidades atuais e deve concentrar as regras centrais; não depende das outras camadas.
 - `AgendAi.Application`: contém os casos de uso de login, perfil atual, consulta de eventos, listagem de profissionais agendáveis e seus procedimentos, resolução de clientes, verificação de disponibilidade e criação de agendamento; também contém portas, modelos, permissões, autorização por escopo, validação e erros tipados; depende de Domain.
 - `AgendAi.Infrastructure`: contém a configuração/mappings NHibernate, readers e writers, os gateways HTTP do n8n, hashing/verificação de senha e geração de JWT; referencia Application para implementar suas portas e Domain para consultar e persistir as entidades.
-- `AgendAi.API`: contém os contratos HTTP, os controllers dos oito endpoints implementados, a composição de dependências, autenticação JWT Bearer, contexto do usuário atual e tratamento global de exceções com Problem Details; referencia Application e Infrastructure.
+- `AgendAi.API`: contém os contratos HTTP, os controllers dos nove endpoints implementados, a composição de dependências, autenticação JWT Bearer, contexto do usuário atual e tratamento global de exceções com Problem Details; referencia Application e Infrastructure.
 
 Preserve essa direção de dependências. Regras de negócio não pertencem a controllers, componentes React ou workflows quando forem regras centrais do CRM.
 
@@ -304,6 +304,8 @@ agend.ai/
 |   |   |   |   |-- ConsultarAgendaResponse.cs
 |   |   |   |   `-- EventoAgendaResponse.cs
 |   |   |   |-- Clientes/
+|   |   |   |   |-- ClienteResponse.cs
+|   |   |   |   |-- ListarClientesResponse.cs
 |   |   |   |   |-- ResolverClienteRequest.cs
 |   |   |   |   `-- ResolverClienteResponse.cs
 |   |   |   |-- Disponibilidade/
@@ -372,10 +374,17 @@ agend.ai/
 |   |   |   `-- Services/
 |   |   |       `-- VerificarDisponibilidadeService.cs
 |   |   |-- Clientes/
+|   |   |   |-- ListarClientes/
+|   |   |   |   |-- ClienteResult.cs
+|   |   |   |   |-- ListarClientesHandler.cs
+|   |   |   |   |-- ListarClientesQuery.cs
+|   |   |   |   `-- ListarClientesResult.cs
 |   |   |   |-- Models/
+|   |   |   |   |-- DadosCliente.cs
 |   |   |   |   `-- DadosResolucaoCliente.cs
 |   |   |   |-- Ports/
 |   |   |   |   |-- IClienteWriter.cs
+|   |   |   |   |-- IClientesReader.cs
 |   |   |   |   `-- IResolucaoClienteReader.cs
 |   |   |   `-- ResolverCliente/
 |   |   |       |-- ResolverClienteCommand.cs
@@ -467,6 +476,7 @@ agend.ai/
 |       |   |-- DisponibilidadeReader.cs
 |       |   `-- ProfissionalAgendaReader.cs
 |       |-- Clientes/
+|       |   |-- ClientesReader.cs
 |       |   |-- ClienteWriter.cs
 |       |   `-- ResolucaoClienteReader.cs
 |       |-- Auth/
@@ -591,11 +601,13 @@ agend.ai/
 - Endpoint `GET /api/profissionais?especialidadeUuid={especialidadeUuid}` para listar profissionais agendáveis no escopo da clínica do token, com filtro opcional por especialidade, destinado ao Web e ao chatbot.
 - Endpoint `GET /api/profissionais/{profissionalUuid}/procedimentos` para listar os vínculos ativos do profissional com procedimentos, incluindo UUID da associação, valor e duração efetivos, destinado ao Web e ao chatbot.
 - Endpoint `GET /api/profissionais/{profissionalUuid}/disponibilidade`, exclusivo do chatbot, para verificar um horário solicitado e retornar alternativas próximas quando ele estiver ocupado.
+- Endpoint `GET /api/clientes` para listar os clientes ativos da clínica do token, ordenados por nome, para seleção no Web.
 - Endpoint `POST /api/clientes/resolver`, destinado ao Web e ao chatbot, para localizar ou criar um cliente pelo telefone dentro da clínica do token e, quando informado, vincular sua identidade do Telegram.
 - Endpoint `POST /api/agendamentos`, usado pelo Web e pelo chatbot, para revalidar o horário, reservar o intervalo no PostgreSQL e criar o evento correspondente via n8n.
 - Listagem de profissionais agendáveis com filtro por clínica, calendário configurado e especialidade ativa opcional, sem expor o ID externo do Google Calendar.
 - Listagem de procedimentos por profissional com diferenciação entre profissional inexistente e coleção vazia, filtros de soft delete, ordenação por nome e exposição somente dos UUIDs públicos e valores efetivos da associação.
 - Resolução de clientes com normalização de telefone, reaproveitamento do cadastro ativo existente, vínculo opcional do Telegram e detecção de identidades conflitantes.
+- Listagem de clientes com filtro de clínica e soft delete, ordenação sem diferenciação de maiúsculas/minúsculas e projeção que não expõe CPF, Telegram, anamnese ou IDs internos.
 - Consulta de agenda com contratos HTTP, caso de uso, leitura NHibernate do profissional, correlação em lote do ID externo com o UUID do agendamento e gateway HTTP para o n8n com timeout e erros tipados.
 - Consulta de disponibilidade com duração obtida da associação profissional/procedimento, validação das janelas de atendimento antes da integração, busca externa via n8n e validação defensiva das alternativas retornadas. A mesma lógica foi extraída para `VerificarDisponibilidadeService` e é reutilizada pela criação sem chamar internamente outro handler ou endpoint HTTP.
 - Criação de agendamento com `Idempotency-Key` obrigatória, consulta idempotente por clínica, persistência inicial como `pendente_integracao`, bloqueio concorrente de sobreposição, integração n8n com até duas tentativas totais e transição para `agendado` ou `falha_integracao`.
@@ -623,7 +635,22 @@ Falhas de entrada resultam em `400`; clínica, e-mail ou senha inválidos result
 
 Rota autenticada que lê as claims por `IContextUsuarioAtual`, consulta usuário, clínica e vínculo profissional ativos e rejeita com `401` qualquer divergência entre token e banco. Retorna perfil, clínica — incluindo `tipoClinica` (`medica`, `odontologica` ou `estetica`) — e a coleção de permissões calculada por `AutorizacaoService`.
 
-O cargo concede permissões operacionais e `isAdmin` acrescenta apenas `clinica:gerenciar` e `usuarios:gerenciar:clinica`. O Web ainda precisa usar essa rota para restaurar a sessão e decidir a apresentação de controles; essas permissões visuais não substituem a autorização dos handlers.
+O cargo concede permissões operacionais e `isAdmin` acrescenta apenas `clinica:gerenciar` e `usuarios:gerenciar:clinica`. O Web usa essa rota para restaurar a sessão e decidir a apresentação de controles; essas permissões visuais não substituem a autorização dos handlers.
+
+#### `GET /api/clientes`
+
+Rota autenticada usada pelo Web para listar os clientes ativos da clínica para seleção em novos agendamentos. Não recebe parâmetros públicos: a clínica é derivada do JWT.
+
+Fluxo executado:
+
+1. O controller cria `ListarClientesQuery` e delega ao handler.
+2. `ListarClientesHandler` obtém o usuário atual e exige `clientes:gerenciar:clinica`.
+3. `ClientesReader` consulta via NHibernate somente a clínica e os clientes ativos do escopo, projetando `DadosCliente`.
+4. O handler ordena por nome sem diferenciar maiúsculas/minúsculas, converte para `ClienteResult` e o controller devolve `ListarClientesResponse`.
+
+Resposta de sucesso: HTTP `200` com `clientes`, coleção que pode ser vazia. Cada item expõe somente `uuid`, `nome`, `telefone`, `email`, `dataNascimento` e `genero`; os três últimos podem ser nulos e a data usa `YYYY-MM-DD`. CPF, Telegram, anamnese e IDs internos não fazem parte do contrato público.
+
+Falhas tratadas: HTTP `401` para token ausente/inválido, `403` para falta de `clientes:gerenciar:clinica` e `500` para erro inesperado. A rota foi validada manualmente nos cenários de coleção ordenada, coleção vazia, campos opcionais nulos, soft delete, isolamento entre clínicas, token ausente e falta de permissão.
 
 #### `GET /api/agenda/{profissionalUuid}`
 
@@ -748,7 +775,7 @@ Não trate os itens abaixo como implementados apenas porque constam na documenta
 
 ### PoC funcional
 
-- Os oito endpoints atuais do backend estão implementados: login, perfil atual, consulta de agenda, listagem de profissionais agendáveis, listagem dos procedimentos oferecidos por profissional, disponibilidade, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida.
+- Os nove endpoints atuais do backend estão implementados: login, perfil atual, consulta de agenda, listagem de profissionais agendáveis, listagem dos procedimentos oferecidos por profissional, disponibilidade, listagem de clientes, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida.
 - O conjunto mínimo de rotas necessário ao chatbot estático está completo. O próximo fluxo pode resolver o cliente, listar profissionais e procedimentos, consultar disponibilidade e confirmar o agendamento sem acesso direto ao banco.
 - Para a PoC, o chatbot autenticará n8n → API com um JWT anual emitido pontualmente para um usuário `Recepcionista` com `isAdmin = true` da clínica. O token deve permanecer nas Credentials do n8n; a emissão não deve alterar permanentemente a duração padrão dos tokens humanos.
 - Criar os DTOs, casos de uso e endpoints adicionais somente quando os próximos fluxos de cadastro ou MVP os exigirem.
@@ -757,7 +784,7 @@ Não trate os itens abaixo como implementados apenas porque constam na documenta
 - Exportar workflows n8n importáveis para disponibilidade, criação e consulta de agenda.
 - Implementar o fluxo Telegram -> n8n -> API.
 - Antes de produção, definir a estratégia definitiva de renovação/revogação da sessão Web e reavaliar o armazenamento do access token; a PoC segue a decisão documentada de usar `sessionStorage` sem refresh token.
-- Implementar `GET /api/clientes` para alimentar o select de clientes existentes no modal Web. Inicialmente pode exigir `clientes:gerenciar:clinica`; se profissionais precisarem pesquisar clientes, criar permissão separada de leitura sem conceder CRUD.
+- Integrar `GET /api/clientes` ao select de clientes existentes no modal Web. Se profissionais precisarem pesquisar clientes em um fluxo futuro, criar uma permissão de leitura separada sem conceder CRUD.
 - Habilitar a criação real de agendamento na interface a partir da seleção direta de um intervalo livre no calendário, com revalidação no backend no momento da gravação.
 - Verificar os fluxos ponta a ponta ainda não cobertos a partir dos consumidores React e Telegram; disponibilidade e criação já foram validadas manualmente entre API, PostgreSQL, n8n e Google Calendar.
 
