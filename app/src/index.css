@@ -45,6 +45,15 @@
     @apply cursor-pointer;
   }
 
+  select {
+    color-scheme: light;
+  }
+
+  select option {
+    color: #131b2e;
+    background-color: #ffffff;
+  }
+
   #root {
     @apply min-h-screen w-full;
   }
@@ -94,6 +103,14 @@
 
   .agenda-calendar .fc .fc-timegrid-slot-minor {
     border-top: 0 !important;
+  }
+
+  .agenda-calendar .fc .fc-highlight {
+    @apply bg-agend-brand-100/70;
+  }
+
+  .agenda-calendar--selectable .fc .fc-timegrid-slot-lane {
+    @apply cursor-pointer transition-colors duration-100 hover:bg-agend-brand-100/70;
   }
 
   .agenda-calendar .fc .fc-timegrid-col.fc-day-today {

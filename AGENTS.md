@@ -161,7 +161,7 @@ Não crie migrations incrementais sem nova decisão explícita. Um agente nunca 
 | `@vitejs/plugin-react` | `^6.0.3` | integração React/Vite |
 | Tailwind CSS | `^4.3.3` | tokens e estilos utilitários |
 | `@tailwindcss/vite` | `^4.3.3` | integração Tailwind/Vite |
-| FullCalendar core/react/daygrid/timegrid | `^6.1.21` | agenda semanal, semana útil e mês |
+| FullCalendar core/react/daygrid/timegrid/interaction | `^6.1.21` | agenda semanal, semana útil e mês; interação de clique e seleção de horário |
 | FullCalendar Luxon 3 + Luxon | `^6.1.21` / `^3.7.2` | suporte ao fuso nomeado `America/Sao_Paulo` no FullCalendar v6 |
 | Lucide React | `^1.28.0` | ícones da interface |
 | Radix UI Dialog | `^1.1.23` | primitive React acessível e sem estilos para modais personalizados conforme o Figma |
@@ -532,6 +532,7 @@ agend.ai/
 |       |   |-- AppSidebar.tsx
 |       |   |-- Header.tsx
 |       |   |-- LoginHero.tsx
+|       |   |-- NewAppointmentDialog.tsx
 |       |   `-- WeeklyAgenda.tsx
 |       |-- config/
 |       |   `-- appConfig.ts
@@ -540,6 +541,8 @@ agend.ai/
 |       |   |   `-- agendaApi.ts
 |       |   |-- api/
 |       |   |   `-- apiClient.ts
+|       |   |-- clientes/
+|       |   |   `-- clientesApi.ts
 |       |   `-- auth/
 |       |       |-- authApi.ts
 |       |       |-- AuthContext.tsx
@@ -585,12 +588,15 @@ agend.ai/
 - Localização `pt-BR` e fuso `America/Sao_Paulo`.
 - Tokens visuais teal e componentes acessíveis com foco visível e rótulos.
 - Eventos carregados por período via `GET /api/agenda/{profissionalUuid}`, com adaptação ao contrato do FullCalendar.
+- A agenda concentra a recarga manual em `refreshAgendaData`: o botão junto de “Hoje” recarrega profissionais e eventos do período visível; o retry de erro e o retorno da aba ao primeiro plano usam a mesma ação. Após criar um agendamento, somente os eventos são recarregados. Mudanças de período, visão e profissional continuam disparando as consultas correspondentes pelos efeitos existentes; isso não é uma assinatura realtime nem polling.
 - Cards da grade semanal adaptam a densidade visual à duração real: até 30 minutos exibem somente o paciente, de 31 a 59 minutos exibem paciente e procedimento em tipografia compacta, e a partir de 60 minutos preservam o card completo, sem ampliar artificialmente o intervalo ocupado.
 - O contrato de eventos distingue `agendamento` de `indisponibilidade`, expõe o UUID relacional apenas quando houver agendamento correspondente e aceita cliente/procedimento ausentes em indisponibilidades.
 - Requisições canceláveis e estados visuais de carregamento, erro, tentativa novamente e período vazio.
 - Proxy `/api` do Vite para evitar CORS no desenvolvimento local; o destino conteinerizado é configurado por `API_PROXY_TARGET`.
-- Botão “Novo agendamento” visível, porém intencionalmente desabilitado.
-- O fluxo Web planejado inicia a criação ao selecionar diretamente um intervalo livre visível no calendário; o Web não consome a rota de disponibilidade usada pelo chatbot. A criação ainda deve revalidar o horário no backend porque a agenda exibida é apenas uma fotografia e pode ficar desatualizada.
+- Não há botão “Novo agendamento”; o modal é aberto ao clicar ou selecionar um intervalo livre nas visões semanais do calendário. A visão mensal não inicia a criação por não possuir hora explícita.
+- Nas visões semanais elegíveis, os slots livres indicam a ação com cursor de ponteiro e o mesmo realce teal usado pela seleção do FullCalendar.
+- O modal de novo agendamento recebe do grid apenas o início. Ele lista os procedimentos do profissional por `GET /api/profissionais/{profissionalUuid}/procedimentos`; a duração e o preço efetivos preenchidos pela escolha determinam o fim exibido. Clientes ativos são carregados uma única vez por `GET /api/clientes` durante a permanência da agenda e filtrados localmente por nome ou telefone. O motivo do contato é opcional. A confirmação usa `POST /api/agendamentos` com `Idempotency-Key` persistida temporariamente em `sessionStorage`; sucesso atualiza a grade e limpa a chave. Falhas terminais retornadas pela API limpam a chave; falha de transporte, HTTP `500` ou operação ainda pendente mantêm chave e fingerprint para repetir a mesma operação com segurança.
+- O fluxo Web inicia a criação ao selecionar diretamente um intervalo livre visível no calendário; o Web não consome a rota de disponibilidade usada pelo chatbot. `POST /api/agendamentos` revalida o horário no backend porque a agenda exibida é apenas uma fotografia e pode ficar desatualizada.
 
 ### Backend e persistência
 
@@ -784,8 +790,8 @@ Não trate os itens abaixo como implementados apenas porque constam na documenta
 - Exportar workflows n8n importáveis para disponibilidade, criação e consulta de agenda.
 - Implementar o fluxo Telegram -> n8n -> API.
 - Antes de produção, definir a estratégia definitiva de renovação/revogação da sessão Web e reavaliar o armazenamento do access token; a PoC segue a decisão documentada de usar `sessionStorage` sem refresh token.
-- Integrar `GET /api/clientes` ao select de clientes existentes no modal Web. Se profissionais precisarem pesquisar clientes em um fluxo futuro, criar uma permissão de leitura separada sem conceder CRUD.
-- Habilitar a criação real de agendamento na interface a partir da seleção direta de um intervalo livre no calendário, com revalidação no backend no momento da gravação.
+- Ligar resolução/criação de cliente ao modal Web. A listagem de clientes existentes, seleção de procedimento e criação de agendamento estão integradas. Se profissionais precisarem pesquisar clientes em um fluxo futuro, criar uma permissão de leitura separada sem conceder CRUD.
+- Tratar eventuais divergências entre agendamento criado e atualização visual da grade; a API já revalida o horário no momento da gravação.
 - Verificar os fluxos ponta a ponta ainda não cobertos a partir dos consumidores React e Telegram; disponibilidade e criação já foram validadas manualmente entre API, PostgreSQL, n8n e Google Calendar.
 
 ### MVP

@@ -966,7 +966,7 @@ Erros previstos: `400` para data inválida, `401` para token ausente ou inválid
 | Novo agendamento | `GET /api/clientes`, `POST /api/clientes/resolver`, `GET /api/profissionais`, `GET /api/profissionais/{profissionalUuid}/procedimentos`, `POST /api/agendamentos` |
 | Ficha do cliente | `GET /api/clientes/{clienteUuid}` |
 
-No Web, atendentes e profissionais iniciam o novo agendamento selecionando diretamente um intervalo livre visível no calendário. A interface não chama a rota de disponibilidade. `GET /api/clientes` alimenta o select de clientes existentes; `POST /api/clientes/resolver` pode criar ou reaproveitar um cliente por telefone quando a permissão do usuário permitir. Como a agenda exibida é apenas uma fotografia, `POST /api/agendamentos` revalida o intervalo no backend antes de confirmar a gravação, protegendo o fluxo contra atualizações concorrentes. O frontend gera uma `Idempotency-Key` aleatória por intenção e conserva a mesma chave apenas nas retentativas daquela confirmação.
+No Web, atendentes e profissionais iniciam o novo agendamento selecionando diretamente um intervalo livre visível no calendário. A interface não chama a rota de disponibilidade. `GET /api/clientes` alimenta o select de clientes existentes; `POST /api/clientes/resolver` poderá criar ou reaproveitar um cliente por telefone quando a permissão do usuário permitir. O modal envia cliente, associação profissional/procedimento, início e motivo de contato opcional; a API deriva duração, término e valor e revalida o intervalo antes de confirmar a gravação. O frontend guarda em `sessionStorage` uma `Idempotency-Key` e uma impressão do payload. Se uma falha de transporte, HTTP `500`, operação ainda pendente ou resposta de sucesso inválida deixar o resultado incerto, repetir os mesmos dados reutiliza a chave; alterar qualquer dado gera uma nova chave. Respostas terminais de erro limpam o registro, enquanto uma resposta de sucesso válida também limpa a chave e atualiza a agenda.
 
 ### Mobile — Agend.AI Profissional
 
@@ -1014,6 +1014,6 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 - **13 rotas planejadas**;
 - as nove rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
 - nenhuma listagem com busca ou paginação;
-- `GET /api/clientes` já fornece os clientes ativos para o select do modal Web; a integração visual desse fluxo permanece uma etapa do frontend.
+- `GET /api/clientes` já fornece os clientes ativos para o select do modal Web. A interface carrega a coleção uma única vez enquanto a agenda permanece montada e filtra localmente por nome ou telefone. O início é escolhido no grid; `GET /api/profissionais/{profissionalUuid}/procedimentos` fornece o preço e a duração efetivos que definem o fim exibido, e a confirmação já usa `POST /api/agendamentos` com chave de idempotência.
 
 As rotas estão agrupadas por domínio para que controllers, handlers, validações e modelos possam ser reutilizados sem misturar responsabilidades.

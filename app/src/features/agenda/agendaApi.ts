@@ -23,12 +23,48 @@ export type ProfissionalAgendavelApi = {
   especialidade: EspecialidadeProfissionalApi | null
 }
 
+export type ProcedimentoProfissionalApi = {
+  profissionalProcedimentoUuid: string
+  procedimentoUuid: string
+  nome: string
+  valorEfetivo: number
+  duracaoEfetivaMinutos: number
+}
+
+export type CriarAgendamentoInput = {
+  clienteUuid: string
+  profissionalProcedimentoUuid: string
+  inicio: string
+  motivoContato: string | null
+}
+
+export type AgendamentoCriadoApi = {
+  uuid: string
+  inicio: string
+  fim: string
+  nomeCliente: string
+  nomeProfissional: string
+  nomeProcedimento: string
+  valorTotal: number
+  status: string
+}
+
 type ConsultarAgendaResponse = {
   eventos: EventoAgendaApi[]
 }
 
 type ListarProfissionaisResponse = {
   profissionais: ProfissionalAgendavelApi[]
+}
+
+type ListarProcedimentosProfissionalResponse = {
+  procedimentos: ProcedimentoProfissionalApi[]
+}
+
+type CriarAgendamentoParams = {
+  agendamento: CriarAgendamentoInput
+  idempotencyKey: string
+  signal?: AbortSignal
 }
 
 type ConsultarAgendaParams = {
@@ -39,6 +75,11 @@ type ConsultarAgendaParams = {
 }
 
 type ListarProfissionaisParams = {
+  signal?: AbortSignal
+}
+
+type ListarProcedimentosProfissionalParams = {
+  profissionalUuid: string
   signal?: AbortSignal
 }
 
@@ -84,6 +125,19 @@ function isProfissionalAgendavel(
   )
 }
 
+function isProcedimentoProfissional(
+  value: unknown,
+): value is ProcedimentoProfissionalApi {
+  return (
+    isRecord(value) &&
+    typeof value.profissionalProcedimentoUuid === 'string' &&
+    typeof value.procedimentoUuid === 'string' &&
+    typeof value.nome === 'string' &&
+    typeof value.valorEfetivo === 'number' &&
+    typeof value.duracaoEfetivaMinutos === 'number'
+  )
+}
+
 function isConsultarAgendaResponse(
   value: unknown,
 ): value is ConsultarAgendaResponse {
@@ -101,6 +155,30 @@ function isListarProfissionaisResponse(
     isRecord(value) &&
     Array.isArray(value.profissionais) &&
     value.profissionais.every(isProfissionalAgendavel)
+  )
+}
+
+function isListarProcedimentosProfissionalResponse(
+  value: unknown,
+): value is ListarProcedimentosProfissionalResponse {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.procedimentos) &&
+    value.procedimentos.every(isProcedimentoProfissional)
+  )
+}
+
+function isAgendamentoCriado(value: unknown): value is AgendamentoCriadoApi {
+  return (
+    isRecord(value) &&
+    typeof value.uuid === 'string' &&
+    typeof value.inicio === 'string' &&
+    typeof value.fim === 'string' &&
+    typeof value.nomeCliente === 'string' &&
+    typeof value.nomeProfissional === 'string' &&
+    typeof value.nomeProcedimento === 'string' &&
+    typeof value.valorTotal === 'number' &&
+    typeof value.status === 'string'
   )
 }
 
@@ -147,6 +225,55 @@ export async function consultarAgenda({
 
   if (!isConsultarAgendaResponse(data)) {
     throw new Error('A API retornou um formato de agenda inválido.')
+  }
+
+  return data
+}
+
+export async function listarProcedimentosProfissional({
+  profissionalUuid,
+  signal,
+}: ListarProcedimentosProfissionalParams): Promise<ListarProcedimentosProfissionalResponse> {
+  const response = await apiFetch(
+    `/api/profissionais/${encodeURIComponent(profissionalUuid)}/procedimentos`,
+    { signal },
+  )
+
+  await ensureApiSuccess(
+    response,
+    `Não foi possível carregar os procedimentos (HTTP ${response.status}).`,
+  )
+
+  const data: unknown = await response.json()
+
+  if (!isListarProcedimentosProfissionalResponse(data)) {
+    throw new Error('A API retornou um formato de procedimentos inválido.')
+  }
+
+  return data
+}
+
+export async function criarAgendamento({
+  agendamento,
+  idempotencyKey,
+  signal,
+}: CriarAgendamentoParams): Promise<AgendamentoCriadoApi> {
+  const response = await apiFetch('/api/agendamentos', {
+    method: 'POST',
+    headers: { 'Idempotency-Key': idempotencyKey },
+    body: JSON.stringify(agendamento),
+    signal,
+  })
+
+  await ensureApiSuccess(
+    response,
+    `Não foi possível criar o agendamento (HTTP ${response.status}).`,
+  )
+
+  const data: unknown = await response.json()
+
+  if (!isAgendamentoCriado(data)) {
+    throw new Error('A API retornou um formato de agendamento inválido.')
   }
 
   return data

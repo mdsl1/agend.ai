@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type {
+  DateSelectArg,
   DatesSetArg,
   DayHeaderContentArg,
   EventContentArg,
@@ -8,6 +9,8 @@ import type {
 } from '@fullcalendar/core'
 import ptBrLocale from '@fullcalendar/core/locales/pt-br'
 import dayGridPlugin from '@fullcalendar/daygrid'
+import interactionPlugin from '@fullcalendar/interaction'
+import type { DateClickArg } from '@fullcalendar/interaction'
 import luxonPlugin from '@fullcalendar/luxon3'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -21,7 +24,6 @@ import {
   Columns3,
   Grid3X3,
   LoaderCircle,
-  Plus,
   RefreshCw,
   Stethoscope,
 } from 'lucide-react'
@@ -31,6 +33,10 @@ import {
   type EventoAgendaApi,
   type ProfissionalAgendavelApi,
 } from '../features/agenda/agendaApi'
+import {
+  NewAppointmentDialog,
+  type AppointmentSlot,
+} from './NewAppointmentDialog'
 
 type AppointmentDetails = {
   patient: string
@@ -229,9 +235,32 @@ export function WeeklyAgenda() {
   const [reloadProfessionalsAttempt, setReloadProfessionalsAttempt] =
     useState(0)
   const [visibleRange, setVisibleRange] = useState('Carregando período...')
+  const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] =
+    useState(false)
+  const [selectedAppointmentSlot, setSelectedAppointmentSlot] =
+    useState<AppointmentSlot | null>(null)
+
+  const refreshAgendaData = useCallback(
+    (options: { includeProfessionals?: boolean } = {}) => {
+      setReloadAttempt((attempt) => attempt + 1)
+
+      if (options.includeProfessionals ?? true) {
+        setReloadProfessionalsAttempt((attempt) => attempt + 1)
+      }
+    },
+    [],
+  )
 
   const activeDoctor = professionals.find(
     (professional) => professional.profissionalUuid === selectedDoctor,
+  )
+  const canSelectAppointment = Boolean(
+    activeDoctor &&
+      !isLoadingProfessionals &&
+      !isLoading &&
+      !professionalsError &&
+      !loadError &&
+      calendarView !== 'dayGridMonth',
   )
 
   useEffect(() => {
@@ -338,6 +367,18 @@ export function WeeklyAgenda() {
 
     return () => abortController.abort()
   }, [queryPeriod, reloadAttempt, selectedDoctor])
+
+  useEffect(() => {
+    function refreshWhenVisible() {
+      if (document.visibilityState === 'visible') {
+        refreshAgendaData()
+      }
+    }
+
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+    return () =>
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+  }, [refreshAgendaData])
 
   useEffect(() => {
     const calendarContainer = calendarContainerRef.current
@@ -453,6 +494,37 @@ export function WeeklyAgenda() {
     })
   }
 
+  function openAppointmentDialog(inicio: Date) {
+    if (!canSelectAppointment || !activeDoctor) {
+      toast.warning('Selecione uma agenda ativa para criar um agendamento.')
+      return
+    }
+
+    setSelectedAppointmentSlot({ inicio })
+    setIsAppointmentDialogOpen(true)
+  }
+
+  function handleCalendarSelect(selectionInfo: DateSelectArg) {
+    openAppointmentDialog(selectionInfo.start)
+    selectionInfo.view.calendar.unselect()
+  }
+
+  function handleCalendarDateClick(dateInfo: DateClickArg) {
+    if (dateInfo.allDay || calendarView === 'dayGridMonth') {
+      return
+    }
+
+    openAppointmentDialog(dateInfo.date)
+  }
+
+  function handleAppointmentDialogOpenChange(nextOpen: boolean) {
+    setIsAppointmentDialogOpen(nextOpen)
+
+    if (!nextOpen) {
+      setSelectedAppointmentSlot(null)
+    }
+  }
+
   return (
     <section
       aria-labelledby="agenda-title"
@@ -467,16 +539,6 @@ export function WeeklyAgenda() {
             Agenda Semanal
           </h1>
         </div>
-
-        <button
-          type="button"
-          className="inline-flex min-h-10 cursor-not-allowed items-center justify-center gap-2 self-start rounded-lg bg-agend-brand-500 px-4 text-[13px] font-semibold text-white opacity-65 shadow-sm md:self-auto"
-          title="Disponível em uma próxima etapa da PoC"
-          disabled
-        >
-          <Plus aria-hidden="true" size={17} />
-          Novo agendamento
-        </button>
       </div>
 
       <div className="flex min-h-144 w-full min-w-0 flex-col overflow-hidden rounded-xl border border-agend-border bg-white shadow-agend-card">
@@ -574,6 +636,20 @@ export function WeeklyAgenda() {
             >
               Hoje
             </button>
+            <button
+              type="button"
+              onClick={() => refreshAgendaData()}
+              disabled={isLoadingProfessionals || isLoading}
+              aria-label="Atualizar agenda"
+              title="Atualizar agenda"
+              className="grid size-9 place-items-center rounded-lg border border-agend-border bg-white text-agend-muted transition hover:border-agend-brand-500 hover:text-agend-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-agend-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw
+                aria-hidden="true"
+                size={16}
+                className={isLoadingProfessionals || isLoading ? 'animate-spin' : ''}
+              />
+            </button>
           </div>
         </div>
 
@@ -623,7 +699,9 @@ export function WeeklyAgenda() {
 
         <div
           ref={calendarContainerRef}
-          className="agenda-calendar relative w-full min-w-0 overflow-x-auto bg-white"
+          className={`agenda-calendar relative w-full min-w-0 overflow-x-auto bg-white ${
+            canSelectAppointment ? 'agenda-calendar--selectable' : ''
+          }`}
           aria-busy={isLoadingProfessionals || isLoading}
         >
           {isLoadingProfessionals || isLoading ? (
@@ -657,11 +735,7 @@ export function WeeklyAgenda() {
               </span>
               <button
                 type="button"
-                onClick={() =>
-                  professionalsError
-                    ? setReloadProfessionalsAttempt((attempt) => attempt + 1)
-                    : setReloadAttempt((attempt) => attempt + 1)
-                }
+                onClick={() => refreshAgendaData()}
                 className="inline-flex min-h-9 shrink-0 items-center gap-2 rounded-lg border border-red-200 bg-white px-3 text-xs font-semibold text-red-800 transition hover:bg-red-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-agend-brand-500"
               >
                 <RefreshCw aria-hidden="true" size={15} />
@@ -703,7 +777,12 @@ export function WeeklyAgenda() {
 
           <FullCalendar
             ref={calendarRef}
-            plugins={[timeGridPlugin, dayGridPlugin, luxonPlugin]}
+            plugins={[
+              timeGridPlugin,
+              dayGridPlugin,
+              interactionPlugin,
+              luxonPlugin,
+            ]}
             initialView="timeGridWeek"
             initialDate={new Date()}
             locale={ptBrLocale}
@@ -732,12 +811,26 @@ export function WeeklyAgenda() {
             eventContent={AppointmentCard}
             eventClassNames={['!border-0', '!bg-transparent', '!shadow-none']}
             datesSet={handleDatesSet}
+            dateClick={handleCalendarDateClick}
+            select={handleCalendarSelect}
+            selectable={canSelectAppointment}
+            selectMirror
+            selectOverlap={false}
             nowIndicator
             expandRows
             height={calendarHeight}
           />
         </div>
       </div>
+
+      <NewAppointmentDialog
+        open={isAppointmentDialogOpen}
+        onOpenChange={handleAppointmentDialogOpenChange}
+        onCreated={() => refreshAgendaData({ includeProfessionals: false })}
+        slot={selectedAppointmentSlot}
+        professionalName={activeDoctor?.nomeExibicao ?? 'Profissional'}
+        professionalUuid={activeDoctor?.profissionalUuid ?? ''}
+      />
     </section>
   )
 }
