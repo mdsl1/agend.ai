@@ -15,8 +15,8 @@ public class AgendamentoMap : ClassMap<Agendamento>
         References(x => x.Clinica).Column("id_clinica").Not.Nullable();
         References(x => x.Cliente).Column("id_cliente").Not.Nullable();
         References(x => x.Profissional).Column("id_profissional").Not.Nullable();
-        References(x => x.Especialidade).Column("id_especialidade").Nullable();
-        References(x => x.Procedimento).Column("id_procedimento").Nullable();
+        References(x => x.Especialidade).Column("id_especialidade").Not.Nullable();
+        References(x => x.Procedimento).Column("id_procedimento").Not.Nullable();
         Map(x => x.IdEventGoogleCalendar).Column("id_event_google_calendar").CustomSqlType("text");
         Map(x => x.TimeDateInicio).Column("timedate_inicio").CustomSqlType("timestamptz").Not.Nullable();
         Map(x => x.TimeDateFim).Column("timedate_fim").CustomSqlType("timestamptz").Not.Nullable();

@@ -17,6 +17,7 @@ using AgendAi.Infrastructure.Agenda;
 using AgendAi.Application.Agenda.ConsultarAgenda;
 using AgendAi.Application.Agenda.ConsultarDisponibilidade;
 using AgendAi.Application.Agenda.CriarAgendamento;
+using AgendAi.Application.Agenda.ConsultarAgendamento;
 
 using AgendAi.Application.Profissionais.Ports;
 using AgendAi.Infrastructure.Profissionais;
@@ -106,6 +107,9 @@ builder.Services.AddHttpClient<
 builder.Services.AddScoped<ConsultarAgendaHandler>();
 
 builder.Services.AddScoped<IAgendamentoAgendaReader, AgendamentoAgendaReader>();
+
+builder.Services.AddScoped<IAgendamentoDetalhadoReader, AgendamentoDetalhadoReader>();
+builder.Services.AddScoped<ConsultarAgendamentoHandler>();
 
 builder.Services.AddScoped<IDisponibilidadeReader, DisponibilidadeReader>();
 builder.Services.AddHttpClient<IDisponibilidadeExternaGateway, N8nDisponibilidadeGateway>(

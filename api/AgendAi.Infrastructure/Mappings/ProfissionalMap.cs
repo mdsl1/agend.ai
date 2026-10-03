@@ -12,7 +12,7 @@ public class ProfissionalMap : ClassMap<Profissional>
         Map(x => x.Uuid).Column("uuid").Not.Nullable().Unique();
         References(x => x.Clinica).Column("id_clinica").Not.Nullable();
         References(x => x.Usuario).Column("id_usuario").Not.Nullable().Unique();
-        References(x => x.Especialidade).Column("id_especialidade").Nullable();
+        References(x => x.Especialidade).Column("id_especialidade").Not.Nullable();
         Map(x => x.RegistroProfissional).Column("registro_profissional").Length(30);
         Map(x => x.IdGoogleCalendar).Column("id_google_calendar").CustomSqlType("text");
         Map(x => x.Prefixo).Column("prefixo").Length(6);

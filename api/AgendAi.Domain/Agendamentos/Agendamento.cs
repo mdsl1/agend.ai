@@ -15,8 +15,8 @@ public class Agendamento
     public virtual Clinica Clinica { get; set; } = null!;
     public virtual Cliente Cliente { get; set; } = null!;
     public virtual Profissional Profissional { get; set; } = null!;
-    public virtual Especialidade? Especialidade { get; set; }
-    public virtual Procedimento? Procedimento { get; set; }
+    public virtual Especialidade Especialidade { get; set; } = null!;
+    public virtual Procedimento Procedimento { get; set; } = null!;
     public virtual string? IdEventGoogleCalendar { get; set; }
     public virtual DateTime TimeDateInicio { get; set; }
     public virtual DateTime TimeDateFim { get; set; }
