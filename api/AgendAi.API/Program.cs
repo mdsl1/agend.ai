@@ -24,6 +24,10 @@ using AgendAi.Infrastructure.Profissionais;
 using AgendAi.Application.Profissionais.ListarProfissionais;
 using AgendAi.Application.Profissionais.ListarProcedimentosProfissional;
 
+using AgendAi.Application.Procedimentos.Ports;
+using AgendAi.Infrastructure.Procedimentos;
+using AgendAi.Application.Procedimentos.ListarCatalogoProcedimentos;
+
 using AgendAi.Application.Clientes.Ports;
 using AgendAi.Infrastructure.Clientes;
 using AgendAi.Application.Clientes.ListarClientes;
@@ -144,6 +148,9 @@ builder.Services.AddScoped<ListarProfissionaisHandler>();
 
 builder.Services.AddScoped<IProcedimentosProfissionalReader, ProcedimentosProfissionalReader>();
 builder.Services.AddScoped<ListarProcedimentosProfissionalHandler>();
+
+builder.Services.AddScoped<ICatalogoProcedimentosReader, CatalogoProcedimentosReader>();
+builder.Services.AddScoped<ListarCatalogoProcedimentosHandler>();
 
 builder.Services.AddScoped<IResolucaoClienteReader, ResolucaoClienteReader>();
 builder.Services.AddScoped<IClienteWriter, ClienteWriter>();

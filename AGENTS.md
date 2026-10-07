@@ -4,7 +4,7 @@
 
 Este arquivo é o guia operacional durável para agentes que trabalham no Agend.AI. Ele consolida a arquitetura, a stack, a configuração, a estrutura do repositório, o estado implementado, as pendências e as regras que não podem ser inferidas apenas pelo código.
 
-O inventário técnico e o estado das rotas, autenticação JWT, RBAC, integrações n8n, schema, stack e consumidores foram revisados em **25 de setembro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
+O inventário técnico e o estado das rotas, autenticação JWT, RBAC, integrações n8n, schema, stack e consumidores foram revisados em **25 de setembro de 2026**; as rotas de detalhes de agendamento e catálogo de procedimentos foram atualizadas em **6 de outubro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
 
 O Agend.AI é um CRM para clínicas com agenda, cadastros e automação de agendamentos. A solução combina uma SPA React, uma API ASP.NET Core, PostgreSQL com NHibernate e workflows n8n integrados, no desenho de destino, ao Telegram e ao Google Calendar.
 
@@ -99,9 +99,9 @@ AgendAi.API -+-- também referencia AgendAi.Application
 ```
 
 - `AgendAi.Domain`: contém as entidades atuais e deve concentrar as regras centrais; não depende das outras camadas.
-- `AgendAi.Application`: contém os casos de uso de login, perfil atual, consulta de eventos, listagem de profissionais agendáveis e seus procedimentos, resolução de clientes, verificação de disponibilidade e criação de agendamento; também contém portas, modelos, permissões, autorização por escopo, validação e erros tipados; depende de Domain.
+- `AgendAi.Application`: contém os casos de uso de login, perfil atual, consulta de eventos e detalhes de agendamentos, listagem de profissionais agendáveis, procedimentos oferecidos por profissional e catálogo de procedimentos, resolução e listagem de clientes, verificação de disponibilidade e criação de agendamento; também contém portas, modelos, permissões, autorização por escopo, validação e erros tipados; depende de Domain.
 - `AgendAi.Infrastructure`: contém a configuração/mappings NHibernate, readers e writers, os gateways HTTP do n8n, hashing/verificação de senha e geração de JWT; referencia Application para implementar suas portas e Domain para consultar e persistir as entidades.
-- `AgendAi.API`: contém os contratos HTTP, os controllers dos nove endpoints implementados, a composição de dependências, autenticação JWT Bearer, contexto do usuário atual e tratamento global de exceções com Problem Details; referencia Application e Infrastructure.
+- `AgendAi.API`: contém os contratos HTTP, os controllers dos onze endpoints implementados, a composição de dependências, autenticação JWT Bearer, contexto do usuário atual e tratamento global de exceções com Problem Details; referencia Application e Infrastructure.
 
 Preserve essa direção de dependências. Regras de negócio não pertencem a controllers, componentes React ou workflows quando forem regras centrais do CRM.
 
@@ -297,8 +297,12 @@ agend.ai/
 |   |   |   |   |-- MeuPerfilResponse.cs
 |   |   |   |   `-- UsuarioAutenticadoResponse.cs
 |   |   |   |-- Agendamentos/
+|   |   |   |   |-- ClienteAgendamentoResponse.cs
+|   |   |   |   |-- ConsultarAgendamentoResponse.cs
 |   |   |   |   |-- CriarAgendamentoRequest.cs
-|   |   |   |   `-- CriarAgendamentoResponse.cs
+|   |   |   |   |-- CriarAgendamentoResponse.cs
+|   |   |   |   |-- ProcedimentoAgendamentoResponse.cs
+|   |   |   |   `-- ProfissionalAgendamentoResponse.cs
 |   |   |   |-- Agenda/
 |   |   |   |   |-- ConsultarAgendaRequest.cs
 |   |   |   |   |-- ConsultarAgendaResponse.cs
@@ -312,6 +316,9 @@ agend.ai/
 |   |   |   |   |-- ConsultarDisponibilidadeRequest.cs
 |   |   |   |   |-- ConsultarDisponibilidadeResponse.cs
 |   |   |   |   `-- HorarioDisponivelResponse.cs
+|   |   |   |-- Procedimentos/
+|   |   |   |   |-- ListarCatalogoProcedimentosResponse.cs
+|   |   |   |   `-- ProcedimentoCatalogadoResponse.cs
 |   |   |   `-- Profissionais/
 |   |   |       |-- EspecialidadeProfissionalResponse.cs
 |   |   |       |-- ListarProcedimentosProfissionalResponse.cs
@@ -326,6 +333,7 @@ agend.ai/
 |   |   |   |-- ClientesController.cs
 |   |   |   |-- DisponibilidadeController.cs
 |   |   |   |-- MeController.cs
+|   |   |   |-- ProcedimentosController.cs
 |   |   |   `-- ProfissionaisController.cs
 |   |   |-- Infrastructure/
 |   |   |   |-- Auth/
@@ -350,9 +358,17 @@ agend.ai/
 |   |   |   |   |-- CriarAgendamentoCommand.cs
 |   |   |   |   |-- CriarAgendamentoHandler.cs
 |   |   |   |   `-- CriarAgendamentoResult.cs
+|   |   |   |-- ConsultarAgendamento/
+|   |   |   |   |-- ClienteAgendamentoResult.cs
+|   |   |   |   |-- ConsultarAgendamentoHandler.cs
+|   |   |   |   |-- ConsultarAgendamentoQuery.cs
+|   |   |   |   |-- ConsultarAgendamentoResult.cs
+|   |   |   |   |-- ProcedimentoAgendamentoResult.cs
+|   |   |   |   `-- ProfissionalAgendamentoResult.cs
 |   |   |   |-- Models/
 |   |   |   |   |-- CriacaoAgendamentoExterno.cs
 |   |   |   |   |-- DadosAgendamentoAgenda.cs
+|   |   |   |   |-- DadosAgendamentoDetalhado.cs
 |   |   |   |   |-- DadosAgendaProfissional.cs
 |   |   |   |   |-- DadosCriacaoAgendamento.cs
 |   |   |   |   |-- DadosDisponibilidadeProfissional.cs
@@ -365,6 +381,7 @@ agend.ai/
 |   |   |   |-- Ports/
 |   |   |   |   |-- IAgendaExternaGateway.cs
 |   |   |   |   |-- IAgendamentoAgendaReader.cs
+|   |   |   |   |-- IAgendamentoDetalhadoReader.cs
 |   |   |   |   |-- IAgendamentoWriter.cs
 |   |   |   |   |-- ICriacaoAgendamentoExternoGateway.cs
 |   |   |   |   |-- ICriacaoAgendamentoReader.cs
@@ -390,6 +407,16 @@ agend.ai/
 |   |   |       |-- ResolverClienteCommand.cs
 |   |   |       |-- ResolverClienteHandler.cs
 |   |   |       `-- ResolverClienteResult.cs
+|   |   |-- Procedimentos/
+|   |   |   |-- ListarCatalogoProcedimentos/
+|   |   |   |   |-- ListarCatalogoProcedimentosHandler.cs
+|   |   |   |   |-- ListarCatalogoProcedimentosQuery.cs
+|   |   |   |   |-- ListarCatalogoProcedimentosResult.cs
+|   |   |   |   `-- ProcedimentoCatalogadoResult.cs
+|   |   |   |-- Models/
+|   |   |   |   `-- DadosProcedimentoCatalogado.cs
+|   |   |   `-- Ports/
+|   |   |       `-- ICatalogoProcedimentosReader.cs
 |   |   |-- Auth/
 |   |   |   |-- Login/
 |   |   |   |   |-- LoginCommand.cs
@@ -470,6 +497,7 @@ agend.ai/
 |       |-- AgendAi.Infrastructure.csproj
 |       |-- NHibernateHelper.cs
 |       |-- Agenda/
+|       |   |-- AgendamentoDetalhadoReader.cs
 |       |   |-- AgendamentoAgendaReader.cs
 |       |   |-- AgendamentoWriter.cs
 |       |   |-- CriacaoAgendamentoReader.cs
@@ -497,6 +525,8 @@ agend.ai/
 |       |-- Profissionais/
 |       |   |-- ProcedimentosProfissionalReader.cs
 |       |   `-- ProfissionaisReader.cs
+|       |-- Procedimentos/
+|       |   `-- CatalogoProcedimentosReader.cs
 |       `-- Mappings/
 |           |-- AgendamentoMap.cs
 |           |-- ClienteMap.cs
@@ -606,14 +636,18 @@ agend.ai/
 - Endpoint `GET /api/agenda/{profissionalUuid}` para consultar um período da agenda por profissional.
 - Endpoint `GET /api/profissionais?especialidadeUuid={especialidadeUuid}` para listar profissionais agendáveis no escopo da clínica do token, com filtro opcional por especialidade, destinado ao Web e ao chatbot.
 - Endpoint `GET /api/profissionais/{profissionalUuid}/procedimentos` para listar os vínculos ativos do profissional com procedimentos, incluindo UUID da associação, valor e duração efetivos, destinado ao Web e ao chatbot.
+- Endpoint `GET /api/procedimentos` para listar o catálogo ativo da clínica do token, com valor-base e duração estimada, destinado ao Mobile e acessível a profissionais e recepcionistas autorizados.
 - Endpoint `GET /api/profissionais/{profissionalUuid}/disponibilidade`, exclusivo do chatbot, para verificar um horário solicitado e retornar alternativas próximas quando ele estiver ocupado.
 - Endpoint `GET /api/clientes` para listar os clientes ativos da clínica do token, ordenados por nome, para seleção no Web.
+- Endpoint `GET /api/agendamentos/{agendamentoUuid}` para consultar os detalhes de um atendimento no Web e no Mobile, com autorização do profissional responsável ou de usuário autorizado na clínica.
 - Endpoint `POST /api/clientes/resolver`, destinado ao Web e ao chatbot, para localizar ou criar um cliente pelo telefone dentro da clínica do token e, quando informado, vincular sua identidade do Telegram.
 - Endpoint `POST /api/agendamentos`, usado pelo Web e pelo chatbot, para revalidar o horário, reservar o intervalo no PostgreSQL e criar o evento correspondente via n8n.
 - Listagem de profissionais agendáveis com filtro por clínica, calendário configurado e especialidade ativa opcional, sem expor o ID externo do Google Calendar.
 - Listagem de procedimentos por profissional com diferenciação entre profissional inexistente e coleção vazia, filtros de soft delete, ordenação por nome e exposição somente dos UUIDs públicos e valores efetivos da associação.
+- Listagem do catálogo de procedimentos por clínica autenticada, com filtros de soft delete, ordenação sem diferenciar maiúsculas/minúsculas e exposição de UUID, nome, duração estimada e valor-base, sem consultar vínculos profissionais ou integrações externas.
 - Resolução de clientes com normalização de telefone, reaproveitamento do cadastro ativo existente, vínculo opcional do Telegram e detecção de identidades conflitantes.
 - Listagem de clientes com filtro de clínica e soft delete, ordenação sem diferenciação de maiúsculas/minúsculas e projeção que não expõe CPF, Telegram, anamnese ou IDs internos.
+- Consulta dos detalhes do agendamento por UUID, escopada pela clínica do JWT, incluindo cliente, profissional, procedimento, período, motivo, anotações, valor e status do atendimento e pagamento; mantém os relacionamentos disponíveis para preservar dados históricos e não depende de n8n/Google Calendar.
 - Consulta de agenda com contratos HTTP, caso de uso, leitura NHibernate do profissional, correlação em lote do ID externo com o UUID do agendamento e gateway HTTP para o n8n com timeout e erros tipados.
 - Consulta de disponibilidade com duração obtida da associação profissional/procedimento, validação das janelas de atendimento antes da integração, busca externa via n8n e validação defensiva das alternativas retornadas. A mesma lógica foi extraída para `VerificarDisponibilidadeService` e é reutilizada pela criação sem chamar internamente outro handler ou endpoint HTTP.
 - Criação de agendamento com `Idempotency-Key` obrigatória, consulta idempotente por clínica, persistência inicial como `pendente_integracao`, bloqueio concorrente de sobreposição, integração n8n com até duas tentativas totais e transição para `agendado` ou `falha_integracao`.
@@ -642,6 +676,22 @@ Falhas de entrada resultam em `400`; clínica, e-mail ou senha inválidos result
 Rota autenticada que lê as claims por `IContextUsuarioAtual`, consulta usuário, clínica e vínculo profissional ativos e rejeita com `401` qualquer divergência entre token e banco. Retorna perfil, clínica — incluindo `tipoClinica` (`medica`, `odontologica` ou `estetica`) — e a coleção de permissões calculada por `AutorizacaoService`.
 
 O cargo concede permissões operacionais e `isAdmin` acrescenta apenas `clinica:gerenciar` e `usuarios:gerenciar:clinica`. O Web usa essa rota para restaurar a sessão e decidir a apresentação de controles; essas permissões visuais não substituem a autorização dos handlers.
+
+#### `GET /api/agendamentos/{agendamentoUuid}`
+
+Rota autenticada usada pelo Web e pelo Mobile para abrir os detalhes de um atendimento. Recebe o UUID público na rota e deriva a clínica do JWT.
+
+Fluxo executado:
+
+1. O controller transforma o UUID da rota em `ConsultarAgendamentoQuery`.
+2. `ConsultarAgendamentoHandler` valida o UUID e consulta `IAgendamentoDetalhadoReader` com o UUID do agendamento e a clínica autenticada.
+3. `AgendamentoDetalhadoReader` lê do PostgreSQL o agendamento não excluído logicamente e projeta dados relacionais do cliente, profissional e procedimento, além dos horários, motivo, anotações, valor e status.
+4. O handler retorna `404` quando o registro não existe no escopo e exige `agendamentos:gerenciar:proprios` para o profissional responsável ou `agendamentos:gerenciar:clinica` para acesso da clínica.
+5. O controller mapeia o resultado para `ConsultarAgendamentoResponse` e retorna HTTP `200`.
+
+Resposta: `uuid`, `cliente` (`uuid`, `nome`, `telefone`), `profissional` (`uuid`, `nomeExibicao`), `procedimento` (`uuid`, `nome`, `duracaoMinutos`), `inicio`, `fim`, `motivoContato`, `anotacoesProfissional`, `valorTotal`, `status` e `statusPagamento`. `motivoContato` e `anotacoesProfissional` podem ser nulos. A consulta não chama n8n nem Google Calendar; relacionamentos inativados permanecem disponíveis para leitura histórica.
+
+Falhas documentadas: `400` para UUID vazio, `401` para token ausente/inválido, `403` para falta de permissão, `404` para agendamento ausente/excluído ou fora da clínica e `500` para erro inesperado. A resposta de sucesso foi validada manualmente.
 
 #### `GET /api/clientes`
 
@@ -710,6 +760,21 @@ Resposta de sucesso: HTTP `200` com `procedimentos`, coleção que pode ser vazi
 Na modelagem simplificada atual, `profissional_procedimentos.valor` e `duracao_minutos` são obrigatórios e já representam os valores efetivos daquele profissional. Não existe herança dinâmica: o futuro caso de uso que criar a associação deverá gravar os valores informados ou copiar `procedimentos.valor_base` e `duracao_estimada_minutos` quando eles forem omitidos. Alterações posteriores no catálogo não modificam silenciosamente associações existentes.
 
 Falhas tratadas: HTTP `400` para `Guid.Empty`, `401` para token ausente/inválido, `403` para falta de escopo, `404` para profissional inexistente ou inativo e `500` para erro inesperado. Um texto que não satisfaça a restrição de rota `:guid` não chega ao controller e resulta no `404` do roteamento. Foram validados manualmente profissional com procedimentos, profissional existente sem vínculos e UUID inválido.
+
+#### `GET /api/procedimentos`
+
+Rota autenticada destinada ao Mobile para consultar o catálogo ativo da clínica. Não recebe parâmetros: a clínica é derivada exclusivamente do JWT e a rota não depende de n8n ou Google Calendar.
+
+Fluxo executado:
+
+1. `ProcedimentosController` cria `ListarCatalogoProcedimentosQuery` sem aceitar identificadores de clínica ou profissional do cliente.
+2. `ListarCatalogoProcedimentosHandler` obtém o usuário atual e permite o acesso quando ele possui `procedimentos:gerenciar:proprios` ou `procedimentos:gerenciar:clinica`.
+3. `CatalogoProcedimentosReader` consulta via NHibernate somente procedimentos e clínica sem soft delete no escopo autenticado.
+4. O handler projeta UUID, nome, duração estimada e valor-base, ordena por nome sem diferenciar maiúsculas/minúsculas e devolve `ListarCatalogoProcedimentosResponse`.
+
+Resposta de sucesso: HTTP `200` com `procedimentos`, coleção que pode ser vazia. Cada item expõe somente `uuid`, `nome`, `duracaoEstimadaMinutos` e `valorBase`. A rota não calcula nem expõe se o procedimento já é oferecido pelo profissional: essa informação pertence às futuras rotas de autogestão em `/api/me/procedimentos`.
+
+Falhas tratadas: HTTP `401` para token ausente/inválido, `403` quando o usuário não possui nenhuma das permissões aceitas e `500` para erro inesperado. A resposta de sucesso foi validada manualmente.
 
 #### `GET /api/profissionais/{profissionalUuid}/disponibilidade`
 
@@ -781,7 +846,7 @@ Não trate os itens abaixo como implementados apenas porque constam na documenta
 
 ### PoC funcional
 
-- Os nove endpoints atuais do backend estão implementados: login, perfil atual, consulta de agenda, listagem de profissionais agendáveis, listagem dos procedimentos oferecidos por profissional, disponibilidade, listagem de clientes, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida.
+- Os onze endpoints atuais do backend estão implementados: login, perfil atual, consulta de agenda, listagem de profissionais agendáveis, listagem dos procedimentos oferecidos por profissional, listagem do catálogo de procedimentos, disponibilidade, listagem de clientes, detalhes do agendamento, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida.
 - O conjunto mínimo de rotas necessário ao chatbot estático está completo. O próximo fluxo pode resolver o cliente, listar profissionais e procedimentos, consultar disponibilidade e confirmar o agendamento sem acesso direto ao banco.
 - Para a PoC, o chatbot autenticará n8n → API com um JWT anual emitido pontualmente para um usuário `Recepcionista` com `isAdmin = true` da clínica. O token deve permanecer nas Credentials do n8n; a emissão não deve alterar permanentemente a duração padrão dos tokens humanos.
 - Criar os DTOs, casos de uso e endpoints adicionais somente quando os próximos fluxos de cadastro ou MVP os exigirem.

@@ -1,0 +1,3 @@
+namespace AgendAi.Application.Procedimentos.ListarCatalogoProcedimentos;
+
+public sealed record ListarCatalogoProcedimentosQuery();

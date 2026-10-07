@@ -1,6 +1,6 @@
 # Rotas da API RESTful — MVP Acadêmico Web, Mobile e Chatbot
 
-> Última revisão: 25 de setembro de 2026.
+> Última revisão: 6 de outubro de 2026.
 
 Este documento define os contratos HTTP necessários para integrar os três projetos:
 
@@ -19,6 +19,8 @@ As seguintes rotas já existem na PoC:
 - `GET /api/profissionais/{profissionalUuid}/procedimentos`;
 - `GET /api/profissionais/{profissionalUuid}/disponibilidade?profissionalProcedimentoUuid={uuid}&inicio={iso}&limite={1-3}`;
 - `GET /api/clientes`;
+- `GET /api/agendamentos/{agendamentoUuid}`;
+- `GET /api/procedimentos`;
 - `POST /api/clientes/resolver`;
 - `POST /api/agendamentos`.
 
@@ -304,7 +306,7 @@ Essa resposta é apenas uma fotografia. A criação deve validar novamente se o 
 ### `GET /api/agendamentos/{agendamentoUuid}`
 
 - **Projeto:** Web e Mobile.
-- **Estado/acesso:** planejada; profissional responsável ou usuário autorizado da clínica.
+- **Estado/acesso:** implementada; JWT obrigatório. Exige `agendamentos:gerenciar:proprios` para o profissional responsável ou `agendamentos:gerenciar:clinica` para usuário autorizado da clínica.
 - **Descrição:** retorna os dados necessários para a tela de detalhes de um atendimento.
 
 Entrada:
@@ -331,16 +333,21 @@ Saída `200 OK`:
   "procedimento": {
     "uuid": "19ad57ea-7523-4659-8eab-6d1475831a13",
     "nome": "Consulta inicial",
-    "duracaoMinutos": 45
+    "duracaoMinutos": 60
   },
   "inicio": "2026-09-10T15:00:00-03:00",
   "fim": "2026-09-10T15:45:00-03:00",
   "motivoContato": "Retorno",
   "anotacoesProfissional": null,
   "valorTotal": 220.00,
-  "status": "agendado"
+  "status": "agendado",
+  "statusPagamento": "pendente"
 }
 ```
+
+A API consulta o agendamento no PostgreSQL pelo UUID e pela clínica derivada do token. Retorna somente o agendamento não excluído logicamente; os dados relacionados são mantidos no detalhe para preservar o histórico, mesmo que cliente, profissional ou procedimento tenham sido inativados posteriormente. O handler autoriza o profissional responsável ou um usuário com permissão de gerenciamento de agendamentos na clínica. A rota não chama o n8n nem o Google Calendar.
+
+Falhas esperadas: `400` para UUID vazio, `401` para token ausente/inválido, `403` para falta de permissão, `404` quando o agendamento não existe, foi excluído ou não pertence à clínica do token, e `500` para erro inesperado. A rota foi validada manualmente com uma resposta `200 OK` contendo cliente, profissional, procedimento, horários, observações, valor e estados do agendamento e pagamento.
 
 ### `POST /api/agendamentos`
 
@@ -732,8 +739,8 @@ Na modelagem simplificada atual, `profissional_procedimentos.valor` e `duracao_m
 ### `GET /api/procedimentos`
 
 - **Projeto:** Mobile.
-- **Estado/acesso:** planejada; profissional autenticado.
-- **Descrição:** lista, sem busca ou paginação, todos os procedimentos ativos do catálogo da clínica para que o profissional escolha quais deseja oferecer.
+- **Estado/acesso:** implementada; JWT obrigatório. Profissional com `procedimentos:gerenciar:proprios` e recepcionista com `procedimentos:gerenciar:clinica` podem consultar o catálogo da clínica autenticada.
+- **Descrição:** lista, sem busca ou paginação, os procedimentos ativos do catálogo da clínica para seleção em fluxos de procedimentos.
 
 Entrada:
 
@@ -750,20 +757,16 @@ Saída `200 OK`:
     {
       "uuid": "19ad57ea-7523-4659-8eab-6d1475831a13",
       "nome": "Consulta inicial",
-      "valorBase": 180.00,
-      "duracaoBaseMinutos": 30,
-      "oferecidoPeloProfissional": true
-    },
-    {
-      "uuid": "81c3e389-738f-4d46-a992-11f78cb9a3fd",
-      "nome": "Peeling químico",
-      "valorBase": 300.00,
-      "duracaoBaseMinutos": 60,
-      "oferecidoPeloProfissional": false
+      "duracaoEstimadaMinutos": 30,
+      "valorBase": 180.00
     }
   ]
 }
 ```
+
+A clínica é derivada exclusivamente do JWT; a rota não recebe UUID de clínica nem de profissional. O reader retorna somente clínica e procedimentos sem soft delete, e o handler ordena a coleção por nome sem diferenciar maiúsculas de minúsculas. Não há consulta ao n8n ou ao Google Calendar e nenhum vínculo em `profissional_procedimentos` é exposto ou calculado nesta rota.
+
+Uma clínica sem procedimentos ativos recebe `200 OK` com `procedimentos: []`. Token ausente ou inválido retorna `401`, ausência das duas permissões aceitas retorna `403` e falhas inesperadas retornam `500`. A resposta de sucesso foi validada manualmente.
 
 ### `GET /api/me/procedimentos`
 
@@ -1010,9 +1013,9 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 ## Resumo quantitativo
 
 - **22 contratos HTTP**;
-- **9 rotas implementadas**, incluindo login e perfil;
-- **13 rotas planejadas**;
-- as nove rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
+- **11 rotas implementadas**, incluindo login e perfil;
+- **11 rotas planejadas**;
+- as onze rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
 - nenhuma listagem com busca ou paginação;
 - `GET /api/clientes` já fornece os clientes ativos para o select do modal Web. A interface carrega a coleção uma única vez enquanto a agenda permanece montada e filtra localmente por nome ou telefone. O início é escolhido no grid; `GET /api/profissionais/{profissionalUuid}/procedimentos` fornece o preço e a duração efetivos que definem o fim exibido, e a confirmação já usa `POST /api/agendamentos` com chave de idempotência.
 
