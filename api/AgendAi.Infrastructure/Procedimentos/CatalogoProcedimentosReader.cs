@@ -2,7 +2,6 @@ namespace AgendAi.Infrastructure.Procedimentos;
 
 using AgendAi.Application.Procedimentos.Models;
 using AgendAi.Application.Procedimentos.Ports;
-using AgendAi.Application.Profissionais.ListarProcedimentosProfissional.Ports;
 using AgendAi.Domain.Profissionais;
 using NHibernate;
 using NHibernate.Linq;

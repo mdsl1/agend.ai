@@ -1,7 +1,7 @@
 namespace AgendAi.Application.Profissionais.ListarProcedimentosProfissional;
 
 using AgendAi.Application.Common.Exceptions;
-using AgendAi.Application.Profissionais.ListarProcedimentosProfissional.Ports;
+using AgendAi.Application.Profissionais.Ports;
 using AgendAi.Application.Auth.Permissions;
 using AgendAi.Application.Auth.Ports;
 using AgendAi.Application.Auth.Services;

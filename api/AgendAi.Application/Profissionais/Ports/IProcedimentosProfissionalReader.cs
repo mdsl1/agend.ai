@@ -1,6 +1,6 @@
-namespace AgendAi.Application.Profissionais.ListarProcedimentosProfissional.Ports;
+namespace AgendAi.Application.Profissionais.Ports;
 
-using AgendAi.Application.Profissionais.ListarProcedimentosProfissional.Models;
+using AgendAi.Application.Profissionais.Models;
 
 public interface IProcedimentosProfissionalReader
 {

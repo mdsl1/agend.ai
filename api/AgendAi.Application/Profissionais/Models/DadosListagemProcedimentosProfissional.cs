@@ -1,4 +1,4 @@
-namespace AgendAi.Application.Profissionais.ListarProcedimentosProfissional.Models;
+namespace AgendAi.Application.Profissionais.Models;
 
 public sealed record DadosListagemProcedimentosProfissional(
     Guid ProfissionalUuid,
