@@ -1,6 +1,6 @@
 # Rotas da API RESTful — MVP Acadêmico Web, Mobile e Chatbot
 
-> Última revisão: 6 de outubro de 2026.
+> Última revisão: 8 de outubro de 2026.
 
 Este documento define os contratos HTTP necessários para integrar os três projetos:
 
@@ -21,6 +21,7 @@ As seguintes rotas já existem na PoC:
 - `GET /api/clientes`;
 - `GET /api/agendamentos/{agendamentoUuid}`;
 - `GET /api/procedimentos`;
+- `GET /api/me/procedimentos`;
 - `POST /api/clientes/resolver`;
 - `POST /api/agendamentos`.
 
@@ -771,8 +772,8 @@ Uma clínica sem procedimentos ativos recebe `200 OK` com `procedimentos: []`. T
 ### `GET /api/me/procedimentos`
 
 - **Projeto:** Mobile.
-- **Estado/acesso:** planejada; profissional autenticado.
-- **Descrição:** lista os procedimentos atualmente associados ao profissional, incluindo os valores-base atuais do catálogo e os valores efetivos armazenados na associação.
+- **Estado/acesso:** implementada; exige JWT e `procedimentos:gerenciar:proprios`. Somente profissional autenticado com vínculo profissional pode acessar; recepcionistas e usuários sem `profissionalUuid` recebem `403`.
+- **Descrição:** lista os procedimentos associados ao próprio profissional autenticado, sem aceitar UUID de profissional ou clínica na requisição.
 
 Entrada:
 
@@ -787,18 +788,17 @@ Saída `200 OK`:
 {
   "procedimentos": [
     {
-      "profissionalProcedimentoUuid": "9528014c-5161-4e5e-a8a1-ebf1c26f7417",
-      "procedimentoUuid": "19ad57ea-7523-4659-8eab-6d1475831a13",
-      "nome": "Consulta inicial",
-      "valorBase": 180.00,
-      "valorEfetivo": 220.00,
-      "duracaoBaseMinutos": 30,
-      "duracaoEfetivaMinutos": 45,
-      "disponivelAgendamento": true
+      "profissionalProcedimentoUuid": "d6234251-20f3-4c6d-b412-5c76f69873d9",
+      "procedimentoUuid": "d445e5f2-efd3-474b-b896-dddc12ac92e2",
+      "nome": "Eletrocardiograma",
+      "valorEfetivo": 160.00,
+      "duracaoEfetivaMinutos": 60
     }
   ]
 }
 ```
+
+O handler obtém `ProfissionalUuid` de `IContextUsuarioAtual` e reutiliza `IProcedimentosProfissionalReader`, sem chamar outro endpoint HTTP. A resposta tem o mesmo formato de `GET /api/profissionais/{profissionalUuid}/procedimentos`: `profissionalProcedimentoUuid`, `procedimentoUuid`, `nome`, `valorEfetivo` e `duracaoEfetivaMinutos`. Um profissional sem procedimentos ativos recebe `200 OK` com `procedimentos: []`. Token ausente ou inválido retorna `401`; falta da permissão própria retorna `403`; profissional autenticado sem registro ativo no reader retorna `404`; falha inesperada retorna `500`. O retorno foi validado manualmente.
 
 ### `POST /api/me/procedimentos`
 
@@ -1013,9 +1013,9 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 ## Resumo quantitativo
 
 - **22 contratos HTTP**;
-- **11 rotas implementadas**, incluindo login e perfil;
-- **11 rotas planejadas**;
-- as onze rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
+- **12 rotas implementadas**, incluindo login e perfil;
+- **10 rotas planejadas**;
+- as doze rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
 - nenhuma listagem com busca ou paginação;
 - `GET /api/clientes` já fornece os clientes ativos para o select do modal Web. A interface carrega a coleção uma única vez enquanto a agenda permanece montada e filtra localmente por nome ou telefone. O início é escolhido no grid; `GET /api/profissionais/{profissionalUuid}/procedimentos` fornece o preço e a duração efetivos que definem o fim exibido, e a confirmação já usa `POST /api/agendamentos` com chave de idempotência.
 

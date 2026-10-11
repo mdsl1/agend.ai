@@ -216,12 +216,13 @@ CREATE TABLE IF NOT EXISTS agendamentos (
     CONSTRAINT ck_agendamento_google_event_nao_vazio
         CHECK (id_event_google_calendar IS NULL OR btrim(id_event_google_calendar) <> ''),
     CONSTRAINT ck_agendamento_status_pagamento
-        CHECK (status_pagamento IN ('pendente', 'pago', 'isento')),
+        CHECK (status_pagamento IN ('pendente', 'pago', 'isento', 'estornado')),
     CONSTRAINT ck_agendamento_status
         CHECK (
             status IN (
                 'pendente_integracao',
                 'agendado',
+                'reagendado',
                 'falha_integracao',
                 'concluido',
                 'cancelado',

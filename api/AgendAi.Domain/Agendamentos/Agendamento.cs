@@ -8,7 +8,14 @@ public class Agendamento
 {
     public const string StatusPendenteIntegracao = "pendente_integracao";
     public const string StatusAgendado = "agendado";
+    public const string StatusConcluido = "concluido";
     public const string StatusFalhaIntegracao = "falha_integracao";
+    public const string StatusReagendado = "reagendado";
+    public const string StatusCancelado = "cancelado";
+    public const string StatusPagamentoPendente = "pendente";
+    public const string StatusPagamentoPago = "pago";
+    public const string StatusPagamentoIsento = "isento";
+    public const string StatusPagamentoEstornado = "estornado";
     public virtual long Id { get; set; }
     public virtual Guid Uuid { get; set; } = Guid.NewGuid();
     public virtual string ChaveIdempotencia { get; set; } = string.Empty;

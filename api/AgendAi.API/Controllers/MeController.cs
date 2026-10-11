@@ -2,8 +2,10 @@ namespace AgendAi.API.Controllers;
 
 using AgendAi.API.Contracts.Auth;
 using AgendAi.API.Contracts.Profissionais;
+using AgendAi.API.Contracts.Receitas;
 using AgendAi.Application.Auth.MeuPerfil;
 using AgendAi.Application.Profissionais.ListarMeusProcedimentos;
+using AgendAi.Application.Receitas.ResumoMinhasReceitas;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,14 +16,17 @@ public sealed class MeController : ControllerBase
 {
     private readonly MeuPerfilHandler _meuPerfilHandler;
     private readonly ListarMeusProcedimentosHandler _listarMeusProcedimentosHandler;
+    private readonly ConsultarResumoMinhasReceitasHandler _consultarResumoMinhasReceitasHandler;
 
     public MeController(
         MeuPerfilHandler meuPerfilHandler,
-        ListarMeusProcedimentosHandler listarMeusProcedimentosHandler
+        ListarMeusProcedimentosHandler listarMeusProcedimentosHandler,
+        ConsultarResumoMinhasReceitasHandler consultarResumoMinhasReceitasHandler
     )
     {
         _meuPerfilHandler = meuPerfilHandler;
         _listarMeusProcedimentosHandler = listarMeusProcedimentosHandler;
+        _consultarResumoMinhasReceitasHandler = consultarResumoMinhasReceitasHandler;
     }
 
     [HttpGet]
@@ -79,6 +84,45 @@ public sealed class MeController : ControllerBase
             )).ToArray();
 
         var res = new ListarMeusProcedimentosResponse(procedimentos);
+
+        return Ok(res);
+    }
+
+    [HttpGet("receitas/resumo")]
+    [ProducesResponseType( typeof(ResumoMinhasReceitasResponse), StatusCodes.Status200OK )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status400BadRequest )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status401Unauthorized )]
+    public async Task<ActionResult<ResumoMinhasReceitasResponse>> ConsultarResumoMinhasReceitasAsync(
+        [FromQuery] ResumoMinhasReceitasRequest req,
+        CancellationToken cancellationToken
+    )
+    {
+        var query = new ConsultarResumoMinhasReceitasQuery(
+            Mes: req.Mes,
+            Ano: req.Ano
+        );
+
+        var result = await _consultarResumoMinhasReceitasHandler.HandleAsync(query, cancellationToken);
+
+        var resumoPorProcedimento = result.PorProcedimento
+            .Select(item => new MinhasReceitasPorProcedimentoResponse(
+                item.ProcedimentoUuid,
+                item.Nome,
+                item.Qtde,
+                item.ValorTotal
+            )).ToArray();
+
+        var res = new ResumoMinhasReceitasResponse(
+            Periodo: new ResumoMinhasReceitasResponse.PeriodoResponse(
+                Inicio: result.Periodo.Inicio,
+                Fim: result.Periodo.Fim
+            ),
+            ReceitaRecebida: result.ReceitaRecebida,
+            ReceitaEstimada: result.ReceitaEstimada,
+            PercentualVsMesAnterior: result.PercentualVsMesAnterior,
+            PorProcedimento: resumoPorProcedimento
+        );
 
         return Ok(res);
     }

@@ -34,6 +34,10 @@ using AgendAi.Infrastructure.Clientes;
 using AgendAi.Application.Clientes.ListarClientes;
 using AgendAi.Application.Clientes.ResolverCliente;
 
+using AgendAi.Application.Receitas.Ports;
+using AgendAi.Infrastructure.Receitas;
+using AgendAi.Application.Receitas.ResumoMinhasReceitas;
+
 using AgendAi.Infrastructure;
 using AgendAi.API.Infrastructure;
 
@@ -151,7 +155,6 @@ builder.Services.AddScoped<IProcedimentosProfissionalReader, ProcedimentosProfis
 builder.Services.AddScoped<ListarProcedimentosProfissionalHandler>();
 builder.Services.AddScoped<ListarMeusProcedimentosHandler>();
 
-
 builder.Services.AddScoped<ICatalogoProcedimentosReader, CatalogoProcedimentosReader>();
 builder.Services.AddScoped<ListarCatalogoProcedimentosHandler>();
 
@@ -161,6 +164,10 @@ builder.Services.AddScoped<ResolverClienteHandler>();
 
 builder.Services.AddScoped<IClientesReader, ClientesReader>();
 builder.Services.AddScoped<ListarClientesHandler>();
+
+builder.Services.AddScoped<IResumoMinhasReceitasReader, ResumoMinhasReceitasReader>();
+builder.Services.AddScoped<ConsultarResumoMinhasReceitasHandler>();
+
 
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();
