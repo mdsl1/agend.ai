@@ -1,6 +1,6 @@
 # Rotas da API RESTful — MVP Acadêmico Web, Mobile e Chatbot
 
-> Última revisão: 8 de outubro de 2026.
+> Última revisão: 13 de outubro de 2026.
 
 Este documento define os contratos HTTP necessários para integrar os três projetos:
 
@@ -22,8 +22,10 @@ As seguintes rotas já existem na PoC:
 - `GET /api/agendamentos/{agendamentoUuid}`;
 - `GET /api/procedimentos`;
 - `GET /api/me/procedimentos`;
+- `GET /api/me/overview`;
 - `POST /api/clientes/resolver`;
 - `POST /api/agendamentos`.
+- `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}`.
 
 `POST /api/auth/login` é pública por definição. Todas as demais rotas implementadas exigem JWT Bearer e derivam do token a clínica, o usuário, o cargo, o indicador administrativo e, quando houver, o vínculo profissional. Os casos de uso aplicam o escopo da clínica e diferenciam acesso próprio de acesso à clínica; os demais contratos deste documento permanecem planejados.
 
@@ -870,15 +872,17 @@ No `PATCH`, omitir um campo preserva o valor efetivo atual; enviar `null` copia 
 ### `GET /api/me/receitas/resumo`
 
 - **Projeto:** Mobile.
-- **Estado/acesso:** planejada; profissional autenticado.
-- **Descrição:** calcula o resumo financeiro do profissional a partir de `agendamentos.valor_total`, sem fornecer uma lista detalhada de atendimentos.
+- **Estado/acesso:** implementada; exige JWT e a permissão `receitas:visualizar:proprias`. O profissional e a clínica são obtidos do usuário autenticado.
+- **Descrição:** retorna o resumo financeiro mensal do profissional, sem fornecer uma lista detalhada de atendimentos.
 
 Entrada:
 
 ```http
-GET /api/me/receitas/resumo?inicio=2026-09-01&fim=2026-10-01
+GET /api/me/receitas/resumo?mes=9&ano=2026
 Authorization: Bearer <access-token>
 ```
+
+`mes` e `ano` são obrigatórios. O período usa o fuso `America/Sao_Paulo`, é baseado em `TimeDateInicio` e segue o intervalo semiaberto: início do mês incluído e início do mês seguinte excluído. `periodo.fim` na resposta representa esse limite exclusivo.
 
 Saída `200 OK`:
 
@@ -888,72 +892,74 @@ Saída `200 OK`:
     "inicio": "2026-09-01",
     "fim": "2026-10-01"
   },
-  "valorAtendimentosConcluidos": 9840.00,
-  "receitaPrevista": 2640.00,
-  "quantidadeAtendimentosConcluidos": 37,
-  "quantidadeAgendamentosFuturos": 10,
-  "ticketMedio": 265.95,
+  "receitaRecebida": 0,
+  "receitaEstimada": 160.00,
+  "percentualVsMesAnterior": null,
   "porProcedimento": [
     {
-      "procedimentoUuid": "19ad57ea-7523-4659-8eab-6d1475831a13",
-      "nome": "Consulta inicial",
-      "quantidade": 22,
-      "valor": 4840.00
+      "procedimentoUuid": "d445e5f2-efd3-474b-b896-dddc12ac92e2",
+      "nome": "Eletrocardiograma",
+      "qtde": 1,
+      "valorTotal": 160.00
     }
   ]
 }
 ```
 
-`valorAtendimentosConcluidos` soma atendimentos com status `concluido`; `receitaPrevista` soma agendamentos futuros ativos. Registros cancelados, faltas e soft deleted são desconsiderados.
+`receitaRecebida` soma agendamentos com `statusPagamento = pago`, inclusive os marcados como `faltou` quando já pagos. `receitaEstimada` soma agendamentos com `status = agendado` e `statusPagamento = pendente`. Cancelamentos estornados e reagendamentos isentos não entram nesses totais. `percentualVsMesAnterior` compara a receita recebida com a do mês anterior; é `null` quando não há base anterior positiva. `porProcedimento` considera os agendamentos pagos ou estimados do mês e retorna sua quantidade (`qtde`) e soma (`valorTotal`).
+
+Falhas tratadas: `400` para mês/ano inválidos, `401` para token ausente ou inválido, `403` para usuário sem permissão de visualizar receitas próprias e `500` para erro inesperado. O retorno de sucesso foi validado manualmente.
 
 ### `GET /api/me/overview`
 
 - **Projeto:** Mobile.
-- **Estado/acesso:** planejada; profissional autenticado.
-- **Descrição:** entrega um modelo de leitura enxuto para a tela Início, reunindo o próximo atendimento, a quantidade de atendimentos do dia e os principais indicadores financeiros do mês. A clínica e o profissional são inferidos do access token.
+- **Estado/acesso:** implementada e validada; profissional autenticado.
+- **Descrição:** entrega um modelo de leitura enxuto para a tela Início, reunindo os indicadores de agenda do dia, o próximo atendimento e os principais indicadores financeiros do mês. A clínica e o profissional são inferidos do access token.
 
 Entrada:
 
 ```http
-GET /api/me/overview?dataReferencia=2026-09-20
+GET /api/me/overview
 Authorization: Bearer <access-token>
 ```
 
-`dataReferencia` é opcional, usa o formato `AAAA-MM-DD` e assume a data atual no fuso da clínica quando omitida. Ela define o dia da agenda e o mês usados nos indicadores.
+Não há parâmetros. A API usa a data atual no fuso `America/Sao_Paulo` como referência para a agenda do dia e para selecionar o mês dos indicadores financeiros.
 
 Saída `200 OK`:
 
 ```json
 {
-  "dataReferencia": "2026-09-20",
-  "agenda": {
-    "quantidadeAtendimentosHoje": 4,
-    "proximoAtendimento": {
-      "agendamentoUuid": "a3711381-e0f5-4ddd-828d-a35f45797ca4",
-      "inicio": "2026-09-20T10:30:00-03:00",
-      "fim": "2026-09-20T11:15:00-03:00",
-      "nomeCliente": "João Silva",
-      "nomeProcedimento": "Consulta inicial"
-    }
-  },
-  "financeiro": {
+  "dataReferencia": "2026-10-13",
+  "resumoReceitas": {
     "periodo": {
-      "inicio": "2026-09-01",
-      "fim": "2026-10-01"
+      "inicio": "2026-10-01",
+      "fim": "2026-11-01"
     },
-    "valorRealizado": 9840.00,
-    "valorPrevisto": 2640.00,
-    "quantidadeConcluidos": 37,
-    "ticketMedio": 265.95
+    "valorTotal": 160.00,
+    "percentualVsMesAnterior": null
+  },
+  "resumoAgenda": {
+    "qtdeHoje": 0,
+    "qtdeConfirmados": 0,
+    "qtdeRestante": 0,
+    "qtdeCancelados": 0,
+    "proximoAgendamento": {
+      "agendamentoUuid": "82e11d54-4963-43b1-87b6-5663008a5fd9",
+      "inicio": "2026-10-13T15:00:00+00:00",
+      "fim": "2026-10-13T16:00:00+00:00",
+      "nomeCliente": "Marcos Lima",
+      "nomeProcedimento": "Eletrocardiograma",
+      "status": "agendado"
+    }
   }
 }
 ```
 
-`proximoAtendimento` é `null` quando não houver um atendimento ativo a partir da data de referência. A quantidade diária e os indicadores ignoram registros cancelados, faltas e soft deleted. `valorRealizado` considera atendimentos concluídos no mês; `valorPrevisto`, agendamentos futuros ativos do mesmo período.
+`proximoAgendamento` é `null` quando não houver próximo atendimento elegível no dia. `resumoAgenda` informa as quantidades de agendamentos de hoje, confirmados, restantes e cancelados. `resumoReceitas.periodo.fim` é exclusivo; `valorTotal` e `percentualVsMesAnterior` seguem as regras da rota `GET /api/me/receitas/resumo`. Os valores acima são um exemplo de resposta validada, não valores fixos.
 
 O caso de uso consulta os readers do PostgreSQL diretamente. Ele não chama internamente as rotas de agenda ou receitas e não depende do n8n nem do Google Calendar. As rotas específicas permanecem responsáveis pelas telas completas de agenda e receitas.
 
-Erros previstos: `400` para data inválida, `401` para token ausente ou inválido, `403` para perfil sem permissão e `404` quando o usuário autenticado não possuir vínculo profissional ativo.
+Falhas tratadas: `401` para token ausente ou inválido, `403` para usuário sem permissão de visualizar a própria agenda/receitas ou sem vínculo profissional e `500` para erro inesperado. O retorno `200 OK` foi validado manualmente; a resposta bem-sucedida permite `proximoAgendamento: null`.
 
 ---
 
@@ -1008,14 +1014,14 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 9. **Bloqueios:** criar no n8n as operações de criar e excluir um evento `Indisponível`. A exclusão deve validar agenda, profissional e marcador do evento.
 10. **Idempotência da criação:** implementada por chave aleatória persistida e escopada pela clínica; retentativas idênticas concluídas devolvem o mesmo agendamento.
 11. **Receitas:** os valores representam atendimentos concluídos e receita prevista, não contabilidade, conciliação ou fluxo de caixa.
-12. **Overview do profissional:** criar uma consulta agregada ao PostgreSQL para alimentar a tela Início sem encadear chamadas HTTP internas nem consultar o Google Calendar.
+12. **Overview do profissional:** implementada consulta agregada ao PostgreSQL para alimentar a tela Início sem encadear chamadas HTTP internas nem consultar o Google Calendar. A rota retorna os contadores de agenda (`qtdeHoje`, `qtdeConfirmados`, `qtdeRestante`, `qtdeCancelados`), o próximo agendamento quando houver e o resumo financeiro mensal.
 
 ## Resumo quantitativo
 
-- **22 contratos HTTP**;
-- **12 rotas implementadas**, incluindo login e perfil;
-- **10 rotas planejadas**;
-- as doze rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
+- **23 contratos HTTP**;
+- **14 rotas implementadas**, incluindo login e perfil;
+- **9 rotas planejadas**;
+- as quatorze rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
 - nenhuma listagem com busca ou paginação;
 - `GET /api/clientes` já fornece os clientes ativos para o select do modal Web. A interface carrega a coleção uma única vez enquanto a agenda permanece montada e filtra localmente por nome ou telefone. O início é escolhido no grid; `GET /api/profissionais/{profissionalUuid}/procedimentos` fornece o preço e a duração efetivos que definem o fim exibido, e a confirmação já usa `POST /api/agendamentos` com chave de idempotência.
 

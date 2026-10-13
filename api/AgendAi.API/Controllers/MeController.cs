@@ -1,9 +1,11 @@
 namespace AgendAi.API.Controllers;
 
 using AgendAi.API.Contracts.Auth;
+using AgendAi.API.Contracts.Overview;
 using AgendAi.API.Contracts.Profissionais;
 using AgendAi.API.Contracts.Receitas;
 using AgendAi.Application.Auth.MeuPerfil;
+using AgendAi.Application.Overview.ConsultarMeuOverview;
 using AgendAi.Application.Profissionais.ListarMeusProcedimentos;
 using AgendAi.Application.Receitas.ResumoMinhasReceitas;
 using Microsoft.AspNetCore.Authorization;
@@ -17,16 +19,19 @@ public sealed class MeController : ControllerBase
     private readonly MeuPerfilHandler _meuPerfilHandler;
     private readonly ListarMeusProcedimentosHandler _listarMeusProcedimentosHandler;
     private readonly ConsultarResumoMinhasReceitasHandler _consultarResumoMinhasReceitasHandler;
+    private readonly ConsultarMeuOverviewHandler _consultarMeuOverviewHandler;
 
     public MeController(
         MeuPerfilHandler meuPerfilHandler,
         ListarMeusProcedimentosHandler listarMeusProcedimentosHandler,
-        ConsultarResumoMinhasReceitasHandler consultarResumoMinhasReceitasHandler
+        ConsultarResumoMinhasReceitasHandler consultarResumoMinhasReceitasHandler,
+        ConsultarMeuOverviewHandler consultarMeuOverviewHandler
     )
     {
         _meuPerfilHandler = meuPerfilHandler;
         _listarMeusProcedimentosHandler = listarMeusProcedimentosHandler;
         _consultarResumoMinhasReceitasHandler = consultarResumoMinhasReceitasHandler;
+        _consultarMeuOverviewHandler = consultarMeuOverviewHandler;
     }
 
     [HttpGet]
@@ -126,4 +131,57 @@ public sealed class MeController : ControllerBase
 
         return Ok(res);
     }
+
+    [HttpGet("overview")]
+    [ProducesResponseType( typeof(MeuOverviewResponse), StatusCodes.Status200OK )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status400BadRequest )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status401Unauthorized )]
+    public async Task<ActionResult<MeuOverviewResponse>> ConsultarMeuOverviewAsync(
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await _consultarMeuOverviewHandler.HandleAsync(
+            new ConsultarMeuOverviewQuery(),
+            cancellationToken
+        );
+
+        var agenda = result.ResumoAgenda;
+        var proximoAgendamento = agenda.ProximoAgendamento is not null ?
+            new OverviewAgendaResponse.ProximoAgendamentoResponse(
+                AgendamentoUuid: agenda.ProximoAgendamento.AgendamentoUuid,
+                Inicio: agenda.ProximoAgendamento.Inicio,
+                Fim: agenda.ProximoAgendamento.Fim,
+                NomeCliente: agenda.ProximoAgendamento.NomeCliente,
+                NomeProcedimento: agenda.ProximoAgendamento.NomeProcedimento,
+                Status: agenda.ProximoAgendamento.Status
+            )
+            : null;
+        var agendaResponse = new OverviewAgendaResponse(
+            QtdeHoje: agenda.QtdeHoje,
+            QtdeConfirmados: agenda.QtdeConfirmados,
+            QtdeRestante: agenda.QtdeRestante,
+            QtdeCancelados: agenda.QtdeCancelados,
+            ProximoAgendamento: proximoAgendamento
+        );
+
+        var receitas = result.ResumoReceitas;
+        var receitasResponse = new OverviewReceitasResponse(
+            Periodo: new OverviewReceitasResponse.PeriodoResponse(
+                Inicio: receitas.Periodo.Inicio,
+                Fim: receitas.Periodo.Fim
+            ),
+            ValorTotal: receitas.ValorTotal,
+            PercentualVsMesAnterior: receitas.PercentualVsMesAnterior
+        );
+
+        var res = new MeuOverviewResponse(
+            DataReferencia: result.DataReferencia,
+            ResumoReceitas: receitasResponse,
+            ResumoAgenda: agendaResponse
+        );
+
+        return Ok(res);
+    }
+
 }

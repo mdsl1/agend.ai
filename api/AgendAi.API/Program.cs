@@ -38,6 +38,10 @@ using AgendAi.Application.Receitas.Ports;
 using AgendAi.Infrastructure.Receitas;
 using AgendAi.Application.Receitas.ResumoMinhasReceitas;
 
+using AgendAi.Application.Overview.Ports;
+using AgendAi.Infrastructure.Overview;
+using AgendAi.Application.Overview.ConsultarMeuOverview;
+
 using AgendAi.Infrastructure;
 using AgendAi.API.Infrastructure;
 
@@ -168,6 +172,8 @@ builder.Services.AddScoped<ListarClientesHandler>();
 builder.Services.AddScoped<IResumoMinhasReceitasReader, ResumoMinhasReceitasReader>();
 builder.Services.AddScoped<ConsultarResumoMinhasReceitasHandler>();
 
+builder.Services.AddScoped<IResumoAgendaReader, ResumoAgendaReader>();
+builder.Services.AddScoped<ConsultarMeuOverviewHandler>();
 
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();

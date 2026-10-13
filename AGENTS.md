@@ -4,7 +4,7 @@
 
 Este arquivo é o guia operacional durável para agentes que trabalham no Agend.AI. Ele consolida a arquitetura, a stack, a configuração, a estrutura do repositório, o estado implementado, as pendências e as regras que não podem ser inferidas apenas pelo código.
 
-O inventário técnico e o estado das rotas, autenticação JWT, RBAC, integrações n8n, schema, stack e consumidores foram revisados em **25 de setembro de 2026**; as rotas de detalhes de agendamento e catálogo de procedimentos foram atualizadas em **6 de outubro de 2026**, e `GET /api/me/procedimentos` em **8 de outubro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
+O inventário técnico e o estado das rotas, autenticação JWT, RBAC, integrações n8n, schema, stack e consumidores foram revisados em **25 de setembro de 2026**; as rotas de detalhes de agendamento e catálogo de procedimentos foram atualizadas em **6 de outubro de 2026**, `GET /api/me/procedimentos` em **8 de outubro de 2026**, `GET /api/me/receitas/resumo` em **12 de outubro de 2026** e `GET /api/me/overview` em **13 de outubro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
 
 O Agend.AI é um CRM para clínicas com agenda, cadastros e automação de agendamentos. A solução combina uma SPA React, uma API ASP.NET Core, PostgreSQL com NHibernate e workflows n8n integrados, no desenho de destino, ao Telegram e ao Google Calendar.
 
@@ -99,9 +99,9 @@ AgendAi.API -+-- também referencia AgendAi.Application
 ```
 
 - `AgendAi.Domain`: contém as entidades atuais e deve concentrar as regras centrais; não depende das outras camadas.
-- `AgendAi.Application`: contém os casos de uso de login, perfil atual, consulta de eventos e detalhes de agendamentos, listagem de profissionais agendáveis, procedimentos oferecidos por profissional, procedimentos do profissional autenticado e catálogo de procedimentos, resolução e listagem de clientes, verificação de disponibilidade e criação de agendamento; também contém portas, modelos, permissões, autorização por escopo, validação e erros tipados; depende de Domain.
+- `AgendAi.Application`: contém os casos de uso de login, perfil atual, consulta de eventos e detalhes de agendamentos, listagem de profissionais agendáveis, procedimentos oferecidos por profissional, procedimentos do profissional autenticado e catálogo de procedimentos, resolução e listagem de clientes, verificação de disponibilidade, criação de agendamento e consultas do resumo mensal de receitas e overview do profissional autenticado; também contém portas, modelos, permissões, autorização por escopo, validação e erros tipados; depende de Domain.
 - `AgendAi.Infrastructure`: contém a configuração/mappings NHibernate, readers e writers, os gateways HTTP do n8n, hashing/verificação de senha e geração de JWT; referencia Application para implementar suas portas e Domain para consultar e persistir as entidades.
-- `AgendAi.API`: contém os contratos HTTP, os controllers dos doze endpoints implementados, a composição de dependências, autenticação JWT Bearer, contexto do usuário atual e tratamento global de exceções com Problem Details; referencia Application e Infrastructure.
+- `AgendAi.API`: contém os contratos HTTP, os controllers dos quatorze endpoints implementados, a composição de dependências, autenticação JWT Bearer, contexto do usuário atual e tratamento global de exceções com Problem Details; referencia Application e Infrastructure.
 
 Preserve essa direção de dependências. Regras de negócio não pertencem a controllers, componentes React ou workflows quando forem regras centrais do CRM.
 
@@ -268,7 +268,7 @@ Observações de configuração:
 
 ## Estrutura exata do projeto
 
-Árvore lógica revisada em 13/09/2026. Foram omitidos somente artefatos gerados ou internos: `.git/`, `node_modules/`, `dist/`, `bin/`, `obj/`, `.tmp-nhibernate-audit/` e o conteúdo do `.env`.
+Árvore lógica revisada em 13/10/2026. Foram omitidos somente artefatos gerados ou internos: `.git/`, `node_modules/`, `dist/`, `bin/`, `obj/`, `.tmp-nhibernate-audit/` e o conteúdo do `.env`.
 
 Diretórios marcados como vazios existem no workspace, mas, por estarem vazios, não são rastreados pelo Git e não aparecerão em um clone até receberem arquivos.
 
@@ -319,6 +319,14 @@ agend.ai/
 |   |   |   |-- Procedimentos/
 |   |   |   |   |-- ListarCatalogoProcedimentosResponse.cs
 |   |   |   |   `-- ProcedimentoCatalogadoResponse.cs
+|   |   |   |-- Overview/
+|   |   |   |   |-- MeuOverviewResponse.cs
+|   |   |   |   |-- OverviewAgendaResponse.cs
+|   |   |   |   `-- OverviewReceitasResponse.cs
+|   |   |   |-- Receitas/
+|   |   |   |   |-- MinhasReceitasPorProcedimentoResponse.cs
+|   |   |   |   |-- ResumoMinhasReceitasRequest.cs
+|   |   |   |   `-- ResumoMinhasReceitasResponse.cs
 |   |   |   |-- Profissionais/
 |   |   |   |   |-- ListarMeusProcedimentosResponse.cs
 |   |   |   |   |-- ListarProcedimentosProfissionalResponse.cs
@@ -418,6 +426,29 @@ agend.ai/
 |   |   |   |   `-- DadosProcedimentoCatalogado.cs
 |   |   |   `-- Ports/
 |   |   |       `-- ICatalogoProcedimentosReader.cs
+|   |   |-- Receitas/
+|   |   |   |-- Models/
+|   |   |   |   |-- DadosMinhasReceitasPorProcedimento.cs
+|   |   |   |   `-- DadosResumoMinhasReceitas.cs
+|   |   |   |-- Ports/
+|   |   |   |   `-- IResumoMinhasReceitasReader.cs
+|   |   |   `-- ResumoMinhasReceitas/
+|   |   |       |-- ConsultarResumoMinhasReceitasHandler.cs
+|   |   |       |-- ConsultarResumoMinhasReceitasQuery.cs
+|   |   |       |-- ConsultarResumoMinhasReceitasResult.cs
+|   |   |       `-- MinhasReceitasPorProcedimentoResult.cs
+|   |   |-- Overview/
+|   |   |   |-- Models/
+|   |   |   |   |-- DadosProximoAgendamento.cs
+|   |   |   |   `-- DadosResumoAgenda.cs
+|   |   |   |-- Ports/
+|   |   |   |   `-- IResumoAgendaReader.cs
+|   |   |   `-- ConsultarMeuOverview/
+|   |   |       |-- ConsultarMeuOverviewHandler.cs
+|   |   |       |-- ConsultarMeuOverviewQuery.cs
+|   |   |       |-- ConsultarMeuOverviewResult.cs
+|   |   |       |-- OverviewAgendaResult.cs
+|   |   |       `-- OverviewReceitasResult.cs
 |   |   |-- Auth/
 |   |   |   |-- Login/
 |   |   |   |   |-- LoginCommand.cs
@@ -533,6 +564,10 @@ agend.ai/
 |       |   `-- ProfissionaisReader.cs
 |       |-- Procedimentos/
 |       |   `-- CatalogoProcedimentosReader.cs
+|       |-- Receitas/
+|       |   `-- ResumoMinhasReceitasReader.cs
+|       |-- Overview/
+|       |   `-- ResumoAgendaReader.cs
 |       `-- Mappings/
 |           |-- AgendamentoMap.cs
 |           |-- ClienteMap.cs
@@ -664,7 +699,7 @@ agend.ai/
 - `ISessionFactory` NHibernate configurada para PostgreSQL e sessão por escopo HTTP.
 - Schema de criação integral com nove tabelas, seeds básicos, constraints e índices.
 - Campos de integração `profissionais.id_google_calendar`, `profissionais.prefixo` e `agendamentos.id_event_google_calendar` sincronizados entre schema, domínio e mappings.
-- Status inicial de agendamento `pendente_integracao`, com estados de sucesso, falha, conclusão, cancelamento e falta.
+- Status inicial de agendamento `pendente_integracao`, com estados de sucesso, falha, conclusão, cancelamento, reagendamento e falta; pagamentos também admitem `estornado`.
 - Integridade multi-clínica no banco por FKs compostas.
 - Deduplicação concorrente de telefone e identidade do Telegram entre clientes ativos da mesma clínica, além do bloqueio de sobreposição da agenda no banco.
 - Soft delete por `deleted_at` nas oito tabelas que já possuem o campo; a cobertura de `horario_funcionamento` e a remoção de caminhos de exclusão física permanecem pendentes.
@@ -688,6 +723,18 @@ O cargo concede permissões operacionais e `isAdmin` acrescenta apenas `clinica:
 Rota autenticada exclusiva para profissional consultar os procedimentos oferecidos por si próprio. O handler exige `procedimentos:gerenciar:proprios`, obtém `ProfissionalUuid` de `IContextUsuarioAtual` e reutiliza `IProcedimentosProfissionalReader`; não recebe UUID de profissional ou clínica e não chama outro endpoint HTTP. Recepcionistas e usuários sem vínculo profissional recebem `403`.
 
 Resposta `200 OK`: `{ "procedimentos": [...] }`. Cada item contém `profissionalProcedimentoUuid`, `procedimentoUuid`, `nome`, `valorEfetivo` e `duracaoEfetivaMinutos`, igual ao contrato da listagem de procedimentos por profissional. Coleção vazia é válida. Token ausente/inválido retorna `401`; profissional autenticado sem dados disponíveis no reader retorna `404`; erro inesperado retorna `500`. O retorno foi validado manualmente.
+
+#### `GET /api/me/receitas/resumo`
+
+Rota autenticada para o profissional consultar seu resumo financeiro mensal. Recebe `mes` (1 a 12) e `ano` obrigatórios por query string; clínica e profissional são derivados do usuário autenticado. O handler exige `receitas:visualizar:proprias`, calcula os limites do mês no fuso `America/Sao_Paulo` e chama `IResumoMinhasReceitasReader` com intervalos semiabertos baseados em `TimeDateInicio`.
+
+Resposta `200 OK`: `periodo` (`inicio` inclusivo e `fim` exclusivo), `receitaRecebida`, `receitaEstimada`, `percentualVsMesAnterior` e `porProcedimento`. A receita recebida soma agendamentos pagos; a estimada soma os que estão `agendado` e `pendente`. A comparação usa a receita recebida do mês anterior e retorna `null` quando não há receita anterior positiva. Cada procedimento traz `procedimentoUuid`, `nome`, `qtde` e `valorTotal`; quantidade e valor incluem os agendamentos pagos ou estimados do mês. O retorno de sucesso foi validado manualmente.
+
+#### `GET /api/me/overview`
+
+Rota autenticada da tela inicial do aplicativo profissional. Não recebe parâmetros: data e profissional são derivados do contexto autenticado e do fuso `America/Sao_Paulo`. O handler exige `agenda:visualizar:propria` e `receitas:visualizar:proprias`, consulta `IResumoAgendaReader` e `IResumoMinhasReceitasReader` diretamente e monta uma resposta agregada sem chamadas HTTP internas nem dependência do n8n.
+
+Resposta `200 OK`: `dataReferencia`, `resumoReceitas` (`periodo`, `valorTotal`, `percentualVsMesAnterior`) e `resumoAgenda` (`qtdeHoje`, `qtdeConfirmados`, `qtdeRestante`, `qtdeCancelados`, `proximoAgendamento`). `proximoAgendamento` é `null` quando não há próximo atendimento elegível. Token ausente/inválido retorna `401`; falta de permissão ou vínculo profissional retorna `403`; erro inesperado retorna `500`. O retorno de sucesso foi validado manualmente em 13/10/2026.
 
 #### `GET /api/agendamentos/{agendamentoUuid}`
 
@@ -858,7 +905,7 @@ Não trate os itens abaixo como implementados apenas porque constam na documenta
 
 ### PoC funcional
 
-- Os doze endpoints atuais do backend estão implementados: login, perfil atual, procedimentos do profissional autenticado, consulta de agenda, listagem de profissionais agendáveis, listagem dos procedimentos oferecidos por profissional, listagem do catálogo de procedimentos, disponibilidade, listagem de clientes, detalhes do agendamento, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida.
+- Os quatorze endpoints atuais do backend estão implementados: login, perfil atual, overview e resumo de receitas do profissional autenticado, procedimentos do profissional autenticado, consulta de agenda, listagem de profissionais agendáveis, listagem dos procedimentos oferecidos por profissional, listagem do catálogo de procedimentos, disponibilidade, listagem de clientes, detalhes do agendamento, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida.
 - O conjunto mínimo de rotas necessário ao chatbot estático está completo. O próximo fluxo pode resolver o cliente, listar profissionais e procedimentos, consultar disponibilidade e confirmar o agendamento sem acesso direto ao banco.
 - Para a PoC, o chatbot autenticará n8n → API com um JWT anual emitido pontualmente para um usuário `Recepcionista` com `isAdmin = true` da clínica. O token deve permanecer nas Credentials do n8n; a emissão não deve alterar permanentemente a duração padrão dos tokens humanos.
 - Criar os DTOs, casos de uso e endpoints adicionais somente quando os próximos fluxos de cadastro ou MVP os exigirem.
