@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Agend.AI Profissional",
+    "slug": "agendai-profissional",
+    "scheme": "agendaiprofissional",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
