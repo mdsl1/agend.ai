@@ -2,12 +2,14 @@
 
 ## O que já funciona neste primeiro fluxo
 
-1. O login envia `clinicaUuid`, e-mail e senha para `POST /api/auth/login`.
-2. O access token retornado é guardado pelo Expo SecureStore.
-3. O app chama `GET /api/me` para validar a sessão e carregar o perfil e as permissões.
-4. Ao reabrir o app, o token salvo é validado novamente por `GET /api/me`.
-5. Se o token expirou e a API responde `401`, o token local é apagado e o app volta ao login.
-6. O botão “Sair da conta” apaga a sessão local. A API ainda não tem uma rota de logout.
+1. A tela inicial envia o código informado para `GET /api/clinicas/resolver?codigoIdentificador=...`.
+2. O UUID e o nome retornados são guardados no Expo SecureStore e o nome aparece na tela de login.
+3. O login envia `clinicaUuid`, e-mail e senha para `POST /api/auth/login`.
+4. O access token retornado é guardado pelo Expo SecureStore.
+5. O app chama `GET /api/me` para validar a sessão e carregar o perfil e as permissões.
+6. Ao reabrir o app, o token salvo é validado novamente por `GET /api/me`.
+7. Se o token expirou e a API responde `401`, o token local é apagado e o app volta ao login.
+8. “Sair da conta” apaga a sessão. “Trocar clínica” também remove UUID e nome salvos. A API ainda não tem uma rota de logout.
 
 O aplicativo não lê nem decodifica o JWT. A API valida o token e devolve o perfil por `GET /api/me`.
 
@@ -18,7 +20,9 @@ mobile/
 ├─ app/
 │  ├─ _layout.tsx                 # restaura sessão e protege a navegação
 │  ├─ index.tsx                   # tela inicial após autenticação
-│  └─ (public)/login.tsx           # formulário de login
+│  └─ (public)/
+│     ├─ clinic.tsx                # resolve código e seleciona clínica
+│     └─ login.tsx                 # formulário e nome da clínica ativa
 ├─ src/
 │  ├─ features/auth/
 │  │  ├─ AuthProvider.tsx          # estado de autenticação compartilhado
@@ -26,8 +30,8 @@ mobile/
 │  │  └─ authTypes.ts              # tipos das respostas da API
 │  └─ services/
 │     ├─ api.ts                    # cliente HTTP comum do app
-│     └─ session.ts                # grava, lê e apaga o token seguro
-├─ .env.example                    # modelo de configuração local
+│     └─ session.ts                # grava, lê e apaga token e dados da clínica
+├─ app.config.js                   # lê EXPO_PUBLIC_API_URL do .env da raiz
 ├─ app.json                        # configuração do Expo
 ├─ package.json                    # dependências e comandos
 └─ tsconfig.json                   # configuração do TypeScript
@@ -41,15 +45,7 @@ mobile/
    docker compose up --build db api
    ```
 
-2. Em outro terminal, dentro desta pasta, crie sua configuração local a partir do modelo:
-
-   ```powershell
-   Copy-Item .env.example .env.local
-   ```
-
-3. Edite `.env.local` e preencha:
-
-   - `EXPO_PUBLIC_API_URL`: endereço da API acessível pelo dispositivo.
+2. No `.env` da raiz do repositório, configure `EXPO_PUBLIC_API_URL` com o endereço da API acessível pelo dispositivo. Por exemplo:
 
    Exemplos de endereço da API:
 
@@ -57,16 +53,16 @@ mobile/
    - Emulador iOS: `http://localhost:5000`
    - Celular físico: `http://IP-DO-COMPUTADOR:5000`, com celular e computador na mesma rede Wi-Fi.
 
-   O UUID da clínica será informado na primeira tela do aplicativo e armazenado no SecureStore. Não coloque senhas, JWTs ou outras credenciais no arquivo de ambiente. `.env.local` está no `.gitignore`.
+   O arquivo `.env` da raiz é ignorado pelo Git. O Expo lê dele somente `EXPO_PUBLIC_API_URL`; não mova segredos do backend para variáveis `EXPO_PUBLIC_*`, pois elas são incluídas no bundle do aplicativo. O UUID da clínica será informado na primeira tela e armazenado no SecureStore.
 
-4. Instale as dependências e inicie o Expo:
+3. Instale as dependências e inicie o Expo:
 
    ```powershell
-   npm install
-   npx expo start
+   npm --prefix mobile install
+   npm --prefix mobile run start
    ```
 
-5. Abra o app no emulador ou escaneie o QR Code com o Expo Go. Se alterar `.env.local` enquanto o Expo estiver aberto, reinicie o servidor Expo.
+4. Abra o app no emulador ou escaneie o QR Code com o Expo Go. Após alterar `.env` na raiz, reinicie o servidor Expo; se o valor antigo continuar em cache, rode `npm --prefix mobile run start -- --clear`.
 
 ## Como o código é dividido
 

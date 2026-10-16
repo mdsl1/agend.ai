@@ -4,7 +4,7 @@
 
 Este arquivo é o guia operacional durável para agentes que trabalham no Agend.AI. Ele consolida a arquitetura, a stack, a configuração, a estrutura do repositório, o estado implementado, as pendências e as regras que não podem ser inferidas apenas pelo código.
 
-O inventário técnico e o estado das rotas, autenticação JWT, RBAC, integrações n8n, schema, stack e consumidores foram revisados em **25 de setembro de 2026**; as rotas de detalhes de agendamento e catálogo de procedimentos foram atualizadas em **6 de outubro de 2026**, `GET /api/me/procedimentos` em **8 de outubro de 2026**, `GET /api/me/receitas/resumo` em **12 de outubro de 2026** e `GET /api/me/overview` em **13 de outubro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
+O inventário técnico e o estado das rotas, autenticação JWT, RBAC, integrações n8n, schema, stack e consumidores foram revisados em **25 de setembro de 2026**; as rotas de detalhes de agendamento e catálogo de procedimentos foram atualizadas em **6 de outubro de 2026**, `GET /api/me/procedimentos` em **8 de outubro de 2026**, `GET /api/me/receitas/resumo` em **12 de outubro de 2026**, `GET /api/me/overview` em **13 de outubro de 2026** e `GET /api/clinicas/resolver` em **16 de outubro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
 
 O Agend.AI é um CRM para clínicas com agenda, cadastros e automação de agendamentos. A solução combina uma SPA React, uma API ASP.NET Core, PostgreSQL com NHibernate e workflows n8n integrados, no desenho de destino, ao Telegram e ao Google Calendar.
 
@@ -99,9 +99,9 @@ AgendAi.API -+-- também referencia AgendAi.Application
 ```
 
 - `AgendAi.Domain`: contém as entidades atuais e deve concentrar as regras centrais; não depende das outras camadas.
-- `AgendAi.Application`: contém os casos de uso de login, perfil atual, consulta de eventos e detalhes de agendamentos, listagem de profissionais agendáveis, procedimentos oferecidos por profissional, procedimentos do profissional autenticado e catálogo de procedimentos, resolução e listagem de clientes, verificação de disponibilidade, criação de agendamento e consultas do resumo mensal de receitas e overview do profissional autenticado; também contém portas, modelos, permissões, autorização por escopo, validação e erros tipados; depende de Domain.
+- `AgendAi.Application`: contém os casos de uso de resolução pública de clínica por código identificador, login, perfil atual, consulta de eventos e detalhes de agendamentos, listagem de profissionais agendáveis, procedimentos oferecidos por profissional, procedimentos do profissional autenticado e catálogo de procedimentos, resolução e listagem de clientes, verificação de disponibilidade, criação de agendamento e consultas do resumo mensal de receitas e overview do profissional autenticado; também contém portas, modelos, permissões, autorização por escopo, validação e erros tipados; depende de Domain.
 - `AgendAi.Infrastructure`: contém a configuração/mappings NHibernate, readers e writers, os gateways HTTP do n8n, hashing/verificação de senha e geração de JWT; referencia Application para implementar suas portas e Domain para consultar e persistir as entidades.
-- `AgendAi.API`: contém os contratos HTTP, os controllers dos quatorze endpoints implementados, a composição de dependências, autenticação JWT Bearer, contexto do usuário atual e tratamento global de exceções com Problem Details; referencia Application e Infrastructure.
+- `AgendAi.API`: contém os contratos HTTP, os controllers dos quinze endpoints implementados, a composição de dependências, autenticação JWT Bearer, contexto do usuário atual e tratamento global de exceções com Problem Details; referencia Application e Infrastructure.
 
 Preserve essa direção de dependências. Regras de negócio não pertencem a controllers, componentes React ou workflows quando forem regras centrais do CRM.
 
@@ -184,7 +184,7 @@ Todos os projetos usam .NET 8 (`net8.0`), nullable reference types e implicit us
 | `AgendAi.Infrastructure` | FluentNHibernate 3.4.1; Microsoft.Extensions.Identity.Core 8.0.29; Microsoft.IdentityModel.JsonWebTokens 8.14.0; NHibernate 5.7.0; Npgsql 9.0.5 |
 | `AgendAi.API` | AutoMapper 16.2.0; FluentValidation DI 12.1.1; Microsoft.AspNetCore.Authentication.JwtBearer 8.0.29; Microsoft.AspNetCore.OpenApi 8.0.29; Swashbuckle.AspNetCore 6.6.2 |
 
-A API constrói um `ISessionFactory` singleton e abre uma `ISession` por escopo HTTP. Existem controllers para autenticação, perfil e procedimentos do usuário atual, agenda, agendamentos, clientes, profissionais, disponibilidade, procedimentos do catálogo e por profissional. O Npgsql está deliberadamente fixado na versão 9.0.5 porque a mudança de leitura padrão de colunas PostgreSQL `TIME` no Npgsql 10 é incompatível com o tipo usado pelo mapping NHibernate atual; reavalie essa fixação ao atualizar o NHibernate ou o mapping. Instantes persistidos em `TIMESTAMPTZ` são representados nas entidades por `DateTime` UTC, enquanto contratos HTTP e integrações externas usam `DateTimeOffset` para exigir offset explícito nas fronteiras. Os pacotes OpenAPI/Swagger estão referenciados, porém o middleware Swagger não está configurado.
+A API constrói um `ISessionFactory` singleton e abre uma `ISession` por escopo HTTP. Existem controllers para resolução de clínica, autenticação, perfil e procedimentos do usuário atual, agenda, agendamentos, clientes, profissionais, disponibilidade, procedimentos do catálogo e por profissional. O Npgsql está deliberadamente fixado na versão 9.0.5 porque a mudança de leitura padrão de colunas PostgreSQL `TIME` no Npgsql 10 é incompatível com o tipo usado pelo mapping NHibernate atual; reavalie essa fixação ao atualizar o NHibernate ou o mapping. Instantes persistidos em `TIMESTAMPTZ` são representados nas entidades por `DateTime` UTC, enquanto contratos HTTP e integrações externas usam `DateTimeOffset` para exigir offset explícito nas fronteiras. Os pacotes OpenAPI/Swagger estão referenciados, porém o middleware Swagger não está configurado.
 
 ### Banco de dados
 
@@ -234,7 +234,6 @@ O `.env` da raiz existe localmente, é ignorado pelo Git e atualmente não possu
 | `JWT_ISSUER` | Compose, convertido em `Jwt__Issuer` na `api` | emissor aceito nos JWTs | obrigatória |
 | `JWT_AUDIENCE` | Compose, convertido em `Jwt__Audience` na `api` | público aceito nos JWTs | obrigatória |
 | `JWT_EXPIRATION_MINUTES` | Compose, convertido em `Jwt__ExpirationMinutes` na `api` | duração padrão dos tokens humanos | obrigatória e maior que zero |
-| `VITE_POC_CLINIC_UUID` | `app`; Compose/Vite | UUID temporário da clínica conhecido pela interface da PoC | usado atualmente no payload de login; deverá vir do contexto da clínica em uma etapa futura |
 
 ### Variáveis injetadas nos serviços
 
@@ -250,7 +249,6 @@ O `.env` da raiz existe localmente, é ignorado pelo Git e atualmente não possu
 | `DOTNET_USE_POLLING_FILE_WATCHER` | `api/Dockerfile` | polling do `dotnet watch` no bind mount | `1` |
 | `CHOKIDAR_USEPOLLING` | `app`; Compose | polling do watcher do Vite no bind mount | `true` |
 | `API_PROXY_TARGET` | `app`; Compose/Vite | destino interno do proxy `/api` no desenvolvimento conteinerizado | `http://api:5000`; no host o Vite usa `http://localhost:5000` por padrão |
-| `VITE_POC_CLINIC_UUID` | `app`; Compose/Vite | clínica temporária conhecida pelo frontend | exposta ao bundle por ser configuração pública, nunca segredo |
 | `N8N_HOST` | `n8n`; Compose | host anunciado/configurado | `localhost` |
 | `N8N_PORT` | `n8n`; Compose | porta do serviço | `5678` |
 | `N8N_PROTOCOL` | `n8n`; Compose | protocolo local | `http` |
@@ -262,7 +260,7 @@ Observações de configuração:
 - `Program.cs` encerra a inicialização se a conexão, `N8n:ApiKey` ou opções JWT obrigatórias estiverem ausentes ou inválidas.
 - `appsettings.json` contém apenas logging e `AllowedHosts`.
 - O `appsettings.Development.json` local contém apenas níveis de logging e é ignorado pelo Git.
-- O frontend lê `VITE_POC_CLINIC_UUID` por `import.meta.env`; o valor é público no bundle e não pode conter segredo. `vite.config.ts` lê `API_PROXY_TARGET` somente no servidor de desenvolvimento.
+- O frontend identifica a clínica pela rota pública `/{clinicaUuid}/login` e mantém esse UUID em `localStorage` para redirecionamentos de autenticação. `vite.config.ts` lê `API_PROXY_TARGET` somente no servidor de desenvolvimento.
 - Não há variáveis de Telegram, Google Calendar, Groq, Redis, Google Sheets ou Supabase configuradas no repositório.
 - Quando essas integrações forem implementadas, use variáveis de ambiente/secret stores e adicione somente placeholders seguros ao `.env.example`.
 
@@ -312,6 +310,9 @@ agend.ai/
 |   |   |   |   |-- ListarClientesResponse.cs
 |   |   |   |   |-- ResolverClienteRequest.cs
 |   |   |   |   `-- ResolverClienteResponse.cs
+|   |   |   |-- Clinicas/
+|   |   |   |   |-- ResolverClinicaRequest.cs
+|   |   |   |   `-- ResolverClinicaResponse.cs
 |   |   |   |-- Disponibilidade/
 |   |   |   |   |-- ConsultarDisponibilidadeRequest.cs
 |   |   |   |   |-- ConsultarDisponibilidadeResponse.cs
@@ -340,6 +341,7 @@ agend.ai/
 |   |   |   |-- AgendamentosController.cs
 |   |   |   |-- AuthController.cs
 |   |   |   |-- ClientesController.cs
+|   |   |   |-- ClinicasController.cs
 |   |   |   |-- DisponibilidadeController.cs
 |   |   |   |-- MeController.cs
 |   |   |   |-- ProcedimentosController.cs
@@ -416,6 +418,15 @@ agend.ai/
 |   |   |       |-- ResolverClienteCommand.cs
 |   |   |       |-- ResolverClienteHandler.cs
 |   |   |       `-- ResolverClienteResult.cs
+|   |   |-- Clinicas/
+|   |   |   |-- Models/
+|   |   |   |   `-- DadosClinicaResolvida.cs
+|   |   |   |-- Ports/
+|   |   |   |   `-- IResolverClinicaReader.cs
+|   |   |   `-- ResolverClinica/
+|   |   |       |-- ResolverClinicaHandler.cs
+|   |   |       |-- ResolverClinicaQuery.cs
+|   |   |       `-- ResolverClinicaResult.cs
 |   |   |-- Procedimentos/
 |   |   |   |-- ListarCatalogoProcedimentos/
 |   |   |   |   |-- ListarCatalogoProcedimentosHandler.cs
@@ -544,6 +555,8 @@ agend.ai/
 |       |   |-- ClientesReader.cs
 |       |   |-- ClienteWriter.cs
 |       |   `-- ResolucaoClienteReader.cs
+|       |-- Clinicas/
+|       |   `-- ResolverClinicaReader.cs
 |       |-- Auth/
 |       |   |-- AutenticacaoUsuarioReader.cs
 |       |   |-- GeradorAccessToken.cs
@@ -605,8 +618,6 @@ agend.ai/
 |       |   |-- LoginHero.tsx
 |       |   |-- NewAppointmentDialog.tsx
 |       |   `-- WeeklyAgenda.tsx
-|       |-- config/
-|       |   `-- appConfig.ts
 |       |-- features/
 |       |   |-- agenda/
 |       |   |   `-- agendaApi.ts
@@ -619,6 +630,7 @@ agend.ai/
 |       |       |-- AuthContext.tsx
 |       |       |-- authContextValue.ts
 |       |       |-- authSession.ts
+|       |       |-- clinicContext.ts
 |       |       |-- profilePresentation.ts
 |       |       `-- useAuth.ts
 |       `-- pages/
@@ -645,10 +657,10 @@ agend.ai/
 
 ### Frontend da PoC
 
-- SPA React responsiva com React Router; `/login` é a entrada pública, `/agenda` é protegida e caminhos desconhecidos são redirecionados conforme o estado da sessão.
+- SPA React responsiva com React Router; `/{clinicaUuid}/login` é a entrada pública da clínica, `/agenda` é protegida e permanece sem UUID. Caminhos antigos `/login` e caminhos desconhecidos usam o contexto salvo para redirecionar; sem contexto salvo, mostram estado de clínica não identificada.
 - Tela de login baseada na referência do Figma, com hero dinâmica separada em componente próprio: foto de fundo gerada e versionada em `app/src/assets/login_hero_background_v2.png`, título e mensagem do ecossistema em HTML e cards decorativos que reutilizam a linguagem visual dos eventos da agenda semanal. A tela também possui validação de e-mail, senha mínima de oito caracteres, alternância de visibilidade, estados de envio e toasts para validações e falhas da API.
-- O login consome `POST /api/auth/login` com a clínica da PoC vinda de `VITE_POC_CLINIC_UUID`, armazena somente o access token em `sessionStorage` e valida/carrega o usuário ativo por `GET /api/me` antes de liberar a agenda.
-- A sessão é restaurada por `GET /api/me` ao recarregar a SPA; `401` remove o token e redireciona para o login. O logout atual é local porque não existe endpoint de logout nem refresh token.
+- O login obtém o UUID da clínica de `/{clinicaUuid}/login`, envia-o em `POST /api/auth/login` e salva o identificador em `localStorage` na chave `agendai.auth.clinic-uuid.v1`. O access token permanece exclusivamente em `sessionStorage`, na chave `agendai.auth.access-token.v1`; não há refresh token.
+- A sessão é restaurada por `GET /api/me` ao recarregar a SPA. Logoff, token expirado e respostas HTTP `401` removem o token e redirecionam para `/{clinicaUuid}/login` usando o UUID salvo; se não houver UUID, a interface apresenta o estado de clínica não identificada. O logout atual é local porque não existe endpoint de logout.
 - Cabeçalho e sidebar recolhível.
 - Nome, prefixo e contexto de cargo exibidos no shell da agenda vêm do perfil retornado por `GET /api/me`, sem dados estáticos de usuário. Para usuários com cargo técnico `Profissional`, clínicas `medica` e `odontologica` exibem `Doutor` quando o prefixo é `Dr.` e `Doutora` quando é `Dra.`; clínicas `estetica` exibem `Profissional`. Prefixo ausente/desconhecido mantém `Profissional`, e os demais cargos permanecem inalterados.
 - Tela de agenda baseada em FullCalendar.
@@ -694,7 +706,7 @@ agend.ai/
 - Criação de agendamento com `Idempotency-Key` obrigatória, consulta idempotente por clínica, persistência inicial como `pendente_integracao`, bloqueio concorrente de sobreposição, integração n8n com até duas tentativas totais e transição para `agendado` ou `falha_integracao`.
 - JWT Bearer com assinatura HMAC, validação de emissor, audiência, expiração e tolerância de relógio de 30 segundos; senha validada com `PasswordHasher`.
 - Autorização de aplicação com permissões no formato `recurso:ação:escopo`, clínica derivada do token, acesso próprio para profissionais e acesso de clínica para recepcionistas. `isAdmin` acrescenta somente administração da clínica e de usuários.
-- Todas as rotas implementadas, exceto o login, possuem `[Authorize]` explícito e os handlers sensíveis validam o escopo antes de chamar n8n ou persistir alterações.
+- Todas as rotas implementadas, exceto o login e `GET /api/clinicas/resolver`, possuem `[Authorize]` explícito e os handlers sensíveis validam o escopo antes de chamar n8n ou persistir alterações.
 - Nove entidades de domínio e nove mappings FluentNHibernate.
 - `ISessionFactory` NHibernate configurada para PostgreSQL e sessão por escopo HTTP.
 - Schema de criação integral com nove tabelas, seeds básicos, constraints e índices.
@@ -705,6 +717,12 @@ agend.ai/
 - Soft delete por `deleted_at` nas oito tabelas que já possuem o campo; a cobertura de `horario_funcionamento` e a remoção de caminhos de exclusão física permanecem pendentes.
 
 ### Rotas HTTP implementadas
+
+#### `GET /api/clinicas/resolver`
+
+Rota pública por `[AllowAnonymous]`, sem JWT. Recebe o parâmetro obrigatório `codigoIdentificador` por query string e consulta somente clínicas não excluídas logicamente. Resposta `200 OK`: `uuid` e `nome` da clínica encontrada. Código ausente/em branco retorna `400`; código sem clínica ativa correspondente retorna `404`. Essa operação fornece o UUID necessário para iniciar o login multi-clínica; o código identificador não substitui as credenciais.
+
+Exemplo validado: `GET /api/clinicas/resolver?codigoIdentificador=clinica-vitality` retorna `{ "uuid": "cceb703f-22d1-4274-8f5d-9eeab30bc6ee", "nome": "Clínica Vitality" }`.
 
 #### `POST /api/auth/login`
 
@@ -897,7 +915,7 @@ Falhas tratadas: HTTP `400` para entrada inválida, `401` para contexto ausente/
 
 `ApiExceptionHandler` converte `CredenciaisInvalidasException` e `NaoAutenticadoException` em `401`, `AcessoNegadoException` em `403`, `ValidacaoException` em `400`, `RecursoNaoEncontradoException` em `404`, `ConflitoException` em `409`, `IntegracaoExternaException` em `502` e exceções desconhecidas em `500`. As falhas tratadas pela aplicação são retornadas como `application/problem+json`, com `codigo` e `traceId`; respostas `401` produzidas diretamente pelo middleware JWT podem não ter o mesmo corpo.
 
-`POST /api/auth/login` é a única rota pública implementada. Os demais controllers atuais possuem `[Authorize]`, usam a clínica do token e aplicam o escopo no caso de uso. Ainda não existe fallback policy global; ao criar um novo controller, adicione `[Authorize]` explicitamente até essa política ser configurada.
+`POST /api/auth/login` e `GET /api/clinicas/resolver` são as rotas públicas implementadas. A rota de resolução localiza uma clínica ativa pelo `codigoIdentificador` e retorna somente `uuid` e `nome`, antes do login; as demais rotas usam a clínica do token e aplicam o escopo no caso de uso. Ainda não existe fallback policy global; ao criar um novo controller, adicione `[Authorize]` explicitamente até essa política ser configurada.
 
 ## Pendências conhecidas
 
@@ -905,7 +923,7 @@ Não trate os itens abaixo como implementados apenas porque constam na documenta
 
 ### PoC funcional
 
-- Os quatorze endpoints atuais do backend estão implementados: login, perfil atual, overview e resumo de receitas do profissional autenticado, procedimentos do profissional autenticado, consulta de agenda, listagem de profissionais agendáveis, listagem dos procedimentos oferecidos por profissional, listagem do catálogo de procedimentos, disponibilidade, listagem de clientes, detalhes do agendamento, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida.
+- Os quinze endpoints atuais do backend estão implementados: resolução de clínica, login, perfil atual, overview e resumo de receitas do profissional autenticado, procedimentos do profissional autenticado, consulta de agenda, listagem de profissionais agendáveis, listagem dos procedimentos oferecidos por profissional, listagem do catálogo de procedimentos, disponibilidade, listagem de clientes, detalhes do agendamento, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida.
 - O conjunto mínimo de rotas necessário ao chatbot estático está completo. O próximo fluxo pode resolver o cliente, listar profissionais e procedimentos, consultar disponibilidade e confirmar o agendamento sem acesso direto ao banco.
 - Para a PoC, o chatbot autenticará n8n → API com um JWT anual emitido pontualmente para um usuário `Recepcionista` com `isAdmin = true` da clínica. O token deve permanecer nas Credentials do n8n; a emissão não deve alterar permanentemente a duração padrão dos tokens humanos.
 - Criar os DTOs, casos de uso e endpoints adicionais somente quando os próximos fluxos de cadastro ou MVP os exigirem.

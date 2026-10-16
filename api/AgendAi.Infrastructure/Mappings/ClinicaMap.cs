@@ -10,6 +10,7 @@ public class ClinicaMap : ClassMap <Clinica>
         Table("clinicas");
         Id(x => x.Id).Column("id").GeneratedBy.Native();
         Map(x => x.Uuid).Column("uuid").Not.Nullable().Unique();
+        Map(x => x.CodigoIdentificador).Column("codigo_identificador").Not.Nullable().Unique();
         Map(x => x.Cnpj).Column("cnpj").Length(18).Unique();
         Map(x => x.Nome).Column("nome").Length(150).Not.Nullable();
         Map(x => x.Telefone).Column("telefone").Length(20);

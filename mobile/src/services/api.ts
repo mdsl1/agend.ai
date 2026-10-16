@@ -33,7 +33,7 @@ function getApiBaseUrl(): string {
 
     if (!configuredUrl || configuredUrl.includes('SEU_IP')) {
         throw new ApiConfigurationError(
-            'Configure EXPO_PUBLIC_API_URL no arquivo .env.local antes de iniciar o aplicativo.',
+            'Configure EXPO_PUBLIC_API_URL no arquivo .env da raiz do repositório antes de iniciar o aplicativo.',
         );
     }
 

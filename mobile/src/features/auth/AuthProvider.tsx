@@ -20,7 +20,7 @@ export type AuthState =
 
 type AuthContextValue = {
     state: AuthState;
-    saveClinic: (clinicUuid: string) => Promise<void>;
+    saveClinic: (clinicUuid: string, clinicName: string) => Promise<void>;
     changeClinic: () => Promise<void>;
     signIn: (email: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
@@ -75,9 +75,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
         void retryRestore();
     }, [retryRestore]);
 
-    const saveClinic = useCallback(async (clinicUuid: string) => {
+    const saveClinic = useCallback(async (clinicUuid: string, clinicName: string) => {
         await sessionService.clearToken();
-        await sessionService.saveClinicUuid(clinicUuid);
+        await sessionService.saveClinic(clinicUuid, clinicName);
         setState({ status: 'signedOut' });
     }, []);
 

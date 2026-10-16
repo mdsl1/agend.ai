@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 import {
     ActivityIndicator,
+    Image,
     KeyboardAvoidingView,
     Platform,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -12,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ApiError } from '../../src/services/api';
 import { useAuth } from '../../src/features/auth/AuthProvider';
+import { sessionService } from '../../src/services/session';
 
 function explainLoginError(error: unknown): string {
     if (error instanceof ApiError && error.status === 401) {
@@ -30,11 +34,42 @@ function explainLoginError(error: unknown): string {
 }
 
 export default function LoginScreen() {
-    const { signIn, changeClinic } = useAuth();
+    const { state, signIn, changeClinic } = useAuth();
+    const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [isClinicReady, setIsClinicReady] = useState(false);
+    const [clinicName, setClinicName] = useState<string | null>(null);
+
+    useEffect(() => {
+        let active = true;
+        async function loadActiveClinic() {
+            try {
+                const clinicUuid = await sessionService.getClinicUuid();
+                if (!clinicUuid) {
+                    router.replace('/(public)/clinic');
+                    return;
+                }
+
+                const storedName = await sessionService.getClinicName();
+                if (active) {
+                    setClinicName(storedName);
+                    setIsClinicReady(true);
+                }
+            } catch {
+                if (active) router.replace('/(public)/clinic');
+            }
+        }
+
+        void loadActiveClinic();
+        return () => { active = false; };
+    }, [router]);
+
+    useEffect(() => {
+        if (state.status === 'signedIn') router.replace('/');
+    }, [router, state.status]);
 
     async function handleSubmit() {
         if (!email.trim() || !password) {
@@ -54,21 +89,46 @@ export default function LoginScreen() {
         }
     }
 
+    if (!isClinicReady || state.status === 'signedIn') {
+        return (
+            <SafeAreaView style={[styles.safeArea, styles.loading]}>
+                <ActivityIndicator size="large" color="#007D8D" />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.safeArea}>
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={0}
                 style={styles.keyboardArea}
             >
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardDismissMode="on-drag"
+                    keyboardShouldPersistTaps="handled"
+                    automaticallyAdjustKeyboardInsets
+                >
                 <View style={styles.container}>
                     <View style={styles.brandMark}>
-                        <Text style={styles.brandMarkText}>A</Text>
+                        <Image
+                            accessibilityLabel="Logo Agend.AI"
+                            source={require('../../assets/agendai-logo.png')}
+                            style={styles.brandLogo}
+                        />
                     </View>
                     <Text style={styles.brandName}>Agend.AI</Text>
                     <Text style={styles.title}>Acesse sua conta</Text>
                     <Text style={styles.subtitle}>
                         Entre para consultar sua agenda e gerenciar sua rotina profissional.
                     </Text>
+                    {clinicName ? (
+                        <View style={styles.activeClinic}>
+                            <Text style={styles.activeClinicLabel}>Clínica ativa</Text>
+                            <Text style={styles.activeClinicName}>{clinicName}</Text>
+                        </View>
+                    ) : null}
 
                     <Text style={styles.label}>E-mail</Text>
                     <TextInput
@@ -126,10 +186,11 @@ export default function LoginScreen() {
                         )}
                     </Pressable>
 
-                    <Pressable accessibilityRole="button" onPress={() => void changeClinic()} style={styles.changeClinicButton}>
+                    <Pressable accessibilityRole="button" onPress={() => void changeClinic().then(() => router.replace('/(public)/clinic'))} style={styles.changeClinicButton}>
                         <Text style={styles.changeClinicText}>Trocar clínica</Text>
                     </Pressable>
                 </View>
+                </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
@@ -140,10 +201,9 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F6FAFB',
     },
-    keyboardArea: {
-        flex: 1,
-        justifyContent: 'center',
-    },
+    loading: { alignItems: 'center', justifyContent: 'center' },
+    keyboardArea: { flex: 1 },
+    scrollContent: { flexGrow: 1, justifyContent: 'center' },
     container: {
         width: '100%',
         maxWidth: 480,
@@ -164,6 +224,11 @@ const styles = StyleSheet.create({
         fontSize: 25,
         fontWeight: '800',
     },
+    brandLogo: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
+    },
     brandName: {
         marginTop: 12,
         color: '#007D8D',
@@ -183,6 +248,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
         lineHeight: 23,
     },
+    activeClinic: {
+        marginBottom: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        borderRadius: 12,
+        backgroundColor: '#E7F3F4',
+    },
+    activeClinicLabel: { color: '#53656B', fontSize: 12 },
+    activeClinicName: { marginTop: 3, color: '#007D8D', fontSize: 15, fontWeight: '700' },
     label: {
         marginTop: 14,
         marginBottom: 8,
@@ -208,7 +282,7 @@ const styles = StyleSheet.create({
     },
     submitButton: {
         minHeight: 52,
-        marginTop: 24,
+        marginTop: 30,
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 12,

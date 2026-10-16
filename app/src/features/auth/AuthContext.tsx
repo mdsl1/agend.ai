@@ -7,6 +7,7 @@ import {
 import { toast } from 'sonner'
 import { ApiError } from '../api/apiClient'
 import { fazerLogin, obterMeuPerfil, type MeuPerfilApi } from './authApi'
+import { saveClinicUuid } from './clinicContext'
 import {
   AuthContext,
   type AuthStatus,
@@ -16,7 +17,9 @@ import {
   AUTH_SESSION_INVALIDATED_EVENT,
   clearAccessToken,
   getAccessToken,
+  getAccessTokenExpiration,
   saveAccessToken,
+  invalidateAuthSession,
 } from './authSession'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -45,6 +48,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         handleInvalidSession,
       )
   }, [])
+
+  useEffect(() => {
+    if (status !== 'authenticated') {
+      return
+    }
+
+    const expiration = getAccessTokenExpiration()
+
+    if (!expiration) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(
+      invalidateAuthSession,
+      Math.max(0, expiration - Date.now()),
+    )
+
+    return () => window.clearTimeout(timeoutId)
+  }, [status])
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -94,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const profile = await obterMeuPerfil({ signal: params.signal })
+      saveClinicUuid(params.clinicaUuid)
       setUser(profile)
       setStatus('authenticated')
     } catch (error) {

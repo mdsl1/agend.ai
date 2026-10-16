@@ -4,6 +4,11 @@ export type LoginRequest = {
     senha: string;
 };
 
+export type ResolverClinicaResponse = {
+    uuid: string;
+    nome: string;
+};
+
 export type LoginResponse = {
     accessToken: string;
     expiraEm: string;

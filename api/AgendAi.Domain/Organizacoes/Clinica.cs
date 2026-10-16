@@ -6,6 +6,7 @@ public class Clinica
 {
     public virtual long Id { get; set; }
     public virtual Guid Uuid { get; set; } = Guid.NewGuid();
+    public virtual string CodigoIdentificador { get; set; } = string.Empty;
     public virtual string? Cnpj { get; set; }
     public virtual string Nome { get; set; } = string.Empty;
     public virtual string? Telefone { get; set; }

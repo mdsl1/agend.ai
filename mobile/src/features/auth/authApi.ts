@@ -1,5 +1,12 @@
 import { apiRequest } from '../../services/api';
-import type { LoginRequest, LoginResponse, MeuPerfil } from './authTypes';
+import type { LoginRequest, LoginResponse, MeuPerfil, ResolverClinicaResponse } from './authTypes';
+
+export function resolveClinic(code: string): Promise<ResolverClinicaResponse> {
+    const query = encodeURIComponent(code.trim());
+    return apiRequest<ResolverClinicaResponse>(
+        `/api/clinicas/resolver?codigoIdentificador=${query}`,
+    );
+}
 
 export function login(
     clinicUuid: string,

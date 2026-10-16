@@ -1,6 +1,6 @@
 # Rotas da API RESTful — MVP Acadêmico Web, Mobile e Chatbot
 
-> Última revisão: 13 de outubro de 2026.
+> Última revisão: 16 de outubro de 2026.
 
 Este documento define os contratos HTTP necessários para integrar os três projetos:
 
@@ -12,6 +12,7 @@ Este documento define os contratos HTTP necessários para integrar os três proj
 
 As seguintes rotas já existem na PoC:
 
+- `GET /api/clinicas/resolver?codigoIdentificador={codigo}`;
 - `POST /api/auth/login`;
 - `GET /api/me`;
 - `GET /api/agenda/{profissionalUuid}?inicio={iso}&fim={iso}`;
@@ -24,10 +25,10 @@ As seguintes rotas já existem na PoC:
 - `GET /api/me/procedimentos`;
 - `GET /api/me/overview`;
 - `POST /api/clientes/resolver`;
-- `POST /api/agendamentos`.
+- `POST /api/agendamentos`;
 - `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}`.
 
-`POST /api/auth/login` é pública por definição. Todas as demais rotas implementadas exigem JWT Bearer e derivam do token a clínica, o usuário, o cargo, o indicador administrativo e, quando houver, o vínculo profissional. Os casos de uso aplicam o escopo da clínica e diferenciam acesso próprio de acesso à clínica; os demais contratos deste documento permanecem planejados.
+`GET /api/clinicas/resolver` e `POST /api/auth/login` são públicas: a primeira resolve o contexto da clínica antes da autenticação; a segunda valida as credenciais nesse contexto. Todas as demais rotas implementadas exigem JWT Bearer e derivam do token a clínica, o usuário, o cargo, o indicador administrativo e, quando houver, o vínculo profissional. Os casos de uso aplicam o escopo da clínica e diferenciam acesso próprio de acesso à clínica; os demais contratos deste documento permanecem planejados.
 
 ## Convenções gerais
 
@@ -102,6 +103,29 @@ Códigos usuais: `400` para entrada inválida, `401` para não autenticado, `403
 ---
 
 ## 1. Autenticação e sessão
+
+### `GET /api/clinicas/resolver`
+
+- **Projeto:** Web e Mobile.
+- **Estado/acesso:** implementada; pública, sem JWT.
+- **Descrição:** resolve o UUID e o nome de uma clínica ativa a partir do código identificador público. É usada antes do login para selecionar o contexto de autenticação; o código não substitui as credenciais do usuário.
+
+Entrada:
+
+```http
+GET /api/clinicas/resolver?codigoIdentificador=clinica-vitality
+```
+
+Resposta `200 OK`:
+
+```json
+{
+  "uuid": "cceb703f-22d1-4274-8f5d-9eeab30bc6ee",
+  "nome": "Clínica Vitality"
+}
+```
+
+O endpoint retorna somente clínicas não excluídas logicamente. Código ausente ou em branco retorna `400 Bad Request`; código sem clínica correspondente ativa retorna `404 Not Found`. O UUID retornado é então enviado no payload de `POST /api/auth/login`.
 
 ### `POST /api/auth/login`
 
@@ -1005,7 +1029,7 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 
 1. **Autenticação:** JWT Bearer, validação de assinatura, emissor, público e expiração já estão implementados. O Web já possui tela de login, sessão em `sessionStorage`, envio do header Bearer, restauração por `GET /api/me` e tratamento de `401`/`403`. Uma fallback policy global para proteger novas rotas por padrão permanece pendente.
 2. **Senha:** hashing e verificação estão implementados com `PasswordHasher`; nunca armazenar ou registrar a senha original.
-3. **Identificação da clínica no login:** o e-mail é único apenas dentro de uma clínica. O `clinicaUuid` deve vir de configuração, convite ou informação conhecida pela interface.
+3. **Identificação da clínica no login:** o e-mail é único apenas dentro de uma clínica. O Mobile já pode resolver o `clinicaUuid` usando `GET /api/clinicas/resolver` com o `codigoIdentificador`; o Web atual obtém o UUID do segmento da URL de login. Em ambos os fluxos, o UUID segue no payload de `POST /api/auth/login`.
 4. **Dados iniciais:** clínica, usuários, horários de funcionamento, especialidades e catálogo de procedimentos precisam existir previamente no ambiente acadêmico.
 5. **Clientes e Telegram:** `clientes.id_telegram` aceita `NULL` no schema, na entidade e no mapping. A rota de resolução mantém o campo opcional e índices parciais únicos impedem que telefone ou Telegram ativos sejam compartilhados por clientes da mesma clínica.
 6. **Procedimentos do profissional:** `profissional_procedimentos` está sincronizada entre `database/init.sql`, entidade e mapping NHibernate, com unicidade ativa do par profissional/procedimento e valor/duração efetivos obrigatórios sem defaults silenciosos. A associação já é exposta para seleção por `GET /api/profissionais/{profissionalUuid}/procedimentos`; a criação administrativa futura deverá gravar os valores informados ou copiar os valores-base vigentes quando eles forem omitidos.
@@ -1018,10 +1042,10 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 
 ## Resumo quantitativo
 
-- **23 contratos HTTP**;
-- **14 rotas implementadas**, incluindo login e perfil;
+- **24 contratos HTTP**;
+- **15 rotas implementadas**, incluindo resolução de clínica, login e perfil;
 - **9 rotas planejadas**;
-- as quatorze rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
+- as quinze rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
 - nenhuma listagem com busca ou paginação;
 - `GET /api/clientes` já fornece os clientes ativos para o select do modal Web. A interface carrega a coleção uma única vez enquanto a agenda permanece montada e filtra localmente por nome ou telefone. O início é escolhido no grid; `GET /api/profissionais/{profissionalUuid}/procedimentos` fornece o preço e a duração efetivos que definem o fim exibido, e a confirmação já usa `POST /api/agendamentos` com chave de idempotência.
 

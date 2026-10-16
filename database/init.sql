@@ -4,6 +4,7 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 CREATE TABLE IF NOT EXISTS clinicas (
     id BIGSERIAL PRIMARY KEY,
     uuid UUID NOT NULL DEFAULT uuid_generate_v4() UNIQUE,
+    codigo_identificador VARCHAR(50) NOT NULL UNIQUE,
     cnpj VARCHAR(18),
     nome VARCHAR(150) NOT NULL,
     telefone VARCHAR(20),
@@ -349,8 +350,8 @@ CREATE INDEX IF NOT EXISTS idx_profissional_procedimentos_procedimento
 ON profissional_procedimentos(id_clinica, id_procedimento);
 
 
-INSERT INTO clinicas (nome, cnpj, tipo_clinica)
-VALUES ('Clínica Vitality', '12.345.678/0001-95', 'medica')
+INSERT INTO clinicas (nome, codigo_identificador, cnpj, tipo_clinica)
+VALUES ('Clínica Vitality', 'clinica-vitality' '12.345.678/0001-95', 'medica')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO horario_funcionamento (id_clinica, dia_semana, hora_inicio, hora_fim) VALUES

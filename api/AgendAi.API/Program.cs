@@ -10,6 +10,10 @@ using AgendAi.Application.Auth.Login;
 using AgendAi.API.Infrastructure.Auth;
 using AgendAi.Application.Auth.MeuPerfil;
 
+using AgendAi.Application.Clinicas.Ports;
+using AgendAi.Infrastructure.Clinicas;
+using AgendAi.Application.Clinicas.ResolverClinica;
+
 using AgendAi.Application.Agenda.Services;
 using AgendAi.Application.Agenda.Ports;
 using AgendAi.Infrastructure.Integracoes.N8n;
@@ -107,6 +111,9 @@ builder.Services.AddScoped<LoginHandler>();
 
 builder.Services.AddScoped<IMeuPerfilReader, MeuPerfilReader>();
 builder.Services.AddScoped<MeuPerfilHandler>();
+
+builder.Services.AddScoped<IResolverClinicaReader, ResolverClinicaReader>();
+builder.Services.AddScoped<ResolverClinicaHandler>();
 
 builder.Services.AddScoped< IProfissionalAgendaReader, ProfissionalAgendaReader >();
 builder.Services.AddHttpClient<

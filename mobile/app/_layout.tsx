@@ -1,26 +1,11 @@
-import { Redirect, Stack, useSegments } from 'expo-router';
-import { useEffect, useState } from 'react';
-import type { Href } from 'expo-router';
+import { Stack } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '../src/features/auth/AuthProvider';
-import { sessionService } from '../src/services/session';
 
 function RootNavigator() {
     const { state, retryRestore, signOut } = useAuth();
-    const segments = useSegments();
-    const isPublicRoute = (segments as readonly string[])[0] === '(public)';
-    const publicPage = (segments as readonly string[])[1];
-    const [hasClinic, setHasClinic] = useState<boolean | null>(null);
-
-    useEffect(() => {
-        let active = true;
-        void sessionService.getClinicUuid().then((uuid) => {
-            if (active) setHasClinic(Boolean(uuid));
-        });
-        return () => { active = false; };
-    }, [state]);
 
     if (state.status === 'loading') {
         return (
@@ -54,26 +39,6 @@ function RootNavigator() {
                 </Pressable>
             </SafeAreaView>
         );
-    }
-
-    if (state.status === 'signedOut' && hasClinic === null) {
-        return <SafeAreaView style={styles.centered}><ActivityIndicator size="large" color="#007D8D" /></SafeAreaView>;
-    }
-
-    if (state.status === 'signedOut' && !isPublicRoute) {
-        return <Redirect href={(hasClinic ? '/(public)/login' : '/(public)/clinic') as Href} />;
-    }
-
-    if (state.status === 'signedOut' && hasClinic && publicPage === 'clinic') {
-        return <Redirect href={'/(public)/login' as Href} />;
-    }
-
-    if (state.status === 'signedOut' && !hasClinic && publicPage === 'login') {
-        return <Redirect href={'/(public)/clinic' as Href} />;
-    }
-
-    if (state.status === 'signedIn' && isPublicRoute) {
-        return <Redirect href="/" />;
     }
 
     return (

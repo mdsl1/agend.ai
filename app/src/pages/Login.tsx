@@ -10,7 +10,6 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { LoginHero } from '../components/LoginHero'
-import { appConfig } from '../config/appConfig'
 import { ApiError } from '../features/api/apiClient'
 import { useAuth } from '../features/auth/useAuth'
 
@@ -47,7 +46,7 @@ function validatePassword(password: string) {
   return undefined
 }
 
-export function Login() {
+export function Login({ clinicaUuid }: { clinicaUuid: string }) {
   const navigate = useNavigate()
   const { signIn } = useAuth()
   const [email, setEmail] = useState('')
@@ -77,7 +76,7 @@ export function Login() {
 
     try {
       await signIn({
-        clinicaUuid: appConfig.pocClinicUuid,
+        clinicaUuid,
         email: email.trim(),
         senha: password,
       })

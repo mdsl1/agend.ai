@@ -1,12 +1,26 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../src/features/auth/AuthProvider';
+import { sessionService } from '../src/services/session';
 
 export default function HomeScreen() {
     const { state, signOut, changeClinic } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (state.status !== 'signedOut') return;
+        let active = true;
+        void sessionService.getClinicUuid().then((clinicUuid) => {
+            if (!active) return;
+            router.replace(clinicUuid ? '/(public)/login' : '/(public)/clinic');
+        });
+        return () => { active = false; };
+    }, [router, state.status]);
 
     if (state.status !== 'signedIn') {
-        return null;
+        return <SafeAreaView style={styles.loading}><ActivityIndicator size="large" color="#007D8D" /></SafeAreaView>;
     }
 
     const { profile } = state;
@@ -59,6 +73,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+    loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F6FAFB' },
     safeArea: {
         flex: 1,
         backgroundColor: '#F6FAFB',
