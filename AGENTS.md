@@ -40,6 +40,10 @@ Quando documentação e implementação divergirem, descreva a divergência e o 
 
 ## Visão geral da arquitetura
 
+### Diretrizes específicas do aplicativo mobile
+
+Para qualquer tarefa que leia ou altere o projeto em `mobile/`, leia e siga também [`mobile/AGENTS.md`](mobile/AGENTS.md). Esse arquivo define as fontes obrigatórias de contrato e produto, as regras de nomenclatura/estrutura das telas, a atualização dos estados de implementação nos documentos e os testes esperados para o app.
+
 ### Topologia executável atual
 
 O `docker-compose.yml` provisiona quatro serviços locais. A presença do serviço na topologia não significa que o fluxo funcional correspondente já esteja implementado.
@@ -646,6 +650,13 @@ agend.ai/
 ```
 
 ## Estado implementado
+
+### Aplicativo Mobile (Expo)
+
+- Projeto Expo/TypeScript inicializado em `mobile/`; Expo Router mantém adaptadores de rota em `mobile/app/` e telas com `index.tsx`/`styles.ts` em `mobile/src/features/`.
+- Fluxos de resolução da clínica, login, armazenamento de sessão e restauração de perfil implementados.
+- Tela Início integrada a `GET /api/me/overview`, com resumo de receita, os quatro indicadores diários (agendamentos, confirmados, restantes e cancelados), próximo atendimento opcional, estados de carregamento/erro e atualização manual. Verificações registradas em 22/10/2026: `npm run typecheck` passou; lint não está configurado. Os destinos de navegação para os demais módulos continuam pendentes; teste visual em dispositivo não foi realizado pelo agente.
+- `figma.css` contém especificações mobile; usar a referência mobile para novas telas e preservar margem lateral e alvos de toque adequados.
 
 ### Infraestrutura local
 
