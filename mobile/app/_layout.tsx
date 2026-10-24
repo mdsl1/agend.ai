@@ -48,6 +48,7 @@ function RootNavigator() {
                 <Stack.Screen name="(public)/clinic" />
                 <Stack.Screen name="(public)/login" />
                 <Stack.Screen name="index" />
+                <Stack.Screen name="receitas/resumo" />
             </Stack>
         </>
     );

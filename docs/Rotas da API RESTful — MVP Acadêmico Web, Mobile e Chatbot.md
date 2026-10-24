@@ -1006,11 +1006,11 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 | Tela ou fluxo | Rotas principais | Estado no aplicativo |
 |---|---|---|
 | Login e perfil | `POST /api/auth/login`, `GET /api/me` | Implementado |
-| Início | `GET /api/me/overview` | Implementado: consulta integrada e exibição dos quatro indicadores diários; destinos das demais telas seguem em desenvolvimento |
+| Início | `GET /api/me/overview` | Implementado: consulta integrada e exibição dos quatro indicadores diários; navegação para Receitas disponível |
 | Agenda e atendimento | `GET /api/agenda/{profissionalUuid}`, `GET /api/agendamentos/{agendamentoUuid}` | Planejado |
 | Bloquear ou liberar horário | `POST /api/me/indisponibilidades`, `DELETE /api/me/indisponibilidades/{eventoId}` | Planejado |
 | Procedimentos e preços | `GET /api/procedimentos`, `GET /api/me/procedimentos`, `POST /api/me/procedimentos`, `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` | Planejado |
-| Receitas | `GET /api/me/receitas/resumo` | Planejado |
+| Receitas (rota interna `/receitas/resumo`) | `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}` | Implementado: consulta mensal e navegação entre Início/Receitas |
 
 ### Chatbot
 

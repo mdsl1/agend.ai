@@ -655,7 +655,7 @@ agend.ai/
 
 - Projeto Expo/TypeScript inicializado em `mobile/`; Expo Router mantém adaptadores de rota em `mobile/app/` e telas com `index.tsx`/`styles.ts` em `mobile/src/features/`.
 - Fluxos de resolução da clínica, login, armazenamento de sessão e restauração de perfil implementados.
-- Tela Início integrada a `GET /api/me/overview`, com resumo de receita, os quatro indicadores diários (agendamentos, confirmados, restantes e cancelados), próximo atendimento opcional, estados de carregamento/erro e atualização manual. Verificações registradas em 22/10/2026: `npm run typecheck` passou; lint não está configurado. Os destinos de navegação para os demais módulos continuam pendentes; teste visual em dispositivo não foi realizado pelo agente.
+- Tela Início integrada a `GET /api/me/overview`, com resumo de receita, os quatro indicadores diários (agendamentos, confirmados, restantes e cancelados), próximo atendimento opcional, estados de carregamento/erro e atualização manual. Tela Overview de Receitas na rota interna `/receitas/resumo`, integrada a `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}`, com troca de mês, detalhamento por procedimento, ticket médio calculado e estados de carregamento/vazio/erro. Navegação inferior compartilhada permite alternar entre Início e Receitas; Agenda, Serviços e Perfil mostram que ainda estão em desenvolvimento. Verificações em 24/10/2026: `npm run typecheck` passou; lint não está configurado. Teste visual em dispositivo não foi realizado pelo agente.
 - `figma.css` contém especificações mobile; usar a referência mobile para novas telas e preservar margem lateral e alvos de toque adequados.
 
 ### Infraestrutura local

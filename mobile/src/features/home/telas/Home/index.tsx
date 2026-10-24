@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import NavegacaoInferior from '../../../../components/NavegacaoInferior';
 import { ApiError } from '../../../../services/api';
 import { sessionService } from '../../../../services/session';
 import { useAuth } from '../../../auth/AuthProvider';
@@ -90,7 +91,7 @@ export default function HomeScreen() {
     ]);
 
     return (
-        <SafeAreaView style={styles.tela} edges={['top', 'left', 'right']}>
+        <SafeAreaView style={styles.tela} edges={['top', 'left', 'right', 'bottom']}>
             <ScrollView
                 contentContainerStyle={styles.conteudo}
                 refreshControl={<RefreshControl refreshing={atualizando} onRefresh={() => void carregarResumo(true)} tintColor="#007D94" />}
@@ -177,6 +178,7 @@ export default function HomeScreen() {
                 ) : null}
 
             </ScrollView>
+            <NavegacaoInferior abaAtiva="inicio" />
         </SafeAreaView>
     );
 }

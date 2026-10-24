@@ -2,10 +2,10 @@ import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
     tela: { flex: 1, backgroundColor: '#F8FAFC' },
-    conteudo: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 28, gap: 20 },
+    conteudo: { paddingHorizontal: 20, paddingVertical: 28, gap: 20 },
     topo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     data: { color: '#6D797D', fontSize: 12, fontWeight: '500', letterSpacing: 0.5 },
-    saudacao: { marginTop: 5, color: '#131B2E', fontSize: 23, fontWeight: '700' },
+    saudacao: { marginTop: 15, color: '#131B2E', fontSize: 23, fontWeight: '700' },
     avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#D8EEF2', alignItems: 'center', justifyContent: 'center' },
     avatarTexto: { color: '#006578', fontSize: 14, fontWeight: '700' },
     receita: { minHeight: 144, padding: 18, borderRadius: 18, backgroundColor: '#007D94', justifyContent: 'space-between' },
