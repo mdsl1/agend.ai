@@ -1,17 +1,21 @@
+import { useMemo } from 'react';
 import { Stack } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '../src/features/auth/AuthProvider';
+import { useTema, type CoresTema } from '../src/tema/tema';
 
 function RootNavigator() {
     const { state, retryRestore, signOut } = useAuth();
+    const { cores, modo } = useTema();
+    const styles = useMemo(() => criarEstilos(cores), [cores]);
 
     if (state.status === 'loading') {
         return (
             <SafeAreaView style={styles.centered}>
-                <StatusBar style="dark" />
-                <ActivityIndicator size="large" color="#007D8D" />
+                <StatusBar style={modo === 'escuro' ? 'light' : 'dark'} />
+                <ActivityIndicator size="large" color={cores.marca} />
                 <Text style={styles.statusText}>Verificando sua sessão…</Text>
             </SafeAreaView>
         );
@@ -20,7 +24,7 @@ function RootNavigator() {
     if (state.status === 'error') {
         return (
             <SafeAreaView style={styles.centered}>
-                <StatusBar style="dark" />
+                <StatusBar style={modo === 'escuro' ? 'light' : 'dark'} />
                 <Text style={styles.title}>Não foi possível restaurar a sessão</Text>
                 <Text style={styles.message}>{state.message}</Text>
                 <Pressable
@@ -43,12 +47,13 @@ function RootNavigator() {
 
     return (
         <>
-            <StatusBar style="dark" />
+            <StatusBar style={modo === 'escuro' ? 'light' : 'dark'} />
             <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="(public)/clinic" />
                 <Stack.Screen name="(public)/login" />
                 <Stack.Screen name="index" />
-                <Stack.Screen name="receitas/resumo" />
+                <Stack.Screen name="agenda" />
+                <Stack.Screen name="receitas" />
             </Stack>
         </>
     );
@@ -62,56 +67,15 @@ export default function RootLayout() {
     );
 }
 
-const styles = StyleSheet.create({
-    centered: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 28,
-        backgroundColor: '#F6FAFB',
-    },
-    statusText: {
-        marginTop: 16,
-        color: '#53656B',
-        fontSize: 16,
-    },
-    title: {
-        color: '#16252A',
-        fontSize: 23,
-        fontWeight: '700',
-        textAlign: 'center',
-    },
-    message: {
-        marginTop: 12,
-        marginBottom: 24,
-        color: '#53656B',
-        fontSize: 16,
-        lineHeight: 23,
-        textAlign: 'center',
-    },
-    primaryButton: {
-        minHeight: 48,
-        alignSelf: 'stretch',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 12,
-        backgroundColor: '#007D8D',
-    },
-    primaryButtonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '700',
-    },
-    secondaryButton: {
-        minHeight: 48,
-        marginTop: 8,
-        alignSelf: 'stretch',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    secondaryButtonText: {
-        color: '#007D8D',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-});
+function criarEstilos(cores: CoresTema) {
+    return StyleSheet.create({
+        centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28, backgroundColor: cores.fundo },
+        statusText: { marginTop: 16, color: cores.textoSuave, fontSize: 16 },
+        title: { color: cores.texto, fontSize: 23, fontWeight: '700', textAlign: 'center' },
+        message: { marginTop: 12, marginBottom: 24, color: cores.textoSuave, fontSize: 16, lineHeight: 23, textAlign: 'center' },
+        primaryButton: { minHeight: 48, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#007D8D' },
+        primaryButtonText: { color: cores.textoSobreMarca, fontSize: 16, fontWeight: '700' },
+        secondaryButton: { minHeight: 48, marginTop: 8, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
+        secondaryButtonText: { color: cores.marca, fontSize: 16, fontWeight: '600' },
+    });
+}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +8,8 @@ import NavegacaoInferior from '../../../../components/NavegacaoInferior';
 import { useAuth } from '../../../auth/AuthProvider';
 import { obterResumoReceitas } from '../../apiReceitas';
 import type { ResumoReceitas } from '../../typeReceitas';
-import { styles } from './styles';
+import { useTema } from '../../../../tema/tema';
+import { criarEstilos } from './styles';
 
 function formatarMoeda(valor: number): string {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
@@ -39,6 +40,8 @@ function obterMesAtual(): { ano: number; mes: number } {
 export default function TelaOverviewReceitas() {
     const { state, signOut } = useAuth();
     const router = useRouter();
+    const { cores } = useTema();
+    const styles = useMemo(() => criarEstilos(cores), [cores]);
     const mesAtual = obterMesAtual();
     const [ano, setAno] = useState(mesAtual.ano);
     const [mes, setMes] = useState(mesAtual.mes);
@@ -86,7 +89,7 @@ export default function TelaOverviewReceitas() {
     }
 
     if (state.status !== 'signedIn') {
-        return <SafeAreaView style={styles.carregando}><ActivityIndicator size="large" color="#007D94" /></SafeAreaView>;
+        return <SafeAreaView style={styles.carregando}><ActivityIndicator size="large" color={cores.marca} /></SafeAreaView>;
     }
 
     const proximoMes = mes === 12 ? { ano: ano + 1, mes: 1 } : { ano, mes: mes + 1 };
@@ -100,7 +103,7 @@ export default function TelaOverviewReceitas() {
         <SafeAreaView style={styles.tela} edges={['top', 'left', 'right', 'bottom']}>
             <ScrollView
                 contentContainerStyle={styles.conteudo}
-                refreshControl={<RefreshControl refreshing={atualizando} onRefresh={() => void carregarResumo(true)} tintColor="#007D94" />}
+                refreshControl={<RefreshControl refreshing={atualizando} onRefresh={() => void carregarResumo(true)} tintColor={cores.marca} />}
             >
                 <View style={styles.cabecalho}>
                     <Text style={styles.titulo}>Receitas</Text>
@@ -131,7 +134,7 @@ export default function TelaOverviewReceitas() {
                 </View>
 
                 {carregando ? (
-                    <View style={[styles.card, styles.carregando]}><ActivityIndicator color="#007D94" /></View>
+                    <View style={[styles.card, styles.carregando]}><ActivityIndicator color={cores.marca} /></View>
                 ) : erro ? (
                     <View style={styles.cartaoProcedimento}>
                         <Text style={styles.erro}>{erro}</Text>
@@ -196,7 +199,7 @@ export default function TelaOverviewReceitas() {
                     </>
                 ) : null}
             </ScrollView>
-            <NavegacaoInferior abaAtiva="receitas/resumo" />
+            <NavegacaoInferior abaAtiva="receitas" />
         </SafeAreaView>
     );
 }

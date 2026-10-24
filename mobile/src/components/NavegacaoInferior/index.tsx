@@ -1,21 +1,25 @@
 import { Alert, Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { styles } from './styles';
+import { useMemo } from 'react';
+import { useTema } from '../../tema/tema';
+import { criarEstilos } from './styles';
 
-type AbaAtiva = 'inicio' | 'receitas/resumo';
+type AbaAtiva = 'inicio' | 'agenda' | 'receitas';
 
 const itens = [
     { chave: 'inicio', rotulo: 'Início', icone: '⌂', rota: '/' },
-    { chave: 'agenda', rotulo: 'Agenda', icone: '▦' },
-    { chave: 'receitas/resumo', rotulo: 'Receitas', icone: 'R$' , rota: '/receitas/resumo' },
+    { chave: 'agenda', rotulo: 'Agenda', icone: '▦', rota: '/agenda' },
+    { chave: 'receitas', rotulo: 'Receitas', icone: 'R$', rota: '/receitas' },
     { chave: 'servicos', rotulo: 'Serviços', icone: '✚' },
     { chave: 'perfil', rotulo: 'Perfil', icone: '○' },
 ] as const;
 
 export default function NavegacaoInferior({ abaAtiva }: { abaAtiva: AbaAtiva }) {
     const router = useRouter();
+    const { cores } = useTema();
+    const styles = useMemo(() => criarEstilos(cores), [cores]);
 
-    function selecionarAba(chave: string, rota?: '/' | '/receitas/resumo') {
+    function selecionarAba(chave: string, rota?: '/' | '/agenda' | '/receitas') {
         if (rota) {
             router.replace(rota);
             return;

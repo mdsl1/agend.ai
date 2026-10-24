@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
     ActivityIndicator,
@@ -17,10 +17,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/features/auth/AuthProvider';
 import { ApiError } from '../../src/services/api';
 import { resolveClinic } from '../../src/features/auth/authApi';
+import { useTema, type CoresTema } from '../../src/tema/tema';
 
 export default function ClinicScreen() {
     const { state, saveClinic } = useAuth();
     const router = useRouter();
+    const { cores, modo } = useTema();
+    const styles = useMemo(() => criarEstilos(cores), [cores]);
     const [clinicCode, setClinicCode] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,9 +94,10 @@ export default function ClinicScreen() {
                         accessibilityLabel="Código da clínica"
                         autoCapitalize="none"
                         autoCorrect={false}
+                        keyboardAppearance={modo === 'escuro' ? 'dark' : 'light'}
                         onChangeText={setClinicCode}
                         placeholder="Ex.: VITALITY"
-                        placeholderTextColor="#849398"
+                        placeholderTextColor={cores.textoPlaceholder}
                         returnKeyType="done"
                         onSubmitEditing={() => void handleSubmit()}
                         value={clinicCode}
@@ -107,7 +111,7 @@ export default function ClinicScreen() {
                         onPress={() => void handleSubmit()}
                         style={({ pressed }) => [styles.submitButton, pressed && !isSubmitting ? styles.pressed : null]}
                     >
-                        {isSubmitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitText}>Continuar</Text>}
+                        {isSubmitting ? <ActivityIndicator color={cores.textoSobreMarca} /> : <Text style={styles.submitText}>Continuar</Text>}
                     </Pressable>
                 </View>
                 </ScrollView>
@@ -116,25 +120,23 @@ export default function ClinicScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: '#F6FAFB' },
-    keyboardArea: { flex: 1 },
-    scrollContent: { flexGrow: 1, justifyContent: 'center' },
-    container: { width: '100%', maxWidth: 480, alignSelf: 'center', paddingHorizontal: 24, paddingVertical: 28 },
-    brandMark: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: '#007D8D' },
-    brandMarkText: { color: '#FFFFFF', fontSize: 25, fontWeight: '800' },
-    brandLogo: {
-        width: 48,
-        height: 48,
-        borderRadius: 16,
-    },
-    brandName: { marginTop: 12, color: '#007D8D', fontSize: 17, fontWeight: '700' },
-    title: { marginTop: 30, color: '#16252A', fontSize: 29, fontWeight: '700' },
-    subtitle: { marginTop: 8, marginBottom: 28, color: '#53656B', fontSize: 16, lineHeight: 23 },
-    label: { marginTop: 14, marginBottom: 8, color: '#25363B', fontSize: 15, fontWeight: '600' },
-    input: { minHeight: 52, paddingHorizontal: 15, borderWidth: 1, borderColor: '#C9D7DA', borderRadius: 12, backgroundColor: '#FFFFFF', color: '#16252A', fontSize: 15 },
-    error: { marginTop: 14, color: '#B42318', fontSize: 14, lineHeight: 20 },
-    submitButton: { minHeight: 52, marginTop: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#007D8D' },
-    pressed: { backgroundColor: '#006977' },
-    submitText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-});
+function criarEstilos(cores: CoresTema) {
+    return StyleSheet.create({
+        safeArea: { flex: 1, backgroundColor: cores.fundo },
+        keyboardArea: { flex: 1 },
+        scrollContent: { flexGrow: 1, justifyContent: 'center' },
+        container: { width: '100%', maxWidth: 480, alignSelf: 'center', paddingHorizontal: 24, paddingVertical: 28 },
+        brandMark: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: '#007D8D' },
+        brandMarkText: { color: cores.textoSobreMarca, fontSize: 25, fontWeight: '800' },
+        brandLogo: { width: 48, height: 48, borderRadius: 16 },
+        brandName: { marginTop: 12, color: cores.marca, fontSize: 17, fontWeight: '700' },
+        title: { marginTop: 30, color: cores.texto, fontSize: 29, fontWeight: '700' },
+        subtitle: { marginTop: 8, marginBottom: 28, color: cores.textoSuave, fontSize: 16, lineHeight: 23 },
+        label: { marginTop: 14, marginBottom: 8, color: cores.textoSecundario, fontSize: 15, fontWeight: '600' },
+        input: { minHeight: 52, paddingHorizontal: 15, borderWidth: 1, borderColor: cores.bordaForte, borderRadius: 12, backgroundColor: cores.superficie, color: cores.texto, fontSize: 15 },
+        error: { marginTop: 14, color: cores.perigo, fontSize: 14, lineHeight: 20 },
+        submitButton: { minHeight: 52, marginTop: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#007D8D' },
+        pressed: { backgroundColor: '#006977' },
+        submitText: { color: cores.textoSobreMarca, fontSize: 16, fontWeight: '700' },
+    });
+}

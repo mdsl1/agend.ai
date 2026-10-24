@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +8,8 @@ import { sessionService } from '../../../../services/session';
 import { useAuth } from '../../../auth/AuthProvider';
 import { obterResumoInicio } from '../../apiHome';
 import type { ResumoInicio } from '../../homeTypes';
-import { styles } from './styles';
+import { useTema } from '../../../../tema/tema';
+import { criarEstilos } from './styles';
 
 function formatarMoeda(valor: number): string {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
@@ -39,6 +40,8 @@ function obterMensagemErro(erro: unknown): string {
 export default function HomeScreen() {
     const { state, signOut, changeClinic } = useAuth();
     const router = useRouter();
+    const { cores } = useTema();
+    const styles = useMemo(() => criarEstilos(cores), [cores]);
     const [dados, setDados] = useState<ResumoInicio | null>(null);
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
@@ -77,7 +80,7 @@ export default function HomeScreen() {
     }, [router, state.status]);
 
     if (state.status !== 'signedIn') {
-        return <SafeAreaView style={styles.carregando}><ActivityIndicator size="large" color="#007D94" /></SafeAreaView>;
+        return <SafeAreaView style={styles.carregando}><ActivityIndicator size="large" color={cores.marca} /></SafeAreaView>;
     }
 
     const { profile } = state;
@@ -94,7 +97,7 @@ export default function HomeScreen() {
         <SafeAreaView style={styles.tela} edges={['top', 'left', 'right', 'bottom']}>
             <ScrollView
                 contentContainerStyle={styles.conteudo}
-                refreshControl={<RefreshControl refreshing={atualizando} onRefresh={() => void carregarResumo(true)} tintColor="#007D94" />}
+                refreshControl={<RefreshControl refreshing={atualizando} onRefresh={() => void carregarResumo(true)} tintColor={cores.marca} />}
             >
                 <View style={styles.topo}>
                     <View>
@@ -107,7 +110,7 @@ export default function HomeScreen() {
                 </View>
 
                 {carregando ? (
-                    <View style={[styles.cartao, styles.carregando]}><ActivityIndicator color="#007D94" /></View>
+                    <View style={[styles.cartao, styles.carregando]}><ActivityIndicator color={cores.marca} /></View>
                 ) : erro ? (
                     <View style={styles.cartao}>
                         <Text style={styles.erro}>{erro}</Text>
@@ -119,7 +122,7 @@ export default function HomeScreen() {
                             <Text style={styles.receitaRotulo}>Receita total neste mês</Text>
                             <Text style={styles.receitaValor}>{formatarMoeda(dados.resumoReceitas.valorTotal)}</Text>
                             <Text style={styles.variacao}>
-                                {percentual == null ? 'Sem comparação com o mês anterior' : `${percentual >= 0 ? '+' : ''}${new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDigits: 1 }).format(percentual)} em relação ao mês anterior`}
+                                {percentual == null ? 'Sem comparação com o mês anterior' : `${percentual >= 0 ? '+' : ''}${new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDigits: 1 }).format(percentual)} vs. mês anterior`}
                             </Text>
                         </View>
 
