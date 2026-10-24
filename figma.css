@@ -75,6 +75,53 @@
   --agend-page-gap: 24px;
 }
 
+/* ========================================================================== */
+/* PROPOSTA — paleta para modo escuro                                          */
+/* Ative em um ancestral com data-theme="dark" após validar contraste.        */
+/* Os tons principais da marca (brand-700/600/500) permanecem inalterados.     */
+/* ========================================================================== */
+:root[data-theme='dark'] {
+  /* Texto */
+  --agend-ink: #f1f5f9;
+  --agend-label: #cbd5e1;
+  --agend-table-heading: #d8e1ee;
+  --agend-muted: #aab8ca;
+  --agend-subtle: #8b9aaf;
+  --agend-placeholder: #8292a8;
+  --agend-placeholder-light: #64748b;
+
+  /* Superfícies e contornos */
+  --agend-canvas: #0b1220;
+  --agend-white: #111b2e;
+  --agend-surface-subtle: #17243a;
+  --agend-border: #2a3a52;
+  --agend-border-strong: #42556e;
+  --agend-on-brand: #f9fdff;
+  --agend-brand-100: rgba(0, 151, 178, 0.16);
+  --agend-brand-050: rgba(0, 151, 178, 0.08);
+
+  /* Feedback com fundos escuros e texto mais luminoso */
+  --agend-success: #4ade80;
+  --agend-success-bg: #123323;
+  --agend-warning: #fbbf24;
+  --agend-warning-bg: #38290e;
+  --agend-danger: #fb7185;
+  --agend-danger-bg: #3b1824;
+  --agend-info: #60a5fa;
+  --agend-info-bg: #142b4a;
+  --agend-inactive-bg: #292f50;
+  --agend-lavender: #211f3a;
+  --agend-lavender-strong: #2c294d;
+  --agend-lilac: #241e35;
+
+  /* Elevação */
+  --agend-overlay: rgba(0, 0, 0, 0.64);
+  --agend-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --agend-shadow-header: 0 4px 8px rgba(0, 0, 0, 0.32);
+  --agend-shadow-card: 0 4px 14px rgba(0, 0, 0, 0.24);
+  --agend-shadow-modal: 0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
 *,
 *::before,
 *::after {

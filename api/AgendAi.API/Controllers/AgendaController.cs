@@ -46,6 +46,7 @@ public sealed class AgendaController : ControllerBase
             Titulo: evento.Titulo,
             Tipo: evento.Tipo,
             AgendamentoUuid: evento.AgendamentoUuid,
+            StatusAgendamento: evento.StatusAgendamento,
             Inicio: evento.Inicio,
             Fim: evento.Fim,
             NomeCliente: evento.NomeCliente,

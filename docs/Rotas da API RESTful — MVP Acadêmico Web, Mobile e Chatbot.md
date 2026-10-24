@@ -231,6 +231,7 @@ Saída `200 OK`:
       "id": "evento-opaco-123",
       "tipo": "agendamento",
       "agendamentoUuid": "a3711381-e0f5-4ddd-828d-a35f45797ca4",
+      "statusAgendamento": "agendado",
       "titulo": "Consulta",
       "inicio": "2026-09-02T09:00:00-03:00",
       "fim": "2026-09-02T09:45:00-03:00",
@@ -242,6 +243,7 @@ Saída `200 OK`:
       "id": "evento-opaco-456",
       "tipo": "indisponibilidade",
       "agendamentoUuid": null,
+      "statusAgendamento": null,
       "titulo": "Indisponível",
       "inicio": "2026-09-02T12:00:00-03:00",
       "fim": "2026-09-02T13:00:00-03:00",
@@ -252,6 +254,8 @@ Saída `200 OK`:
   ]
 }
 ```
+
+Cada evento de tipo `agendamento` pode informar `statusAgendamento`, conforme o registro relacional associado: `pendente_integracao`, `agendado`, `reagendado`, `falha_integracao`, `concluido`, `cancelado` ou `faltou`. O campo é `null` quando o evento não representa um agendamento associado, como nas indisponibilidades.
 
 O campo `tipo` define o componente visual usado pelo Web e pelo Mobile. Um profissional só pode consultar seu próprio UUID; uma recepcionista pode consultar qualquer profissional da mesma clínica. Token ausente ou inválido resulta em `401`, e tentativa autenticada fora do escopo resulta em `403` antes da chamada ao n8n.
 
@@ -1007,10 +1011,13 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 |---|---|---|
 | Login e perfil | `POST /api/auth/login`, `GET /api/me` | Implementado |
 | Início | `GET /api/me/overview` | Implementado: consulta integrada e exibição dos quatro indicadores diários; navegação para Receitas disponível |
-| Agenda e atendimento | `GET /api/agenda/{profissionalUuid}`, `GET /api/agendamentos/{agendamentoUuid}` | Planejado |
+| Agenda (rota interna `/agenda`) | `GET /api/agenda/{profissionalUuid}` | Implementado: consulta semanal, seleção de data, atendimentos/indisponibilidades com etiquetas de status e estados de carregamento, vazio e erro |
+| Detalhes do atendimento | `GET /api/agendamentos/{agendamentoUuid}` | Planejado |
 | Bloquear ou liberar horário | `POST /api/me/indisponibilidades`, `DELETE /api/me/indisponibilidades/{eventoId}` | Planejado |
 | Procedimentos e preços | `GET /api/procedimentos`, `GET /api/me/procedimentos`, `POST /api/me/procedimentos`, `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` | Planejado |
-| Receitas (rota interna `/receitas/resumo`) | `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}` | Implementado: consulta mensal e navegação entre Início/Receitas |
+| Receitas (rota interna `/receitas`) | `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}` | Implementado: consulta mensal e navegação entre Início/Receitas |
+
+As telas mobile implementadas acompanham automaticamente o tema claro ou escuro configurado no sistema do dispositivo; essa preferência visual não exige chamada à API.
 
 ### Chatbot
 

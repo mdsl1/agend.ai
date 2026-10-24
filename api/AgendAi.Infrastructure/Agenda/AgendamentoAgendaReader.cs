@@ -39,7 +39,8 @@ public sealed class AgendamentoAgendaReader : IAgendamentoAgendaReader
                 && ids.Contains(agendamento.IdEventGoogleCalendar!))
             .Select(agendamento => new DadosAgendamentoAgenda (
                 agendamento.IdEventGoogleCalendar!,
-                agendamento.Uuid
+                agendamento.Uuid,
+                agendamento.Status
             ))
             .ToListAsync(cancellationToken);
     }

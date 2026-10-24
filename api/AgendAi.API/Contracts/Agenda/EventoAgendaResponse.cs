@@ -5,6 +5,7 @@ public sealed record EventoAgendaResponse (
     string Titulo,
     string Tipo,
     Guid? AgendamentoUuid,
+    string? StatusAgendamento,
     DateTimeOffset Inicio,
     DateTimeOffset Fim,
     string? NomeCliente,
