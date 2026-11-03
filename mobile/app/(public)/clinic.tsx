@@ -96,7 +96,7 @@ export default function ClinicScreen() {
                         autoCorrect={false}
                         keyboardAppearance={modo === 'escuro' ? 'dark' : 'light'}
                         onChangeText={setClinicCode}
-                        placeholder="Ex.: VITALITY"
+                        placeholder="Ex.: clinica-tal"
                         placeholderTextColor={cores.textoPlaceholder}
                         returnKeyType="done"
                         onSubmitEditing={() => void handleSubmit()}

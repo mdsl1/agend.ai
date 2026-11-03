@@ -1,17 +1,20 @@
+namespace AgendAi.Domain.Agendamentos;
+
 using AgendAi.Domain.Clientes;
 using AgendAi.Domain.Organizacoes;
 using AgendAi.Domain.Profissionais;
-
-namespace AgendAi.Domain.Agendamentos;
+using AgendAi.Domain.Common.Exceptions;
 
 public class Agendamento
 {
+    public const int DiasToleranciaParaCancelamento = -1;
     public const string StatusPendenteIntegracao = "pendente_integracao";
     public const string StatusAgendado = "agendado";
     public const string StatusConcluido = "concluido";
     public const string StatusFalhaIntegracao = "falha_integracao";
     public const string StatusReagendado = "reagendado";
     public const string StatusCancelado = "cancelado";
+    public const string StatusFaltou = "faltou";
     public const string StatusPagamentoPendente = "pendente";
     public const string StatusPagamentoPago = "pago";
     public const string StatusPagamentoIsento = "isento";
@@ -51,12 +54,18 @@ public class Agendamento
 
         if (cliente.Clinica.Uuid != profissionalProcedimento.Clinica.Uuid)
         {
-            throw new ArgumentException("Cliente e profissional devem pertencer à mesma clínica.");
+            throw new RegraNegocioException(
+                "dados_clinicas_diferentes",
+                "Cliente e profissional devem pertencer à mesma clínica."
+            );
         }
 
         if (fim <= inicio)
         {
-            throw new ArgumentException("O fim do agendamento deve ser posterior ao início.");
+            throw new RegraNegocioException(
+                "periodos_invalidos",
+                "O fim do agendamento deve ser posterior ao início."
+            );
         }
 
         return new Agendamento
@@ -84,7 +93,10 @@ public class Agendamento
 
         if (Status != StatusPendenteIntegracao)
         {
-            throw new InvalidOperationException("Somente um agendamento pendente pode ser confirmado.");
+            throw new RegraNegocioException(
+                "alteracao_nao_permitida",
+                "Somente um agendamento pendente pode ser confirmado."
+            );
         }
 
         IdEventGoogleCalendar = idEventGoogleCalendar.Trim();
@@ -96,10 +108,73 @@ public class Agendamento
     {
         if (Status != StatusPendenteIntegracao)
         {
-            throw new InvalidOperationException("Somente um agendamento pendente pode registrar uma falha de integração.");
+            throw new RegraNegocioException(
+                "alteracao_nao_permitida",
+                "Somente um agendamento pendente pode registrar uma falha de integração."
+            );
         }
 
         Status = StatusFalhaIntegracao;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public virtual void MarcarComoFaltou(DateTime datetimeAlteracao)
+    {
+        if (datetimeAlteracao.Date < TimeDateInicio.Date)
+        {
+            throw new RegraNegocioException(
+                "alteracao_nao_permitida",
+                "Não é possível marcar uma falta antes de chegar o dia agendado."
+            );
+        }
+
+        Status = StatusFaltou;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public virtual void MarcarComoCancelado(DateTime datetimeAlteracao)
+    {
+        var dataLimite = TimeDateInicio.Date.AddDays(DiasToleranciaParaCancelamento);
+
+        if (Status == StatusConcluido)
+        {
+            throw new RegraNegocioException(
+                "alteracao_nao_permitida",
+                "Não é possível cancelar um agendamento concluído."
+            );
+        }
+
+        if (datetimeAlteracao.Date >= dataLimite)
+        {
+            throw new RegraNegocioException(
+                "alteracao_nao_permitida",
+                $"O prazo de cancelamento é de no máximo d{DiasToleranciaParaCancelamento}. Após esse período, deverá ser solicitado reagendamento."
+            );
+        }
+
+        Status = StatusCancelado;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public virtual void MarcarComoConcluido(DateTime datetimeAlteracao)
+    {
+        if (datetimeAlteracao.Date <= TimeDateInicio.Date)
+        {
+            throw new RegraNegocioException(
+                "alteracao_nao_permitida",
+                "Não é possível concluir um agendamento antes do dia agendado."
+            );
+        }
+
+        if (Status != StatusAgendado)
+        {
+            throw new RegraNegocioException(
+                "alteracao_nao_permitida",
+                "Somente um agendamento com status 'agendado' pode ser concluído."
+            );
+        }
+
+        Status = StatusConcluido;
         UpdatedAt = DateTime.UtcNow;
     }
 }

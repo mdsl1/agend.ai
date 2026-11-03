@@ -53,6 +53,7 @@ function RootNavigator() {
                 <Stack.Screen name="(public)/login" />
                 <Stack.Screen name="index" />
                 <Stack.Screen name="agenda" />
+                <Stack.Screen name="agendamento/[agendamentoUuid]" />
                 <Stack.Screen name="receitas" />
             </Stack>
         </>

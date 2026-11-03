@@ -10,6 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { LoginHero } from '../components/LoginHero'
+import AgendAiLogo from '../assets/agendai-logo.png';
 import { ApiError } from '../features/api/apiClient'
 import { useAuth } from '../features/auth/useAuth'
 
@@ -100,7 +101,7 @@ export function Login({ clinicaUuid }: { clinicaUuid: string }) {
     <main className="relative flex min-h-screen w-full overflow-hidden bg-[linear-gradient(144.58deg,#e6f5f8_0%,#f8fafc_100%)] min-[821px]:min-w-[1024px]">
       <section className="relative z-10 flex min-h-screen w-full flex-col items-center gap-20 px-6 py-10 sm:px-12 min-[821px]:w-[600px] min-[821px]:shrink-0 min-[821px]:items-start min-[821px]:gap-[125px] min-[821px]:px-[60px] min-[821px]:py-[70px]">
         <div className="flex h-8 items-center gap-2 text-agend-brand-700">
-          <CalendarCheck2 aria-hidden="true" size={32} strokeWidth={2.1} />
+          <img src={AgendAiLogo} className='w-10'></img>
           <span className="font-heading text-2xl font-semibold leading-8">
             Agend.AI
           </span>

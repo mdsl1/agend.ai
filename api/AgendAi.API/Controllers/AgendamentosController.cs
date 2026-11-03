@@ -2,9 +2,10 @@ namespace AgendAi.API.Controllers;
 
 using AgendAi.API.Contracts.Agendamentos;
 using AgendAi.Application.Agenda.CriarAgendamento;
+using AgendAi.Application.Agenda.ConsultarAgendamento;
+using AgendAi.Application.Agenda.AlterarStatusAgendamento;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using AgendAi.Application.Agenda.ConsultarAgendamento;
 
 [ApiController]
 [Authorize]
@@ -13,14 +14,17 @@ public sealed class AgendamentosController : ControllerBase
 {
     private readonly CriarAgendamentoHandler _criarAgendamentoHandler;
     private readonly ConsultarAgendamentoHandler _consultarAgendamentoHandler;
+    private readonly AlterarStatusAgendamentoHandler _alterarStatusAgendamentoHandler;
 
     public AgendamentosController(
         CriarAgendamentoHandler criarAgendamentoHandler,
-        ConsultarAgendamentoHandler consultarAgendamentoHandler
+        ConsultarAgendamentoHandler consultarAgendamentoHandler,
+        AlterarStatusAgendamentoHandler alterarStatusAgendamentoHandler
     )
     {
         _criarAgendamentoHandler = criarAgendamentoHandler;
         _consultarAgendamentoHandler = consultarAgendamentoHandler;
+        _alterarStatusAgendamentoHandler = alterarStatusAgendamentoHandler;
     }
 
     [HttpGet("{agendamentoUuid:guid}")]
@@ -113,4 +117,32 @@ public sealed class AgendamentosController : ControllerBase
         );
     }
     
+    [HttpPatch("{agendamentoUuid:guid}/status")]
+    [ProducesResponseType( typeof(AlterarStatusAgendamentoResponse), StatusCodes.Status200OK )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status400BadRequest )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status404NotFound )]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
+    public async Task<ActionResult<AlterarStatusAgendamentoResponse>> AlterarStatusAsync(
+        [FromRoute] Guid agendamentoUuid,
+        [FromBody] AlterarStatusAgendamentoRequest req,
+        CancellationToken cancellationToken
+    )
+    {
+        var command = new AlterarStatusAgendamentoCommand(
+            AgendamentoUuid: agendamentoUuid,
+            NovoStatus: req.Status
+        );
+
+        var result = await _alterarStatusAgendamentoHandler.HandleAsync(command, cancellationToken);
+
+        var res = new AlterarStatusAgendamentoResponse(
+            AgendamentoUuid: result.AgendamentoUuid,
+            StatusAnterior: result.StatusAnterior,
+            NovoStatus: result.NovoStatus,
+            AlteradoEm: result.AlteradoEm
+        );
+
+        return Ok(res);
+    }
 }

@@ -1,3 +1,3 @@
-import TelaMinhaAgenda from '../src/features/agenda/telas/MinhaAgenda';
+import TelaAgenda from '../src/features/agenda/telas/Agenda';
 
-export default TelaMinhaAgenda;
+export default TelaAgenda;

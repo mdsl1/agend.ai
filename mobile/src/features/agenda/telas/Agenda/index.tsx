@@ -10,7 +10,7 @@ import {
     type TextStyle,
     type ViewStyle,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ApiError } from '../../../../services/api';
 import { sessionService } from '../../../../services/session';
@@ -162,7 +162,7 @@ function obterVarianteStatus(
     return 'semStatus';
 }
 
-export default function TelaMinhaAgenda() {
+export default function TelaAgenda() {
     const { state, signOut } = useAuth();
     const router = useRouter();
     const { cores } = useTema();
@@ -207,9 +207,9 @@ export default function TelaMinhaAgenda() {
         }
     }, [inicioSemana, profissionalUuid, signOut]);
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         if (state.status === 'signedIn') void carregarAgenda();
-    }, [carregarAgenda, state.status]);
+    }, [carregarAgenda, state.status]));
 
     useEffect(() => {
         if (state.status !== 'signedOut') return;
@@ -371,8 +371,16 @@ export default function TelaMinhaAgenda() {
                                     ? rotulosStatus[evento.statusAgendamento]
                                     : 'Status não informado';
                             return (
-                                <View
+                                <Pressable
                                     key={evento.id}
+                                    accessibilityRole={evento.tipo === 'agendamento' && evento.agendamentoUuid ? 'button' : undefined}
+                                    accessibilityLabel={evento.tipo === 'agendamento' ? `Ver detalhes de ${evento.nomeCliente ?? evento.titulo}` : undefined}
+                                    disabled={evento.tipo !== 'agendamento' || !evento.agendamentoUuid}
+                                    onPress={() => {
+                                        if (evento.agendamentoUuid) {
+                                            router.push({ pathname: '/agendamento/[agendamentoUuid]', params: { agendamentoUuid: evento.agendamentoUuid } });
+                                        }
+                                    }}
                                     style={[styles.cartaoEvento, indisponibilidade && styles.cartaoIndisponibilidade]}
                                 >
                                     <View style={styles.horarioEvento}>
@@ -395,7 +403,7 @@ export default function TelaMinhaAgenda() {
                                             {rotuloStatus}
                                         </Text>
                                     </View>
-                                </View>
+                                </Pressable>
                             );
                         })}
                     </View>
