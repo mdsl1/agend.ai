@@ -42,6 +42,8 @@ export function criarEstilos(cores: CoresTema) {
         textoEtiquetaPendente: { color: cores.aviso },
         etiquetaAgendado: { backgroundColor: cores.fundoInformacao },
         textoEtiquetaAgendado: { color: cores.informacao },
+        etiquetaConfirmado: { backgroundColor: cores.fundoSucesso },
+        textoEtiquetaConfirmado: { color: cores.sucesso },
         etiquetaStatusErro: { backgroundColor: cores.fundoPerigoStatus },
         textoEtiquetaStatusErro: { color: cores.perigoStatus },
         etiquetaIndisponibilidade: { backgroundColor: cores.superficie },

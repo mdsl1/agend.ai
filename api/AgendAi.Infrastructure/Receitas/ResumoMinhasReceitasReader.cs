@@ -60,8 +60,7 @@ public sealed class ResumoMinhasReceitasReader : IResumoMinhasReceitasReader
         
         var receitaEstimada = registrosMesAtual
             .Where(registro => 
-                registro.Status == Agendamento.StatusAgendado
-                && registro.StatusPagamento == Agendamento.StatusPagamentoPendente
+                registro.StatusPagamento == Agendamento.StatusPagamentoPendente
             ).Sum(registro => registro.ValorTotal);
         
         var receitaRecebidaMesAnterior = registros
@@ -74,7 +73,7 @@ public sealed class ResumoMinhasReceitasReader : IResumoMinhasReceitasReader
         var receitaPorProcedimento = registrosMesAtual
             .Where(registro =>
                 registro.StatusPagamento == Agendamento.StatusPagamentoPago
-                || (registro.Status == Agendamento.StatusAgendado && registro.StatusPagamento == Agendamento.StatusPagamentoPendente)
+                || registro.StatusPagamento == Agendamento.StatusPagamentoPendente
             ).GroupBy(registro => new
             {
                 registro.ProcedimentoUuid,

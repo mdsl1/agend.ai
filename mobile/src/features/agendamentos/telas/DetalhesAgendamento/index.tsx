@@ -16,6 +16,7 @@ const FUSO_HORARIO = 'America/Sao_Paulo';
 const rotulosStatus: Record<string, string> = {
     pendente_integracao: 'Pendente de integração',
     agendado: 'Agendado',
+    confirmado: 'Confirmado',
     reagendado: 'Reagendado',
     falha_integracao: 'Falha na integração',
     concluido: 'Concluído',
@@ -50,7 +51,7 @@ function obterIniciais(nome: string): string {
         .toLocaleUpperCase('pt-BR');
 }
 
-type VarianteStatus = 'pendente' | 'agendado' | 'concluido' | 'erro';
+type VarianteStatus = 'pendente' | 'agendado' | 'confirmado' | 'concluido' | 'erro';
 
 function obterRotuloStatus(status: StatusAgendamento): string {
     return rotulosStatus[status];
@@ -58,6 +59,7 @@ function obterRotuloStatus(status: StatusAgendamento): string {
 
 function obterVarianteStatus(status: StatusAgendamento): VarianteStatus {
     if (status === 'pendente_integracao') return 'pendente';
+    if (status === 'confirmado') return 'confirmado';
     if (status === 'agendado' || status === 'reagendado') return 'agendado';
     if (status === 'concluido') return 'concluido';
     return 'erro';
@@ -82,16 +84,20 @@ export default function TelaDetalhesAgendamento() {
     const estilosEtiquetaStatus: Record<VarianteStatus, StyleProp<ViewStyle>> = {
         pendente: styles.etiquetaPendente,
         agendado: styles.etiquetaAgendado,
+        confirmado: styles.etiquetaConfirmado,
         concluido: styles.etiquetaConcluido,
         erro: styles.etiquetaErro,
     };
     const estilosTextoStatus: Record<VarianteStatus, StyleProp<TextStyle>> = {
         pendente: styles.textoStatusPendente,
         agendado: styles.textoStatusAgendado,
+        confirmado: styles.textoStatusConfirmado,
         concluido: styles.textoStatusConcluido,
         erro: styles.textoStatusErro,
     };
-    const podeAlterarStatus = dados?.status === 'agendado' && !alterandoStatus;
+    const podeCancelar = (dados?.status === 'agendado' || dados?.status === 'confirmado') && !alterandoStatus;
+    const podeConcluirOuMarcarFalta = dados?.status === 'confirmado' && !alterandoStatus;
+    const podeExibirAcoes = dados?.status === 'agendado' || dados?.status === 'confirmado';
 
     const carregarDetalhes = useCallback(async () => {
         if (!agendamentoUuid) {
@@ -134,12 +140,8 @@ export default function TelaDetalhesAgendamento() {
         else router.replace('/agenda');
     }
 
-    function informarAcaoFutura(acao: string) {
-        Alert.alert('Em desenvolvimento', `A ação “${acao}” será habilitada quando a respectiva rota estiver disponível.`);
-    }
-
-    async function enviarAlteracaoStatus(status: 'concluido' | 'cancelado' | 'faltou') {
-        if (!dados || !podeAlterarStatus) return;
+    async function enviarAlteracaoStatus(status: 'confirmado' | 'concluido' | 'cancelado' | 'faltou') {
+        if (!dados || alterandoStatus) return;
 
         setAlterandoStatus(true);
         try {
@@ -162,7 +164,7 @@ export default function TelaDetalhesAgendamento() {
         }
     }
 
-    function confirmarAlteracaoStatus(status: 'concluido' | 'cancelado' | 'faltou') {
+    function confirmarAlteracaoStatus(status: 'confirmado' | 'concluido' | 'cancelado' | 'faltou') {
         Alert.alert(
             'Confirmar alteração',
             `Deseja marcar este agendamento como ${obterRotuloStatus(status).toLocaleLowerCase('pt-BR')}?`,
@@ -171,32 +173,6 @@ export default function TelaDetalhesAgendamento() {
                 { text: 'Confirmar', onPress: () => void enviarAlteracaoStatus(status) },
             ],
         );
-    }
-
-    function obterStatusCancelamentoOuFalta(inicio: string): 'cancelado' | 'faltou' | null {
-        const hojeUtc = new Date();
-        hojeUtc.setUTCHours(0, 0, 0, 0);
-        const dataAgendamentoUtc = new Date(inicio);
-        dataAgendamentoUtc.setUTCHours(0, 0, 0, 0);
-        const limiteCancelamentoUtc = new Date(dataAgendamentoUtc);
-        limiteCancelamentoUtc.setUTCDate(limiteCancelamentoUtc.getUTCDate() - 1);
-
-        if (hojeUtc < limiteCancelamentoUtc) return 'cancelado';
-        if (hojeUtc >= dataAgendamentoUtc) return 'faltou';
-        return null;
-    }
-
-    function confirmarCancelamentoOuFalta() {
-        if (!dados || !podeAlterarStatus) return;
-        const status = obterStatusCancelamentoOuFalta(dados.inicio);
-        if (!status) {
-            Alert.alert(
-                'Alteração não permitida',
-                'Pelas regras atuais da API, não é possível cancelar nem registrar falta na véspera do atendimento.',
-            );
-            return;
-        }
-        confirmarAlteracaoStatus(status);
     }
 
     if (state.status !== 'signedIn') {
@@ -266,18 +242,53 @@ export default function TelaDetalhesAgendamento() {
                             </View>
                         </View>
 
-                        <View style={styles.acoes}>
-                            <Pressable accessibilityRole="button" accessibilityState={{ disabled: !podeAlterarStatus }} disabled={!podeAlterarStatus} onPress={() => confirmarAlteracaoStatus('concluido')} style={[styles.botaoConcluir, !podeAlterarStatus && styles.botaoDesabilitado]}>
-                                <Text style={styles.textoBotaoConcluir}>{alterandoStatus ? 'Atualizando…' : 'Marcar como Concluído'}</Text>
-                            </Pressable>
-                            <Pressable accessibilityRole="button" accessibilityState={{ disabled: !podeAlterarStatus }} disabled={!podeAlterarStatus} onPress={confirmarCancelamentoOuFalta} style={[styles.botaoCancelar, !podeAlterarStatus && styles.botaoDesabilitado]}>
-                                <Text style={styles.textoBotaoCancelar}>Marcar como Cancelado/ Falta</Text>
-                            </Pressable>
-                            <Pressable accessibilityRole="button" accessibilityState={{ disabled: !podeAlterarStatus }} disabled={!podeAlterarStatus} onPress={() => informarAcaoFutura('solicitar reagendamento')} style={[styles.botaoReagendar, !podeAlterarStatus && styles.botaoDesabilitado]}>
-                                <Text style={styles.textoBotaoReagendar}>Solicitar reagendamento (Em breve)</Text>
-                            </Pressable>
-                            <Text style={styles.ajudaAcoes}>A alteração só ocorre após aceite do paciente.</Text>
-                        </View>
+                        {podeExibirAcoes && (
+                            <View style={styles.acoes}>
+                                {dados.status === 'agendado' && (
+                                    <Pressable
+                                        accessibilityRole="button"
+                                        accessibilityState={{ disabled: alterandoStatus }}
+                                        disabled={alterandoStatus}
+                                        onPress={() => confirmarAlteracaoStatus('confirmado')}
+                                        style={[styles.botaoConfirmar, alterandoStatus && styles.botaoDesabilitado]}
+                                    >
+                                        <Text style={styles.textoBotaoConfirmar}>{alterandoStatus ? 'Atualizando…' : 'Confirmar agendamento'}</Text>
+                                    </Pressable>
+                                )}
+                                {dados.status === 'confirmado' && (
+                                    <>
+                                        <Pressable
+                                            accessibilityRole="button"
+                                            accessibilityState={{ disabled: alterandoStatus }}
+                                            disabled={!podeConcluirOuMarcarFalta}
+                                            onPress={() => confirmarAlteracaoStatus('concluido')}
+                                            style={[styles.botaoConcluir, alterandoStatus && styles.botaoDesabilitado]}
+                                        >
+                                            <Text style={styles.textoBotaoConcluir}>{alterandoStatus ? 'Atualizando…' : 'Marcar como Concluído'}</Text>
+                                        </Pressable>
+                                        <Pressable
+                                            accessibilityRole="button"
+                                            accessibilityState={{ disabled: alterandoStatus }}
+                                            disabled={!podeConcluirOuMarcarFalta}
+                                            onPress={() => confirmarAlteracaoStatus('faltou')}
+                                            style={[styles.botaoCancelar, alterandoStatus && styles.botaoDesabilitado]}
+                                        >
+                                            <Text style={styles.textoBotaoCancelar}>Marcar como Falta</Text>
+                                        </Pressable>
+                                    </>
+                                )}
+                                <Pressable
+                                    accessibilityRole="button"
+                                    accessibilityState={{ disabled: alterandoStatus }}
+                                    disabled={!podeCancelar}
+                                    onPress={() => confirmarAlteracaoStatus('cancelado')}
+                                    style={[styles.botaoCancelar, alterandoStatus && styles.botaoDesabilitado]}
+                                >
+                                    <Text style={styles.textoBotaoCancelar}>{alterandoStatus ? 'Atualizando…' : 'Cancelar agendamento'}</Text>
+                                </Pressable>
+                                <Text style={styles.ajudaAcoes}>A API valida se esta alteração é permitida para o status e a data.</Text>
+                            </View>
+                        )}
                     </>
                 ) : null}
             </ScrollView>

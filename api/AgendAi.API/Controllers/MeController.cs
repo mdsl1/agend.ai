@@ -154,7 +154,8 @@ public sealed class MeController : ControllerBase
                 Fim: agenda.ProximoAgendamento.Fim,
                 NomeCliente: agenda.ProximoAgendamento.NomeCliente,
                 NomeProcedimento: agenda.ProximoAgendamento.NomeProcedimento,
-                Status: agenda.ProximoAgendamento.Status
+                Status: agenda.ProximoAgendamento.Status,
+                StatusPagamento: agenda.ProximoAgendamento.StatusPagamento
             )
             : null;
         var agendaResponse = new OverviewAgendaResponse(

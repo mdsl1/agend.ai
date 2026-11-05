@@ -223,6 +223,7 @@ CREATE TABLE IF NOT EXISTS agendamentos (
             status IN (
                 'pendente_integracao',
                 'agendado',
+                'confirmado',
                 'reagendado',
                 'falha_integracao',
                 'concluido',

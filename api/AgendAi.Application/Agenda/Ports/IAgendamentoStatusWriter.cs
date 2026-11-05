@@ -7,6 +7,7 @@ public interface IAgendamentoStatusWriter
         Guid agendamentoUuid,
         Guid clinicaUuid,
         string novoStatus,
+        DateTimeOffset alteradoEm,
         CancellationToken cancellationToken
     );
 }

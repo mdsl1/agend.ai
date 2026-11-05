@@ -10,6 +10,7 @@ public class Agendamento
     public const int DiasToleranciaParaCancelamento = -1;
     public const string StatusPendenteIntegracao = "pendente_integracao";
     public const string StatusAgendado = "agendado";
+    public const string StatusConfirmado = "confirmado";
     public const string StatusConcluido = "concluido";
     public const string StatusFalhaIntegracao = "falha_integracao";
     public const string StatusReagendado = "reagendado";
@@ -118,33 +119,42 @@ public class Agendamento
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public virtual void MarcarComoFaltou(DateTime datetimeAlteracao)
+    public virtual void MarcarComoConfirmado(DateTimeOffset datetimeAlteracao)
     {
-        if (datetimeAlteracao.Date < TimeDateInicio.Date)
+        if (datetimeAlteracao.UtcDateTime.Date > TimeDateInicio.Date)
         {
             throw new RegraNegocioException(
                 "alteracao_nao_permitida",
-                "Não é possível marcar uma falta antes de chegar o dia agendado."
+                $"Não é possível confirmar o agendamento após o dia agendado.{datetimeAlteracao.UtcDateTime.Date} > {TimeDateInicio.Date}"
             );
         }
 
-        Status = StatusFaltou;
+        if (Status != StatusAgendado)
+        {
+            throw new RegraNegocioException(
+                "alteracao_nao_permitida",
+                "Somente um agendamento com status agendado pode ser confirmado."
+            );
+        }
+
+        Status = StatusConfirmado;
+        StatusPagamento = StatusPagamentoPago;
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public virtual void MarcarComoCancelado(DateTime datetimeAlteracao)
+    public virtual void MarcarComoCancelado(DateTimeOffset datetimeAlteracao)
     {
         var dataLimite = TimeDateInicio.Date.AddDays(DiasToleranciaParaCancelamento);
 
-        if (Status == StatusConcluido)
+        if (Status != StatusAgendado && Status != StatusConfirmado )
         {
             throw new RegraNegocioException(
                 "alteracao_nao_permitida",
-                "Não é possível cancelar um agendamento concluído."
+                "Somente agendamentos com status agendado ou confirmado podem ser cancelados."
             );
         }
 
-        if (datetimeAlteracao.Date >= dataLimite)
+        if (datetimeAlteracao.UtcDateTime.Date >= dataLimite)
         {
             throw new RegraNegocioException(
                 "alteracao_nao_permitida",
@@ -153,12 +163,35 @@ public class Agendamento
         }
 
         Status = StatusCancelado;
+        StatusPagamento = StatusPagamentoEstornado;
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public virtual void MarcarComoConcluido(DateTime datetimeAlteracao)
+    public virtual void MarcarComoFaltou(DateTimeOffset datetimeAlteracao)
     {
-        if (datetimeAlteracao.Date <= TimeDateInicio.Date)
+        if (datetimeAlteracao.UtcDateTime.Date < TimeDateInicio.Date)
+        {
+            throw new RegraNegocioException(
+                "alteracao_nao_permitida",
+                "Não é possível marcar uma falta antes de chegar o dia agendado."
+            );
+        }
+
+        if (Status != StatusConfirmado)
+        {
+            throw new RegraNegocioException(
+                "alteracao_nao_permitida",
+                "Somente um agendamento com status confirmado pode ser marcado como falta."
+            );
+        }
+
+        Status = StatusFaltou;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public virtual void MarcarComoConcluido(DateTimeOffset datetimeAlteracao)
+    {
+        if (datetimeAlteracao.UtcDateTime.Date <= TimeDateInicio.Date)
         {
             throw new RegraNegocioException(
                 "alteracao_nao_permitida",
@@ -166,11 +199,11 @@ public class Agendamento
             );
         }
 
-        if (Status != StatusAgendado)
+        if (Status != StatusConfirmado)
         {
             throw new RegraNegocioException(
                 "alteracao_nao_permitida",
-                "Somente um agendamento com status 'agendado' pode ser concluído."
+                "Somente um agendamento com status confirmado pode ser concluído."
             );
         }
 

@@ -10,7 +10,7 @@ export function obterDetalhesAgendamento(agendamentoUuid: string): Promise<Detal
 
 export function alterarStatusAgendamento(
     agendamentoUuid: string,
-    status: 'concluido' | 'cancelado' | 'faltou',
+    status: 'confirmado' | 'concluido' | 'cancelado' | 'faltou',
 ): Promise<AlteracaoStatusAgendamento> {
     return apiRequest<AlteracaoStatusAgendamento>(
         `/api/agendamentos/${encodeURIComponent(agendamentoUuid)}/status`,

@@ -1,6 +1,6 @@
 # Rotas da API RESTful — MVP Acadêmico Web, Mobile e Chatbot
 
-> Última revisão: 2 de novembro de 2026.
+> Última revisão: 4 de novembro de 2026.
 
 Este documento define os contratos HTTP necessários para integrar os três projetos:
 
@@ -256,7 +256,7 @@ Saída `200 OK`:
 }
 ```
 
-Cada evento de tipo `agendamento` pode informar `statusAgendamento`, conforme o registro relacional associado: `pendente_integracao`, `agendado`, `reagendado`, `falha_integracao`, `concluido`, `cancelado` ou `faltou`. O campo é `null` quando o evento não representa um agendamento associado, como nas indisponibilidades.
+Cada evento de tipo `agendamento` pode informar `statusAgendamento`, conforme o registro relacional associado: `pendente_integracao`, `agendado`, `confirmado`, `reagendado`, `falha_integracao`, `concluido`, `cancelado` ou `faltou`. O campo é `null` quando o evento não representa um agendamento associado, como nas indisponibilidades.
 
 O campo `tipo` define o componente visual usado pelo Web e pelo Mobile. Um profissional só pode consultar seu próprio UUID; uma recepcionista pode consultar qualquer profissional da mesma clínica. Token ausente ou inválido resulta em `401`, e tentativa autenticada fora do escopo resulta em `403` antes da chamada ao n8n.
 
@@ -449,13 +449,13 @@ A rota foi validada manualmente nos cenários de criação, repetição idempote
 
 - **Projeto:** Mobile.
 - **Estado/acesso:** implementada; exige JWT Bearer. Admin e recepcionista podem gerenciar agendamentos da clínica; profissional pode alterar somente o próprio agendamento.
-- **Descrição:** altera o status do agendamento sem excluir o registro. Os status aceitos são `concluido`, `cancelado` e `faltou`; as transições e suas regras são validadas pelo domínio. A rota altera o estado relacional no PostgreSQL e não chama o n8n nem sincroniza o Google Calendar.
+- **Descrição:** altera o status do agendamento sem excluir o registro. Os status aceitos são `confirmado`, `concluido`, `cancelado` e `faltou`; as transições e seus limites temporais são validados pela entidade de domínio. A rota altera o estado relacional no PostgreSQL e não chama o n8n nem sincroniza o Google Calendar.
 
 Entrada `PATCH /api/agendamentos/{agendamentoUuid}/status`:
 
 ```json
 {
-  "status": "faltou"
+  "status": "confirmado"
 }
 ```
 
@@ -470,7 +470,14 @@ Resposta de sucesso `200 OK`:
 }
 ```
 
-As datas das regras de transição são comparadas pela API usando o dia UTC. `concluido` só é permitido depois do dia UTC do atendimento e somente quando o status atual é `agendado`; `faltou` é permitido a partir do dia UTC do atendimento, inclusive no próprio dia; `cancelado` só é permitido antes do dia UTC anterior ao atendimento. Assim, no dia UTC imediatamente anterior, nem `cancelado` nem `faltou` são aceitos. O Mobile usa essa mesma regra UTC ao escolher o status para o botão combinado “Marcar como Cancelado/Falta”; o app apresenta os horários ao usuário no fuso `America/Sao_Paulo`.
+Regras implementadas em `Agendamento` (o domínio compara a data UTC de `datetimeAlteracao` e `TimeDateInicio`):
+
+- `confirmado`: somente quando o estado atual é `agendado` e até a data UTC do atendimento, inclusive;
+- `cancelado`: somente quando o estado atual é `agendado` ou `confirmado` e antes da data UTC do atendimento menos um dia; na data imediatamente anterior, a API já recusa;
+- `faltou`: a API permite quando o estado atual é `agendado` ou `confirmado` e a data UTC atual é igual ou posterior à data UTC do atendimento;
+- `concluido`: somente quando o estado atual é `confirmado` e a data UTC atual é posterior à data UTC do atendimento.
+
+Os limites são regras da API; o Mobile envia a ação escolhida sem calcular datas e apresenta a mensagem `409` quando uma transição ou prazo não for permitido. A interface oferece concluir e marcar falta somente no estado `confirmado`, seguindo a regra deste consumidor, embora o domínio atualmente também aceite `faltou` diretamente de `agendado`. A API não usa `America/Sao_Paulo` nestas validações: `TimeDateInicio` é armazenado/consultado como UTC. Não há chamada ao n8n nem sincronização do Google Calendar.
 
 Falhas tratadas: `400` para status inválido, `401` para token ausente/inválido, `403` para usuário sem autorização, `404` para agendamento inexistente no escopo da clínica e `409` para transição incompatível com o estado atual ou com a data. Exemplo de conflito:
 
@@ -478,14 +485,14 @@ Falhas tratadas: `400` para status inválido, `401` para token ausente/inválido
 {
   "title": "Conflito",
   "status": 409,
-  "detail": "Somente um agendamento com status 'agendado' pode ser concluído.",
+  "detail": "Somente um agendamento com status 'confirmado' pode ser concluído.",
   "instance": "/api/agendamentos/4067caa6-debe-4041-94e1-1b4674b5a129/status",
   "codigo": "alteracao_nao_permitida",
   "traceId": "0HNPP2TILGNOV:00000001"
 }
 ```
 
-O botão de reagendamento permanece sem integração até a implementação de sua rota. Futuramente, poderá ser permitida a transição de `faltou` para `reagendado` conforme regra própria.
+Na interface mobile, `agendado` permite confirmar ou cancelar; `confirmado` permite concluir, marcar falta ou cancelar. Estados finais e de integração não apresentam ações. O botão de reagendamento permanece sem integração até a implementação de sua rota. Futuramente, poderá ser permitida a transição de `faltou` para `reagendado` conforme regra própria.
 
 ### `POST /api/me/indisponibilidades`
 
@@ -1027,10 +1034,10 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 |---|---|---|
 | Login e perfil | `POST /api/auth/login`, `GET /api/me` | Implementado |
 | Início | `GET /api/me/overview` | Implementado: consulta integrada e exibição dos quatro indicadores diários; navegação para Receitas disponível |
-| Agenda (rota interna `/agenda`) | `GET /api/agenda/{profissionalUuid}` | Implementado: consulta semanal, seleção de data, atendimentos/indisponibilidades com etiquetas de status e estados de carregamento, vazio e erro |
-| Detalhes do atendimento (rota interna `/agendamento/{agendamentoUuid}`) | `GET /api/agendamentos/{agendamentoUuid}`, `PATCH /api/agendamentos/{agendamentoUuid}/status` | Implementado: carrega dados do atendimento e altera status quando permitido; reagendamento permanece em breve |
+| Agenda (rota interna `/agenda`) | `GET /api/agenda/{profissionalUuid}` | Implementado: consulta semanal, seleção de data, atendimentos/indisponibilidades, badges dos oito status e estados de carregamento, vazio e erro |
+| Detalhes do atendimento (rota interna `/agendamento/{agendamentoUuid}`) | `GET /api/agendamentos/{agendamentoUuid}`, `PATCH /api/agendamentos/{agendamentoUuid}/status` | Implementado: confirma em `agendado`; permite concluir/falta em `confirmado` e cancelar em ambos. Datas e transições validadas pela API; conflitos `409` são exibidos |
 | Bloquear ou liberar horário | `POST /api/me/indisponibilidades`, `DELETE /api/me/indisponibilidades/{eventoId}` | Planejado |
-| Procedimentos e preços | `GET /api/procedimentos`, `GET /api/me/procedimentos`, `POST /api/me/procedimentos`, `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` | Planejado |
+| Meus Procedimentos (rota interna `/procedimentos`) | `GET /api/procedimentos`, `GET /api/me/procedimentos` | Implementado para consulta: combina catálogo e vínculos; busca local. Associação e edição permanecem indisponíveis |
 | Receitas (rota interna `/receitas`) | `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}` | Implementado: consulta mensal e navegação entre Início/Receitas |
 
 As telas mobile implementadas acompanham automaticamente o tema claro ou escuro configurado no sistema do dispositivo; essa preferência visual não exige chamada à API.

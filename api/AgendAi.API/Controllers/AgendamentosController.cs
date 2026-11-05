@@ -139,7 +139,9 @@ public sealed class AgendamentosController : ControllerBase
         var res = new AlterarStatusAgendamentoResponse(
             AgendamentoUuid: result.AgendamentoUuid,
             StatusAnterior: result.StatusAnterior,
+            StatusPagamentoAnterior: result.StatusPgtoAnterior,
             NovoStatus: result.NovoStatus,
+            NovoStatusPagamento: result.NovoStatusPgto,
             AlteradoEm: result.AlteradoEm
         );
 

@@ -51,18 +51,22 @@ public sealed class ResumoAgendaReader : IResumoAgendaReader
 
         var qtdeHoje = agendamentos
             .Where(agendamento =>
-                agendamento.StatusPagamento == Agendamento.StatusPagamentoPago
-                || (agendamento.Status == Agendamento.StatusAgendado && agendamento.StatusPagamento == Agendamento.StatusPagamentoPendente)
+                agendamento.Status == Agendamento.StatusConfirmado
+                || agendamento.Status == Agendamento.StatusAgendado
+                || agendamento.Status == Agendamento.StatusFaltou
             ).Count();
 
         var qtdeConfirmados = agendamentos
             .Where(agendamento => 
-                agendamento.StatusPagamento == Agendamento.StatusPagamentoPago
+                agendamento.Status == Agendamento.StatusConfirmado
             ).Count();
         
         var qtdeRestante = agendamentos
             .Where(agendamento =>
                 agendamento.TimeDateInicio >= agora.UtcDateTime
+                && (agendamento.Status == Agendamento.StatusConfirmado
+                    || agendamento.Status == Agendamento.StatusAgendado
+                    || agendamento.Status == Agendamento.StatusFaltou)
             ).Count();
 
         var qtdeCancelados = agendamentos
@@ -73,8 +77,9 @@ public sealed class ResumoAgendaReader : IResumoAgendaReader
         var proximoAgendamento = agendamentos
             .Where(agendamento => 
                 agendamento.TimeDateInicio >= agora.UtcDateTime
-                && agendamento.StatusPagamento == Agendamento.StatusPagamentoPago
-                || (agendamento.Status == Agendamento.StatusAgendado && agendamento.StatusPagamento == Agendamento.StatusPagamentoPendente)
+                && (agendamento.Status == Agendamento.StatusConfirmado
+                || agendamento.Status == Agendamento.StatusAgendado
+                || agendamento.Status == Agendamento.StatusFaltou)
             ).OrderBy(agendamento => agendamento.TimeDateInicio)
             .Select(agendamento => new DadosProximoAgendamento(
                 AgendamentoUuid: agendamento.Uuid,
@@ -82,7 +87,8 @@ public sealed class ResumoAgendaReader : IResumoAgendaReader
                 Fim: agendamento.TimeDateFim,
                 NomeCliente: agendamento.NomeCliente,
                 NomeProcedimento: agendamento.NomeProcedimento,
-                Status: agendamento.Status
+                Status: agendamento.Status,
+                StatusPagamento: agendamento.StatusPagamento
             )).FirstOrDefault();
         
         return new DadosResumoAgenda(

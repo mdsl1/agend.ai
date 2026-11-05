@@ -1,16 +1,16 @@
 import { Alert, Pressable, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useMemo } from 'react';
 import { useTema } from '../../tema/tema';
 import { criarEstilos } from './styles';
 
-type AbaAtiva = 'inicio' | 'agenda' | 'receitas';
+type AbaAtiva = 'inicio' | 'agenda' | 'receitas' | 'servicos';
 
 const itens = [
     { chave: 'inicio', rotulo: 'Início', icone: '⌂', rota: '/' },
     { chave: 'agenda', rotulo: 'Agenda', icone: '▦', rota: '/agenda' },
     { chave: 'receitas', rotulo: 'Receitas', icone: 'R$', rota: '/receitas' },
-    { chave: 'servicos', rotulo: 'Serviços', icone: '✚' },
+    { chave: 'servicos', rotulo: 'Serviços', icone: '✚', rota: '/procedimentos' },
     { chave: 'perfil', rotulo: 'Perfil', icone: '○' },
 ] as const;
 
@@ -19,9 +19,10 @@ export default function NavegacaoInferior({ abaAtiva }: { abaAtiva: AbaAtiva }) 
     const { cores } = useTema();
     const styles = useMemo(() => criarEstilos(cores), [cores]);
 
-    function selecionarAba(chave: string, rota?: '/' | '/agenda' | '/receitas') {
+    function selecionarAba(chave: string, rota?: '/' | '/agenda' | '/receitas' | '/procedimentos') {
         if (rota) {
-            router.replace(rota);
+            // O arquivo de tipos gerado em .expo ainda não incluiu esta rota nova.
+            router.replace(rota as Href);
             return;
         }
 

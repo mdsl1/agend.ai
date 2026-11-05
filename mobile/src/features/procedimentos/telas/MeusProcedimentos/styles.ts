@@ -1,0 +1,41 @@
+import { StyleSheet } from 'react-native';
+import type { CoresTema } from '../../../../tema/tema';
+
+export function criarEstilos(cores: CoresTema) {
+    return StyleSheet.create({
+        tela: { flex: 1, backgroundColor: cores.fundo },
+        conteudo: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 24, paddingBottom: 18, gap: 18 },
+        cabecalho: { minHeight: 44, justifyContent: 'center' },
+        titulo: { color: cores.texto, fontSize: 24, fontWeight: '700' },
+        busca: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, borderRadius: 12, backgroundColor: cores.superficie, borderWidth: 1, borderColor: cores.borda },
+        iconeBusca: { color: cores.textoSuave, fontSize: 20 },
+        campoBusca: { flex: 1, minHeight: 44, paddingVertical: 0, color: cores.texto, fontSize: 14 },
+        lista: { gap: 12 },
+        cartao: { gap: 12, padding: 14, borderRadius: 14, backgroundColor: cores.superficie, borderWidth: 1, borderColor: cores.borda },
+        linhaTopo: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+        iconeProcedimento: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: cores.marcaSuave },
+        simboloProcedimento: { color: cores.marca, fontSize: 17, fontWeight: '700' },
+        dadosNome: { flex: 1, gap: 4 },
+        nome: { color: cores.texto, fontSize: 14, lineHeight: 19, fontWeight: '600' },
+        origem: { color: cores.textoSuave, fontSize: 11 },
+        etiqueta: { paddingHorizontal: 9, paddingVertical: 5, borderRadius: 20 },
+        etiquetaAtiva: { backgroundColor: cores.fundoSucesso },
+        etiquetaInativa: { backgroundColor: cores.superficieSecundaria },
+        textoEtiqueta: { fontSize: 10, fontWeight: '700' },
+        textoEtiquetaAtiva: { color: cores.sucesso },
+        textoEtiquetaInativa: { color: cores.textoSecundario },
+        separador: { height: 1, backgroundColor: cores.borda },
+        linhaValores: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+        grupoValor: { flex: 1, gap: 4 },
+        rotuloValor: { color: cores.textoSuave, fontSize: 10 },
+        valor: { color: cores.texto, fontSize: 13, fontWeight: '600' },
+        rodapeCatalogo: { color: cores.textoSuave, fontSize: 10, lineHeight: 14 },
+        estado: { flexGrow: 1, minHeight: 190, alignItems: 'center', justifyContent: 'center', padding: 24, borderRadius: 14, backgroundColor: cores.superficie, borderWidth: 1, borderColor: cores.borda },
+        estadoCarregando: { gap: 12 },
+        tituloEstado: { color: cores.texto, fontSize: 16, fontWeight: '700', textAlign: 'center' },
+        textoEstado: { marginTop: 7, color: cores.textoSuave, fontSize: 13, lineHeight: 19, textAlign: 'center' },
+        textoErro: { color: cores.perigo },
+        botaoTentarNovamente: { minHeight: 48, minWidth: 170, alignItems: 'center', justifyContent: 'center', marginTop: 16, paddingHorizontal: 18, borderRadius: 12, backgroundColor: cores.marca },
+        textoBotao: { color: cores.textoSobreMarca, fontSize: 14, fontWeight: '700' },
+    });
+}

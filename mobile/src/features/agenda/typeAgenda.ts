@@ -1,6 +1,7 @@
 export type StatusAgendamento =
     | 'pendente_integracao'
     | 'agendado'
+    | 'confirmado'
     | 'reagendado'
     | 'falha_integracao'
     | 'concluido'

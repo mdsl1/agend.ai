@@ -138,11 +138,12 @@ function obterMensagemErro(erro: unknown): string {
     return 'Não foi possível carregar sua agenda.';
 }
 
-type VarianteStatus = 'pendente' | 'agendado' | 'concluido' | 'erro' | 'semStatus' | 'indisponibilidade';
+type VarianteStatus = 'pendente' | 'agendado' | 'confirmado' | 'concluido' | 'erro' | 'semStatus' | 'indisponibilidade';
 
 const rotulosStatus: Record<StatusAgendamento, string> = {
     pendente_integracao: 'Pendente de integração',
     agendado: 'Agendado',
+    confirmado: 'Confirmado',
     reagendado: 'Reagendado',
     falha_integracao: 'Falha na integração',
     concluido: 'Concluído',
@@ -156,6 +157,7 @@ function obterVarianteStatus(
 ): VarianteStatus {
     if (indisponibilidade) return 'indisponibilidade';
     if (status === 'pendente_integracao') return 'pendente';
+    if (status === 'confirmado') return 'confirmado';
     if (status === 'agendado' || status === 'reagendado') return 'agendado';
     if (status === 'concluido') return 'concluido';
     if (status === 'cancelado' || status === 'faltou' || status === 'falha_integracao') return 'erro';
@@ -242,6 +244,7 @@ export default function TelaAgenda() {
     const estilosEtiquetaPorVariante: Record<VarianteStatus, StyleProp<ViewStyle>> = {
         pendente: styles.etiquetaPendente,
         agendado: styles.etiquetaAgendado,
+        confirmado: styles.etiquetaConfirmado,
         concluido: undefined,
         erro: styles.etiquetaStatusErro,
         semStatus: styles.etiquetaSemStatus,
@@ -250,6 +253,7 @@ export default function TelaAgenda() {
     const estilosTextoPorVariante: Record<VarianteStatus, StyleProp<TextStyle>> = {
         pendente: styles.textoEtiquetaPendente,
         agendado: styles.textoEtiquetaAgendado,
+        confirmado: styles.textoEtiquetaConfirmado,
         concluido: undefined,
         erro: styles.textoEtiquetaStatusErro,
         semStatus: styles.textoEtiquetaSemStatus,

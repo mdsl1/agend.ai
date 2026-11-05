@@ -6,5 +6,6 @@ public sealed record DadosProximoAgendamento(
     DateTimeOffset Fim,
     string NomeCliente,
     string NomeProcedimento,
-    string Status
+    string Status,
+    string StatusPagamento
 );

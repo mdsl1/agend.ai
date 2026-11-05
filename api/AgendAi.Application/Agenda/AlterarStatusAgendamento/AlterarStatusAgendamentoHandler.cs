@@ -15,6 +15,8 @@ public sealed class AlterarStatusAgendamentoHandler
     private readonly IAgendamentoDetalhadoReader _reader;
     private readonly IContextUsuarioAtual _context;
     private readonly AutorizacaoService _autorizacaoService;
+    private const string TimezonePadrao = "America/Sao_Paulo";
+    private static readonly TimeZoneInfo TimezoneApp = TimeZoneInfo.FindSystemTimeZoneById(TimezonePadrao);
     
     public AlterarStatusAgendamentoHandler(
         IAgendamentoStatusWriter writer,
@@ -74,6 +76,7 @@ public sealed class AlterarStatusAgendamentoHandler
                 command.AgendamentoUuid,
                 usuarioAtual.ClinicaUuid,
                 command.NovoStatus,
+                TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimezoneApp),
                 cancellationToken
             ) ?? throw new RecursoNaoEncontradoException(
                 "agendamento_nao_encontrado",
@@ -92,7 +95,9 @@ public sealed class AlterarStatusAgendamentoHandler
         return new AlterarStatusAgendamentoResult(
             AgendamentoUuid: resultado.AgendamentoUuid,
             StatusAnterior: resultado.StatusAnterior,
+            StatusPgtoAnterior: resultado.StatusPgtoAnterior,
             NovoStatus: resultado.NovoStatus,
+            NovoStatusPgto: resultado.NovoStatusPgto,
             AlteradoEm: resultado.AlteradoEm
         );
     }
@@ -111,7 +116,8 @@ public sealed class AlterarStatusAgendamentoHandler
         {
             Agendamento.StatusConcluido,
             Agendamento.StatusCancelado,
-            Agendamento.StatusFaltou
+            Agendamento.StatusFaltou,
+            Agendamento.StatusConfirmado
         };
 
         if (

@@ -14,6 +14,7 @@ public sealed record OverviewAgendaResult(
         DateTimeOffset Fim,
         string NomeCliente,
         string NomeProcedimento,
-        string Status
+        string Status,
+        string StatusPagamento
     );
 }

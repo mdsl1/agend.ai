@@ -111,7 +111,7 @@ public sealed class ConsultarAgendaHandler
 
         var agendamentoUuidPorEvento = dadosAgendamentos.ToDictionary(
             dado => dado.IdEventoExterno,
-            dado => new { dado.AgendamentoUuid, dado.StatusAgendamento }
+            dado => new { dado.AgendamentoUuid, dado.StatusAgendamento, dado.StatusPagamento }
         );
             
         var eventos = eventosExternos.Select(evento => new EventoAgendaResult(
@@ -126,6 +126,10 @@ public sealed class ConsultarAgendaHandler
                 evento.IdExterno,
                 out var statusEncontrado
             ) ? statusEncontrado.StatusAgendamento : null,
+            StatusPagamento: evento.Tipo == "agendamento" && agendamentoUuidPorEvento.TryGetValue(
+                evento.IdExterno,
+                out var statusPgtoEncontrado
+            ) ? statusPgtoEncontrado.StatusPagamento : null,
             Inicio: evento.Inicio,
             Fim: evento.Fim,
             NomeCliente: evento.NomeCliente,

@@ -105,7 +105,8 @@ public sealed class ConsultarMeuOverviewHandler
                 Fim: dadosAgenda.ProximoAgendamento.Fim,
                 NomeCliente: dadosAgenda.ProximoAgendamento.NomeCliente,
                 NomeProcedimento: dadosAgenda.ProximoAgendamento.NomeProcedimento,
-                Status: dadosAgenda.ProximoAgendamento.Status
+                Status: dadosAgenda.ProximoAgendamento.Status,
+                StatusPagamento: dadosAgenda.ProximoAgendamento.StatusPagamento
             )
             : null;
 

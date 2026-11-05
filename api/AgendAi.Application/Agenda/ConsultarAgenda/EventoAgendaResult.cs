@@ -6,6 +6,7 @@ public sealed record EventoAgendaResult (
     string Tipo,
     Guid? AgendamentoUuid,
     string? StatusAgendamento,
+    string? StatusPagamento,
     DateTimeOffset Inicio,
     DateTimeOffset Fim,
     string? NomeCliente,

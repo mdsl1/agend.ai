@@ -21,6 +21,7 @@ public sealed class AgendamentoStatusWriter : IAgendamentoStatusWriter
         Guid agendamentoUuid,
         Guid clinicaUuid,
         string novoStatus,
+        DateTimeOffset alteradoEm,
         CancellationToken cancellationToken
     )
     {
@@ -44,13 +45,16 @@ public sealed class AgendamentoStatusWriter : IAgendamentoStatusWriter
         }
 
         var statusAnterior = agendamento.Status;
-        var alteradoEm = DateTime.UtcNow;
+        var statusPgtoAnterior = agendamento.StatusPagamento;
 
         try {
             switch (novoStatus.ToLower().Trim())
             {
                 case Agendamento.StatusConcluido:
                     agendamento.MarcarComoConcluido(alteradoEm);
+                    break;
+                case Agendamento.StatusConfirmado:
+                    agendamento.MarcarComoConfirmado(alteradoEm);
                     break;
                 case Agendamento.StatusFaltou:
                     agendamento.MarcarComoFaltou(alteradoEm);
@@ -80,11 +84,10 @@ public sealed class AgendamentoStatusWriter : IAgendamentoStatusWriter
         return new ResultadoAlteracaoStatusAgendamento(
             AgendamentoUuid: agendamento.Uuid,
             StatusAnterior: statusAnterior,
+            StatusPgtoAnterior: statusPgtoAnterior,
             NovoStatus: agendamento.Status,
-            AlteradoEm: new DateTimeOffset(
-                agendamento.UpdatedAt ?? alteradoEm,
-                TimeSpan.Zero
-            )
+            NovoStatusPgto: agendamento.StatusPagamento,
+            AlteradoEm: agendamento.UpdatedAt ?? alteradoEm
         );
 
     }
