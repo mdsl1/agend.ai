@@ -7,6 +7,8 @@ using AgendAi.API.Contracts.Receitas;
 using AgendAi.Application.Auth.MeuPerfil;
 using AgendAi.Application.Overview.ConsultarMeuOverview;
 using AgendAi.Application.Profissionais.ListarMeusProcedimentos;
+using AgendAi.Application.Profissionais.VincularMeuProcedimento;
+using AgendAi.Application.Profissionais.AlterarMeuProcedimento;
 using AgendAi.Application.Receitas.ResumoMinhasReceitas;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,18 +20,24 @@ public sealed class MeController : ControllerBase
 {
     private readonly MeuPerfilHandler _meuPerfilHandler;
     private readonly ListarMeusProcedimentosHandler _listarMeusProcedimentosHandler;
+    private readonly VincularMeuProcedimentoHandler _vincularMeuProcedimentoHandler;
+    private readonly AlterarMeuProcedimentoHandler _alterarMeuProcedimentoHandler;
     private readonly ConsultarResumoMinhasReceitasHandler _consultarResumoMinhasReceitasHandler;
     private readonly ConsultarMeuOverviewHandler _consultarMeuOverviewHandler;
 
     public MeController(
         MeuPerfilHandler meuPerfilHandler,
         ListarMeusProcedimentosHandler listarMeusProcedimentosHandler,
+        VincularMeuProcedimentoHandler vincularMeuProcedimentoHandler,
+        AlterarMeuProcedimentoHandler alterarMeuProcedimentoHandler,
         ConsultarResumoMinhasReceitasHandler consultarResumoMinhasReceitasHandler,
         ConsultarMeuOverviewHandler consultarMeuOverviewHandler
     )
     {
         _meuPerfilHandler = meuPerfilHandler;
         _listarMeusProcedimentosHandler = listarMeusProcedimentosHandler;
+        _vincularMeuProcedimentoHandler = vincularMeuProcedimentoHandler;
+        _alterarMeuProcedimentoHandler = alterarMeuProcedimentoHandler;
         _consultarResumoMinhasReceitasHandler = consultarResumoMinhasReceitasHandler;
         _consultarMeuOverviewHandler = consultarMeuOverviewHandler;
     }
@@ -89,6 +97,84 @@ public sealed class MeController : ControllerBase
             )).ToArray();
 
         var res = new ListarMeusProcedimentosResponse(procedimentos);
+
+        return Ok(res);
+    }
+
+    [HttpPost("procedimentos")]
+    [ProducesResponseType( typeof(VincularMeuProcedimentoResponse), StatusCodes.Status200OK )]
+    [ProducesResponseType( typeof(VincularMeuProcedimentoResponse), StatusCodes.Status201Created )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status400BadRequest )]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status404NotFound )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status409Conflict )]
+    public async Task<ActionResult<VincularMeuProcedimentoResponse>> VincularMeuProcedimentoAsync(
+        [FromBody] VincularMeuProcedimentoRequest req,
+        CancellationToken cancellationToken
+    )
+    {
+        var command = new VincularMeuProcedimentoCommand(
+            ProcedimentoUuid: req.ProcedimentoUuid,
+            DuracaoMinutos: req.DuracaoMinutos,
+            Valor: req.Valor
+        );
+
+        var result = await _vincularMeuProcedimentoHandler.HandleAsync(
+            command,
+            cancellationToken
+        );
+
+        var res = new VincularMeuProcedimentoResponse(
+            ProfissionalProcedimentoUuid: result.ProfissionalProcedimentoUuid,
+            Criado: result.Criado,
+            Nome: result.Nome,
+            DuracaoMinutos: result.DuracaoMinutos,
+            Valor: result.Valor
+        );
+
+        if (res.Criado)
+        {
+            return StatusCode(
+                StatusCodes.Status201Created,
+                res
+            );
+        }
+
+        return Ok(res);
+    }
+
+    [HttpPatch("procedimentos/{profissionalProcedimentoUuid:guid}")]
+    [ProducesResponseType( typeof(AlterarMeuProcedimentoResponse), StatusCodes.Status200OK )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status400BadRequest )]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status404NotFound )]
+    public async Task<ActionResult<AlterarMeuProcedimentoResponse>> AlterarAsync(
+        [FromRoute] Guid profissionalProcedimentoUuid,
+        [FromBody] AlterarMeuProcedimentoRequest req,
+        CancellationToken cancellationToken
+    )
+    {
+        var command = new AlterarMeuProcedimentoCommand(
+            ProfissionalProcedimentoUuid: profissionalProcedimentoUuid,
+            DuracaoMinutos: req.DuracaoMinutos,
+            Valor: req.Valor,
+            DisponivelAgendamento: req.DisponivelAgendamento
+        );
+
+        var result = await _alterarMeuProcedimentoHandler.HandleAsync(
+            command,
+            cancellationToken
+        );
+
+        var res = new AlterarMeuProcedimentoResponse(
+            ProfissionalProcedimentoUuid: result.ProfissionalProcedimentoUuid,
+            DisponivelAgendamento: result.DisponivelAgendamento,
+            Nome: result.Nome,
+            DuracaoMinutos: result.DuracaoMinutos,
+            Valor: result.Valor
+        );
 
         return Ok(res);
     }

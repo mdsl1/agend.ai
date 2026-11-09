@@ -15,10 +15,41 @@ export type ProcedimentoProfissional = {
 
 export type ProcedimentoExibido = {
     uuid: string;
+    profissionalProcedimentoUuid?: string;
     nome: string;
     ativo: boolean;
     valor: number;
     duracaoMinutos: number;
+    valorBase: number;
+    duracaoEstimadaMinutos: number;
+};
+
+export type RequisicaoVincularMeuProcedimento = {
+    procedimentoUuid: string;
+    duracaoMinutos?: number | null;
+    valor?: number | null;
+};
+
+export type RespostaVincularMeuProcedimento = {
+    profissionalProcedimentoUuid: string;
+    criado: boolean;
+    nome: string;
+    duracaoMinutos: number;
+    valor: number;
+};
+
+export type RequisicaoAlterarMeuProcedimento = {
+    duracaoMinutos?: number | null;
+    valor?: number | null;
+    disponivelAgendamento?: boolean | null;
+};
+
+export type RespostaAlterarMeuProcedimento = {
+    profissionalProcedimentoUuid: string;
+    disponivelAgendamento: boolean;
+    nome: string;
+    duracaoMinutos: number;
+    valor: number;
 };
 
 export type RespostaCatalogoProcedimentos = {

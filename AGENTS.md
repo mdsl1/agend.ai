@@ -4,7 +4,7 @@
 
 Este arquivo é o guia operacional durável para agentes que trabalham no Agend.AI. Ele consolida a arquitetura, a stack, a configuração, a estrutura do repositório, o estado implementado, as pendências e as regras que não podem ser inferidas apenas pelo código.
 
-O inventário técnico e o estado das rotas, autenticação JWT, RBAC, integrações n8n, schema, stack e consumidores foram revisados em **25 de setembro de 2026**; as rotas de detalhes de agendamento e catálogo de procedimentos foram atualizadas em **6 de outubro de 2026**, `GET /api/me/procedimentos` em **8 de outubro de 2026**, `GET /api/me/receitas/resumo` em **12 de outubro de 2026**, `GET /api/me/overview` em **13 de outubro de 2026**, `GET /api/clinicas/resolver` em **16 de outubro de 2026** e o fluxo mobile de status de agendamento em **4 de novembro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
+O inventário técnico e o estado das rotas, autenticação JWT, RBAC, integrações n8n, schema, stack e consumidores foram revisados em **25 de setembro de 2026**; as rotas de detalhes de agendamento e catálogo de procedimentos foram atualizadas em **6 de outubro de 2026**, `GET /api/me/procedimentos` em **8 de outubro de 2026**, `GET /api/me/receitas/resumo` em **12 de outubro de 2026**, `GET /api/me/overview` em **13 de outubro de 2026**, `GET /api/clinicas/resolver` em **16 de outubro de 2026**, o fluxo mobile de status de agendamento em **4 de novembro de 2026**, `POST /api/me/procedimentos` em **8 de novembro de 2026** e `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` em **9 de novembro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
 
 O Agend.AI é um CRM para clínicas com agenda, cadastros e automação de agendamentos. A solução combina uma SPA React, uma API ASP.NET Core, PostgreSQL com NHibernate e workflows n8n integrados, no desenho de destino, ao Telegram e ao Google Calendar.
 
@@ -37,6 +37,19 @@ Use esta precedência:
 5. Cronograma e diário de bordo fornecem contexto, mas não substituem verificação no código.
 
 Quando documentação e implementação divergirem, descreva a divergência e o impacto. Não altere silenciosamente um lado para fazê-lo coincidir com o outro. Para decisões significativas, peça direção ou registre claramente a hipótese adotada.
+
+## Diretrizes gerais de colaboração
+
+- Responda em português, salvo solicitação explícita de outro idioma. Comece pela conclusão e use somente a estrutura necessária para deixar a resposta clara.
+- Respeite o tipo de pedido: explicar, revisar ou diagnosticar não autoriza implementar; pedidos de implementação autorizam apenas as mudanças dentro do escopo descrito.
+- Em revisões, apresente achados concretos com arquivo/trecho e impacto. Separe defeitos demonstráveis de decisões de produto ainda não definidas.
+- Preserve alterações existentes do usuário e limite o diff aos arquivos necessários. Não reverta nem sobrescreva trabalho alheio à solicitação.
+- Não avance automaticamente para etapas posteriores quando o usuário estiver conduzindo o desenvolvimento passo a passo; conclua a etapa solicitada e aguarde a próxima instrução.
+- Ao orientar, explique o objetivo, os arquivos e diretórios envolvidos, a responsabilidade de cada camada e como validar o resultado. Quando o usuário pedir apenas nomes, resumo ou código, respeite esse formato.
+- Quando fornecer código sem editar o projeto, indique o caminho do arquivo, as suposições adotadas e como o trecho se integra ao código existente.
+- Nunca exponha segredos ou dados sensíveis em código, logs, documentação, commits ou respostas. Mostre nomes de configuração e finalidade, não os valores.
+- Execute verificações proporcionais ao risco e ao pedido. Relate exatamente o que foi executado; não afirme que testes passaram quando só houve build, lint ou inspeção estática.
+- Antes de usar uma instrução especializada local para uma área do projeto, leia o `AGENTS.md` específico daquela área, quando existir.
 
 ## Visão geral da arquitetura
 
@@ -103,9 +116,9 @@ AgendAi.API -+-- também referencia AgendAi.Application
 ```
 
 - `AgendAi.Domain`: contém as entidades atuais e deve concentrar as regras centrais; não depende das outras camadas.
-- `AgendAi.Application`: contém os casos de uso de resolução pública de clínica por código identificador, login, perfil atual, consulta de eventos e detalhes de agendamentos, listagem de profissionais agendáveis, procedimentos oferecidos por profissional, procedimentos do profissional autenticado e catálogo de procedimentos, resolução e listagem de clientes, verificação de disponibilidade, criação de agendamento e consultas do resumo mensal de receitas e overview do profissional autenticado; também contém portas, modelos, permissões, autorização por escopo, validação e erros tipados; depende de Domain.
+- `AgendAi.Application`: contém os casos de uso de resolução pública de clínica por código identificador, login, perfil atual, consulta de eventos e detalhes de agendamentos, listagem de profissionais agendáveis, procedimentos oferecidos por profissional, listagem, vinculação/reativação e alteração de procedimentos do profissional autenticado e catálogo de procedimentos, resolução e listagem de clientes, verificação de disponibilidade, criação de agendamento e consultas do resumo mensal de receitas e overview do profissional autenticado; também contém portas, modelos, permissões, autorização por escopo, validação e erros tipados; depende de Domain.
 - `AgendAi.Infrastructure`: contém a configuração/mappings NHibernate, readers e writers, os gateways HTTP do n8n, hashing/verificação de senha e geração de JWT; referencia Application para implementar suas portas e Domain para consultar e persistir as entidades.
-- `AgendAi.API`: contém os contratos HTTP, os controllers dos dezesseis endpoints implementados, a composição de dependências, autenticação JWT Bearer, contexto do usuário atual e tratamento global de exceções com Problem Details; referencia Application e Infrastructure.
+- `AgendAi.API`: contém os contratos HTTP, os controllers dos dezoito endpoints implementados, a composição de dependências, autenticação JWT Bearer, contexto do usuário atual e tratamento global de exceções com Problem Details; referencia Application e Infrastructure.
 
 Preserve essa direção de dependências. Regras de negócio não pertencem a controllers, componentes React ou workflows quando forem regras centrais do CRM.
 
@@ -131,7 +144,7 @@ Características implementadas no schema:
 - instantes persistidos em `TIMESTAMPTZ`;
 - soft delete por `deleted_at` em `clinicas`, `especialidades`, `usuarios`, `procedimentos`, `profissionais`, `profissional_procedimentos`, `clientes` e `agendamentos`;
 - chaves estrangeiras compostas para impedir relacionamentos entre clínicas distintas;
-- associação entre profissionais e procedimentos com UUID público, valor e duração efetivos obrigatórios, soft delete e unicidade do par profissional/procedimento entre registros ativos; os campos efetivos não possuem defaults no banco e deverão receber, no futuro caso de uso de associação, os valores informados ou uma cópia dos valores-base vigentes no procedimento;
+- associação entre profissionais e procedimentos com UUID público, valor e duração efetivos obrigatórios, soft delete e unicidade do par profissional/procedimento; os campos efetivos não possuem defaults no banco e recebem, na vinculação (`POST /api/me/procedimentos`), os valores informados ou uma cópia dos valores-base vigentes no procedimento;
 - `CHECK` para tipos, cargos, durações, valores, status e intervalos válidos;
 - telefone ativo de cliente deduplicado por clínica após normalização para dígitos;
 - usuário do Telegram único por clínica entre clientes ativos quando informado;
@@ -333,13 +346,17 @@ agend.ai/
 |   |   |   |   |-- ResumoMinhasReceitasRequest.cs
 |   |   |   |   `-- ResumoMinhasReceitasResponse.cs
 |   |   |   |-- Profissionais/
+|   |   |   |   |-- AlterarMeuProcedimentoRequest.cs
+|   |   |   |   |-- AlterarMeuProcedimentoResponse.cs
 |   |   |   |   |-- ListarMeusProcedimentosResponse.cs
 |   |   |   |   |-- ListarProcedimentosProfissionalResponse.cs
 |   |   |   |   |-- ProcedimentoProfissionalResponse.cs
 |   |   |   |   |-- ListarProfissionaisRequest.cs
 |   |   |   |   |-- ListarProfissionaisResponse.cs
 |   |   |   |   |-- EspecialidadeProfissionalResponse.cs
-|   |   |   `-- ProfissionalAgendavelResponse.cs
+|   |   |   |   |-- ProfissionalAgendavelResponse.cs
+|   |   |   |   |-- VincularMeuProcedimentoRequest.cs
+|   |   |   `-- VincularMeuProcedimentoResponse.cs
 |   |   |-- Controllers/
 |   |   |   |-- AgendaController.cs
 |   |   |   |-- AgendamentosController.cs
@@ -501,11 +518,19 @@ agend.ai/
 |   |   |       |-- RecursoNaoEncontradoException.cs
 |   |   |       `-- ValidacaoException.cs
 |   |   `-- Profissionais/
+|   |       |-- AlterarMeuProcedimento/
+|   |       |   |-- AlterarMeuProcedimentoCommand.cs
+|   |       |   |-- AlterarMeuProcedimentoHandler.cs
+|   |       |   `-- AlterarMeuProcedimentoResult.cs
 |   |       |-- ListarMeusProcedimentos/
 |   |       |   |-- ListarMeusProcedimentosHandler.cs
 |   |       |   |-- ListarMeusProcedimentosQuery.cs
 |   |       |   |-- ListarMeusProcedimentosResult.cs
 |   |       |   `-- MeuProcedimentoResult.cs
+|   |       |-- VincularMeuProcedimento/
+|   |       |   |-- VincularMeuProcedimentoCommand.cs
+|   |       |   |-- VincularMeuProcedimentoHandler.cs
+|   |       |   `-- VincularMeuProcedimentoResult.cs
 |   |       |-- ListarProcedimentosProfissional/
 |   |       |   |-- ListarProcedimentosProfissionalHandler.cs
 |   |       |   |-- ListarProcedimentosProfissionalQuery.cs
@@ -523,9 +548,15 @@ agend.ai/
 |   |       |   |-- ListarProfissionaisResult.cs
 |   |       |   `-- ProfissionalAgendavelResult.cs
 |   |       |-- Models/
-|   |       |   `-- DadosProfissionalAgendavel.cs
+|   |       |   |-- DadosAlteracaoVinculoProcedimentoProfissional.cs
+|   |       |   |-- DadosCriacaoVinculoProcedimentoProfissional.cs
+|   |       |   |-- DadosProfissionalAgendavel.cs
+|   |       |   `-- DadosVinculoProcedimentoProfissional.cs
 |   |       `-- Ports/
-|   |           `-- IProfissionaisReader.cs
+|   |           |-- IAlterarVinculoProcedimentoProfissionalWriter.cs
+|   |           |-- ICriarVinculoProcedimentoProfissionalWriter.cs
+|   |           |-- IProfissionaisReader.cs
+|   |           `-- IVinculoProcedimentoProfissionalReader.cs
 |   |-- AgendAi.Domain/
 |   |   |-- AgendAi.Domain.csproj
 |   |   |-- Agendamentos/
@@ -577,8 +608,11 @@ agend.ai/
 |       |       |-- N8nDisponibilidadeContracts.cs
 |       |       `-- N8nDisponibilidadeGateway.cs
 |       |-- Profissionais/
+|       |   |-- AlterarVinculoProcedimentoProfissionalWriter.cs
+|       |   |-- CriarVinculoProcedimentoProfissionalWriter.cs
 |       |   |-- ProcedimentosProfissionalReader.cs
-|       |   `-- ProfissionaisReader.cs
+|       |   |-- ProfissionaisReader.cs
+|       |   `-- VinculoProcedimentoProfissionalReader.cs
 |       |-- Procedimentos/
 |       |   `-- CatalogoProcedimentosReader.cs
 |       |-- Receitas/
@@ -655,7 +689,7 @@ agend.ai/
 
 - Projeto Expo/TypeScript inicializado em `mobile/`; Expo Router mantém adaptadores de rota em `mobile/app/` e telas com `index.tsx`/`styles.ts` em `mobile/src/features/`.
 - Fluxos de resolução da clínica, login, armazenamento de sessão e restauração de perfil implementados.
-- Tela Início integrada a `GET /api/me/overview`, com resumo de receita, os quatro indicadores diários (agendamentos, confirmados, restantes e cancelados), próximo atendimento opcional, estados de carregamento/erro e atualização manual. Tela Overview de Receitas na rota interna `/receitas`, integrada a `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}`, com troca de mês, detalhamento por procedimento, ticket médio calculado e estados de carregamento/vazio/erro. Tela Minha Agenda na rota interna `/agenda`, integrada a `GET /api/agenda/{profissionalUuid}` com consulta semanal, seleção de data, lista cronológica de atendimentos/indisponibilidades, etiquetas para os oito status, atualização manual, recarga ao retornar do detalhe e estados de carregamento/vazio/erro. Tela Detalhes do Agendamento na rota `/agendamento/{agendamentoUuid}`, integrada a `GET /api/agendamentos/{agendamentoUuid}` e `PATCH /api/agendamentos/{agendamentoUuid}/status`; em `agendado`, oferece confirmar e cancelar; em `confirmado`, oferece concluir, marcar falta e cancelar. A API valida datas e transições; a tela não prevê limites locais e mostra os conflitos `409`. Estados finais e de integração não apresentam ações. Tela Meus Procedimentos na rota `/procedimentos` carrega em paralelo o catálogo (`GET /api/procedimentos`) e os vínculos do profissional autenticado (`GET /api/me/procedimentos`), combina por UUID e permite busca local; associação e edição não estão disponíveis. O tema claro/escuro acompanha a preferência do sistema nas telas, navegação e formulários implementados. Navegação inferior compartilhada permite alternar entre Início, Agenda, Receitas e Serviços; Perfil segue em desenvolvimento. Verificação em 04/11/2026: `npm run typecheck` passou; lint não está configurado. Teste visual em dispositivo não foi realizado pelo agente.
+- Tela Início integrada a `GET /api/me/overview`, com resumo de receita, os quatro indicadores diários (agendamentos, confirmados, restantes e cancelados), próximo atendimento opcional, estados de carregamento/erro e atualização manual. Tela Overview de Receitas na rota interna `/receitas`, integrada a `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}`, com troca de mês, detalhamento por procedimento, ticket médio calculado e estados de carregamento/vazio/erro. Tela Minha Agenda na rota interna `/agenda`, integrada a `GET /api/agenda/{profissionalUuid}` com consulta semanal, seleção de data, lista cronológica de atendimentos/indisponibilidades, etiquetas para os oito status, atualização manual, recarga ao retornar do detalhe e estados de carregamento/vazio/erro. Tela Detalhes do Agendamento na rota `/agendamento/{agendamentoUuid}`, integrada a `GET /api/agendamentos/{agendamentoUuid}` e `PATCH /api/agendamentos/{agendamentoUuid}/status`; em `agendado`, oferece confirmar e cancelar; em `confirmado`, oferece concluir, marcar falta e cancelar. A API valida datas e transições; a tela não prevê limites locais e mostra os conflitos `409`. Estados finais e de integração não apresentam ações. Tela Meus Procedimentos na rota `/procedimentos` carrega em paralelo o catálogo (`GET /api/procedimentos`) e os vínculos do profissional autenticado (`GET /api/me/procedimentos`), combina por UUID, permite busca local, abre a tela de vínculo e recarrega a lista ao retornar. Tela Vincular/Editar Procedimento na rota `/procedimento/{procedimentoUuid}` segue a estrutura do frame mobile `14 — Editar Procedimento` de `figma.css`: chama `POST /api/me/procedimentos` para criar ou reativar vínculos inativos com valor e duração personalizados (ou do catálogo quando deixados em branco) e chama `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` para vínculos já ativos, permitindo alterar valor, duração (preservando os valores atuais do vínculo quando deixados em branco) ou inativar a disponibilidade (`disponivelAgendamento: false`). O tema claro/escuro acompanha a preferência do sistema nas telas, navegação e formulários implementados. Navegação inferior compartilhada permite alternar entre Início, Agenda, Receitas e Serviços; Perfil segue em desenvolvimento. Verificação em 09/11/2026: `npm --prefix mobile run typecheck` passou; lint não está configurado. Teste visual em dispositivo não foi realizado pelo agente.
 - `figma.css` contém especificações mobile; usar a referência mobile para novas telas e preservar margem lateral e alvos de toque adequados.
 
 ### Infraestrutura local
@@ -701,6 +735,8 @@ agend.ai/
 - Endpoint `GET /api/profissionais?especialidadeUuid={especialidadeUuid}` para listar profissionais agendáveis no escopo da clínica do token, com filtro opcional por especialidade, destinado ao Web e ao chatbot.
 - Endpoint `GET /api/profissionais/{profissionalUuid}/procedimentos` para listar os vínculos ativos do profissional com procedimentos, incluindo UUID da associação, valor e duração efetivos, destinado ao Web e ao chatbot.
 - Endpoint `GET /api/procedimentos` para listar o catálogo ativo da clínica do token, com valor-base e duração estimada, destinado ao Mobile e acessível a profissionais e recepcionistas autorizados.
+- Endpoint `POST /api/me/procedimentos` para o profissional autenticado vincular um procedimento ativo do catálogo da clínica ou reativar um vínculo previamente inativado (`deleted_at != null`), copiando os valores-base vigentes quando duração ou valor forem omitidos.
+- Endpoint `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` para o profissional autenticado alterar valor, duração ou disponibilidade (`deleted_at`) de um vínculo existente, preservando os valores atuais do vínculo quando omitidos.
 - Endpoint `GET /api/profissionais/{profissionalUuid}/disponibilidade`, exclusivo do chatbot, para verificar um horário solicitado e retornar alternativas próximas quando ele estiver ocupado.
 - Endpoint `GET /api/clientes` para listar os clientes ativos da clínica do token, ordenados por nome, para seleção no Web.
 - Endpoint `GET /api/agendamentos/{agendamentoUuid}` para consultar os detalhes de um atendimento no Web e no Mobile, com autorização do profissional responsável ou de usuário autorizado na clínica.
@@ -754,6 +790,18 @@ O cargo concede permissões operacionais e `isAdmin` acrescenta apenas `clinica:
 Rota autenticada exclusiva para profissional consultar os procedimentos oferecidos por si próprio. O handler exige `procedimentos:gerenciar:proprios`, obtém `ProfissionalUuid` de `IContextUsuarioAtual` e reutiliza `IProcedimentosProfissionalReader`; não recebe UUID de profissional ou clínica e não chama outro endpoint HTTP. Recepcionistas e usuários sem vínculo profissional recebem `403`.
 
 Resposta `200 OK`: `{ "procedimentos": [...] }`. Cada item contém `profissionalProcedimentoUuid`, `procedimentoUuid`, `nome`, `valorEfetivo` e `duracaoEfetivaMinutos`, igual ao contrato da listagem de procedimentos por profissional. Coleção vazia é válida. Token ausente/inválido retorna `401`; profissional autenticado sem dados disponíveis no reader retorna `404`; erro inesperado retorna `500`. O retorno foi validado manualmente.
+
+#### `POST /api/me/procedimentos`
+
+Rota autenticada exclusiva para o profissional vincular ao seu catálogo pessoal um procedimento existente no catálogo da clínica ou reativar um vínculo inativo (`deleted_at != null`). Recebe `procedimentoUuid` obrigatório, além de `duracaoMinutos` e `valor` opcionais; clínica e profissional são derivados do JWT. O handler exige `procedimentos:gerenciar:proprios` e vínculo profissional ativo.
+
+Quando `duracaoMinutos` ou `valor` são omitidos ou enviados como `null`, o caso de uso adota os valores-base vigentes do procedimento (`duracaoEstimadaMinutos` e `valorBase`). Se o vínculo ainda não existir, `CriarVinculoProcedimentoProfissionalWriter` cria o registro e a rota retorna `201 Created` com `criado: true`. Se o vínculo já existir com `deleted_at != null`, `AlterarVinculoProcedimentoProfissionalWriter` limpa `deleted_at`, atualiza duração, valor e `updated_at`, e a rota retorna `200 OK` com `criado: false`. Ambos os casos retornam `profissionalProcedimentoUuid`, `criado`, `nome`, `duracaoMinutos` e `valor`. Associação já ativa resulta em `409`; procedimento inexistente/inativo na clínica resulta em `404`; duração `<= 0` ou valor `< 0` resulta em `400`. Os cenários de criação e reativação foram validados manualmente.
+
+#### `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}`
+
+Rota autenticada exclusiva para o profissional alterar duração, valor ou disponibilidade (`deleted_at`) de um vínculo existente em seu catálogo pessoal. Recebe `profissionalProcedimentoUuid` na rota e `valor`, `duracaoMinutos` e `disponivelAgendamento` opcionais no corpo; clínica e profissional são derivados do JWT. O handler exige `procedimentos:gerenciar:proprios` e consulta o vínculo via `IVinculoProcedimentoProfissionalReader.ConsultarPorUuidAsync`.
+
+Campos omitidos ou enviados como `null` preservam os valores e o estado atualmente persistidos no vínculo. `disponivelAgendamento: true` limpa `deleted_at` (`null`), enquanto `disponivelAgendamento: false` preenche `deleted_at` com `DateTime.UtcNow` (ou mantém a data de inativação já existente). A escrita reutiliza `AlterarVinculoProcedimentoProfissionalWriter` e retorna `200 OK` com `profissionalProcedimentoUuid`, `disponivelAgendamento`, `nome`, `duracaoMinutos` e `valor`. Vínculo inexistente ou fora do escopo retorna `404`; duração `<= 0` ou valor `< 0` retorna `400`. Os cenários de ativação, desativação, envio completo e envio isolado de cada campo foram validados manualmente.
 
 #### `GET /api/me/receitas/resumo`
 
@@ -861,7 +909,7 @@ Fluxo executado:
 
 Resposta de sucesso: HTTP `200` com `procedimentos`, coleção que pode ser vazia. Cada item expõe `profissionalProcedimentoUuid`, `procedimentoUuid`, `nome`, `valorEfetivo` e `duracaoEfetivaMinutos`. O UUID da associação é o identificador enviado posteriormente às rotas de disponibilidade e criação de agendamento; IDs internos, calendário e dados privados da clínica não são expostos.
 
-Na modelagem simplificada atual, `profissional_procedimentos.valor` e `duracao_minutos` são obrigatórios e já representam os valores efetivos daquele profissional. Não existe herança dinâmica: o futuro caso de uso que criar a associação deverá gravar os valores informados ou copiar `procedimentos.valor_base` e `duracao_estimada_minutos` quando eles forem omitidos. Alterações posteriores no catálogo não modificam silenciosamente associações existentes.
+Na modelagem simplificada atual, `profissional_procedimentos.valor` e `duracao_minutos` são obrigatórios e já representam os valores efetivos daquele profissional. Não existe herança dinâmica: `POST /api/me/procedimentos` grava os valores informados ou copia `procedimentos.valor_base` e `duracao_estimada_minutos` quando eles são omitidos. Alterações posteriores no catálogo não modificam silenciosamente associações existentes.
 
 Falhas tratadas: HTTP `400` para `Guid.Empty`, `401` para token ausente/inválido, `403` para falta de escopo, `404` para profissional inexistente ou inativo e `500` para erro inesperado. Um texto que não satisfaça a restrição de rota `:guid` não chega ao controller e resulta no `404` do roteamento. Foram validados manualmente profissional com procedimentos, profissional existente sem vínculos e UUID inválido.
 
@@ -876,7 +924,7 @@ Fluxo executado:
 3. `CatalogoProcedimentosReader` consulta via NHibernate somente procedimentos e clínica sem soft delete no escopo autenticado.
 4. O handler projeta UUID, nome, duração estimada e valor-base, ordena por nome sem diferenciar maiúsculas/minúsculas e devolve `ListarCatalogoProcedimentosResponse`.
 
-Resposta de sucesso: HTTP `200` com `procedimentos`, coleção que pode ser vazia. Cada item expõe somente `uuid`, `nome`, `duracaoEstimadaMinutos` e `valorBase`. A rota não calcula nem expõe se o procedimento já é oferecido pelo profissional: essa informação é retornada por `GET /api/me/procedimentos`, enquanto associação e edição continuam planejadas.
+Resposta de sucesso: HTTP `200` com `procedimentos`, coleção que pode ser vazia. Cada item expõe somente `uuid`, `nome`, `duracaoEstimadaMinutos` e `valorBase`. A rota não calcula nem expõe se o procedimento já é oferecido pelo profissional: essa informação é retornada por `GET /api/me/procedimentos`, a associação/reativação é realizada por `POST /api/me/procedimentos` e a edição/inativação por `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}`.
 
 Falhas tratadas: HTTP `401` para token ausente/inválido, `403` quando o usuário não possui nenhuma das permissões aceitas e `500` para erro inesperado. A resposta de sucesso foi validada manualmente.
 
@@ -950,7 +998,7 @@ Não trate os itens abaixo como implementados apenas porque constam na documenta
 
 ### PoC funcional
 
-- Os dezesseis endpoints atuais do backend estão implementados: resolução de clínica, login, perfil atual, overview e resumo de receitas do profissional autenticado, procedimentos do profissional autenticado, consulta de agenda, listagem de profissionais agendáveis, listagem dos procedimentos oferecidos por profissional, listagem do catálogo de procedimentos, disponibilidade, listagem de clientes, detalhes e alteração de status do agendamento, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida.
+- Os dezoito endpoints atuais do backend estão implementados: resolução de clínica, login, perfil atual, overview e resumo de receitas do profissional autenticado, listagem, vinculação/reativação e alteração de procedimentos do profissional autenticado, consulta de agenda, listagem de profissionais agendáveis, listagem dos procedimentos oferecidos por profissional, listagem do catálogo de procedimentos, disponibilidade, listagem de clientes, detalhes e alteração de status do agendamento, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida.
 - O conjunto mínimo de rotas necessário ao chatbot estático está completo. O próximo fluxo pode resolver o cliente, listar profissionais e procedimentos, consultar disponibilidade e confirmar o agendamento sem acesso direto ao banco.
 - Para a PoC, o chatbot autenticará n8n → API com um JWT anual emitido pontualmente para um usuário `Recepcionista` com `isAdmin = true` da clínica. O token deve permanecer nas Credentials do n8n; a emissão não deve alterar permanentemente a duração padrão dos tokens humanos.
 - Criar os DTOs, casos de uso e endpoints adicionais somente quando os próximos fluxos de cadastro ou MVP os exigirem.

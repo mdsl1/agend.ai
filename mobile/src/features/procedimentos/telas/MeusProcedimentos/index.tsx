@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import NavegacaoInferior from '../../../../components/NavegacaoInferior';
 import { useTema } from '../../../../tema/tema';
@@ -23,10 +23,13 @@ function combinarProcedimentos(catalogo: ProcedimentoCatalogo[], meusProcediment
         return meuProcedimento
             ? {
                 uuid: procedimento.uuid,
+                profissionalProcedimentoUuid: meuProcedimento.profissionalProcedimentoUuid,
                 nome: procedimento.nome,
                 ativo: true,
                 valor: meuProcedimento.valorEfetivo,
                 duracaoMinutos: meuProcedimento.duracaoEfetivaMinutos,
+                valorBase: procedimento.valorBase,
+                duracaoEstimadaMinutos: procedimento.duracaoEstimadaMinutos,
             }
             : {
                 uuid: procedimento.uuid,
@@ -34,6 +37,8 @@ function combinarProcedimentos(catalogo: ProcedimentoCatalogo[], meusProcediment
                 ativo: false,
                 valor: procedimento.valorBase,
                 duracaoMinutos: procedimento.duracaoEstimadaMinutos,
+                valorBase: procedimento.valorBase,
+                duracaoEstimadaMinutos: procedimento.duracaoEstimadaMinutos,
             };
     });
 }
@@ -73,9 +78,9 @@ export default function TelaMeusProcedimentos() {
         }
     }, [signOut]);
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         if (state.status === 'signedIn') void carregarProcedimentos();
-    }, [carregarProcedimentos, state.status]);
+    }, [carregarProcedimentos, state.status]));
 
     useEffect(() => {
         if (state.status !== 'signedOut') return;
@@ -146,7 +151,17 @@ export default function TelaMeusProcedimentos() {
                     </View>
                 )}
                 renderItem={({ item }) => (
-                    <View style={styles.cartao}>
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`${item.ativo ? 'Editar' : 'Vincular'} procedimento ${item.nome}`}
+                        onPress={() => {
+                            router.push({
+                                pathname: '/procedimento/[procedimentoUuid]',
+                                params: { procedimentoUuid: item.uuid },
+                            });
+                        }}
+                        style={styles.cartao}
+                    >
                         <View style={styles.linhaTopo}>
                             <View style={styles.iconeProcedimento}><Text style={styles.simboloProcedimento}>◇</Text></View>
                             <View style={styles.dadosNome}>
@@ -156,6 +171,7 @@ export default function TelaMeusProcedimentos() {
                             <View style={[styles.etiqueta, item.ativo ? styles.etiquetaAtiva : styles.etiquetaInativa]}>
                                 <Text style={[styles.textoEtiqueta, item.ativo ? styles.textoEtiquetaAtiva : styles.textoEtiquetaInativa]}>{item.ativo ? 'Ativo' : 'Inativo'}</Text>
                             </View>
+                            <Text accessibilityElementsHidden style={styles.setaCartao}>›</Text>
                         </View>
                         <View style={styles.separador} />
                         <View style={styles.linhaValores}>
@@ -168,8 +184,8 @@ export default function TelaMeusProcedimentos() {
                                 <Text style={styles.valor}>{item.duracaoMinutos} min</Text>
                             </View>
                         </View>
-                        {!item.ativo && <Text style={styles.rodapeCatalogo}>Valores de referência da clínica; ainda não personalizados para você.</Text>}
-                    </View>
+                        {!item.ativo && <Text style={styles.rodapeCatalogo}>Toque para vincular ou reativar e personalizar valor e duração.</Text>}
+                    </Pressable>
                 )}
             />
             <NavegacaoInferior abaAtiva="servicos" />

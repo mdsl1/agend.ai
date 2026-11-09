@@ -24,6 +24,7 @@ export function criarEstilos(cores: CoresTema) {
         textoEtiqueta: { fontSize: 10, fontWeight: '700' },
         textoEtiquetaAtiva: { color: cores.sucesso },
         textoEtiquetaInativa: { color: cores.textoSecundario },
+        setaCartao: { marginLeft: 2, color: cores.textoSuave, fontSize: 22, lineHeight: 24 },
         separador: { height: 1, backgroundColor: cores.borda },
         linhaValores: { flexDirection: 'row', alignItems: 'center', gap: 8 },
         grupoValor: { flex: 1, gap: 4 },

@@ -56,6 +56,7 @@ function RootNavigator() {
                 <Stack.Screen name="agendamento/[agendamentoUuid]" />
                 <Stack.Screen name="receitas" />
                 <Stack.Screen name="procedimentos" />
+                <Stack.Screen name="procedimento/[procedimentoUuid]" />
             </Stack>
         </>
     );

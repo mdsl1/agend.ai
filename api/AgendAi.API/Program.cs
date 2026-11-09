@@ -30,6 +30,8 @@ using AgendAi.Infrastructure.Profissionais;
 using AgendAi.Application.Profissionais.ListarProfissionais;
 using AgendAi.Application.Profissionais.ListarProcedimentosProfissional;
 using AgendAi.Application.Profissionais.ListarMeusProcedimentos;
+using AgendAi.Application.Profissionais.VincularMeuProcedimento;
+using AgendAi.Application.Profissionais.AlterarMeuProcedimento;
 
 using AgendAi.Application.Procedimentos.Ports;
 using AgendAi.Infrastructure.Procedimentos;
@@ -173,6 +175,12 @@ builder.Services.AddScoped<ListarMeusProcedimentosHandler>();
 
 builder.Services.AddScoped<ICatalogoProcedimentosReader, CatalogoProcedimentosReader>();
 builder.Services.AddScoped<ListarCatalogoProcedimentosHandler>();
+
+builder.Services.AddScoped<IVinculoProcedimentoProfissionalReader, VinculoProcedimentoProfissionalReader>();
+builder.Services.AddScoped<ICriarVinculoProcedimentoProfissionalWriter, CriarVinculoProcedimentoProfissionalWriter>();
+builder.Services.AddScoped<IAlterarVinculoProcedimentoProfissionalWriter, AlterarVinculoProcedimentoProfissionalWriter>();
+builder.Services.AddScoped<VincularMeuProcedimentoHandler>();
+builder.Services.AddScoped<AlterarMeuProcedimentoHandler>();
 
 builder.Services.AddScoped<IResolucaoClienteReader, ResolucaoClienteReader>();
 builder.Services.AddScoped<IClienteWriter, ClienteWriter>();

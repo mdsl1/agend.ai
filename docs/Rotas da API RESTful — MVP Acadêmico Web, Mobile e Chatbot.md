@@ -1,6 +1,6 @@
 # Rotas da API RESTful — MVP Acadêmico Web, Mobile e Chatbot
 
-> Última revisão: 4 de novembro de 2026.
+> Última revisão: 9 de novembro de 2026.
 
 Este documento define os contratos HTTP necessários para integrar os três projetos:
 
@@ -23,6 +23,8 @@ As seguintes rotas já existem na PoC:
 - `GET /api/agendamentos/{agendamentoUuid}`;
 - `GET /api/procedimentos`;
 - `GET /api/me/procedimentos`;
+- `POST /api/me/procedimentos`;
+- `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}`;
 - `GET /api/me/overview`;
 - `POST /api/clientes/resolver`;
 - `POST /api/agendamentos`;
@@ -856,46 +858,45 @@ O handler obtém `ProfissionalUuid` de `IContextUsuarioAtual` e reutiliza `IProc
 ### `POST /api/me/procedimentos`
 
 - **Projeto:** Mobile.
-- **Estado/acesso:** planejada; profissional autenticado.
-- **Descrição:** associa ao profissional um procedimento existente no catálogo da clínica. Não cria um procedimento global.
+- **Estado/acesso:** implementada; exige JWT e `procedimentos:gerenciar:proprios` (profissional autenticado com vínculo profissional ativo).
+- **Descrição:** associa ao profissional autenticado um procedimento ativo existente no catálogo da clínica ou reativa um vínculo previamente inativado (`deleted_at != null`). Não cria um procedimento global.
 
 Entrada:
 
 ```json
 {
-  "procedimentoUuid": "81c3e389-738f-4d46-a992-11f78cb9a3fd",
-  "valor": null,
-  "duracaoMinutos": null
+  "procedimentoUuid": "6c127bc6-f47a-4baf-8c4d-798d3365d5e1",
+  "valor": 175.00,
+  "duracaoMinutos": 20
 }
 ```
 
-Saída `201 Created`:
+Saída `201 Created` para novo vínculo (`criado: true`) ou `200 OK` para vínculo reativado (`criado: false`):
 
 ```json
 {
-  "profissionalProcedimentoUuid": "99f01d9a-a93f-4e0e-95a7-f299b1c25f12",
-  "procedimentoUuid": "81c3e389-738f-4d46-a992-11f78cb9a3fd",
-  "nome": "Peeling químico",
-  "valorEfetivo": 300.00,
-  "duracaoEfetivaMinutos": 60,
-  "disponivelAgendamento": true
+  "profissionalProcedimentoUuid": "2558901a-b76a-4ef6-ac5b-55fc2b417071",
+  "criado": true,
+  "nome": "Consulta de Rotina",
+  "duracaoMinutos": 20,
+  "valor": 175.00
 }
 ```
 
-Quando `valor` ou `duracaoMinutos` forem omitidos ou enviados como `null`, o caso de uso copia os respectivos valores-base vigentes no catálogo e grava o resultado na associação. Associação já disponível retorna `409`. Se ela existir como indisponível, a rota reativa o mesmo registro.
+Quando `valor` ou `duracaoMinutos` forem omitidos ou enviados como `null`, o caso de uso copia os respectivos valores-base vigentes no catálogo (`procedimentos.valor_base` e `procedimentos.duracao_estimada_minutos`) e grava o resultado na associação. Quando enviados, `duracaoMinutos` deve ser maior que zero e `valor` não pode ser negativo (`400 Bad Request`). Se o procedimento não existir ou estiver inativo na clínica do token, retorna `404 Not Found`. Associação já ativa para o profissional retorna `409 Conflict`. Se ela existir como inativa (`deleted_at != null`), a rota reativa o mesmo registro (`deleted_at = null`), atualiza `duracao_minutos`, `valor` e `updated_at`, e retorna `200 OK` com `criado: false`. Os cenários de criação de novo vínculo e reativação de vínculo existente foram validados manualmente.
 
 ### `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}`
 
 - **Projeto:** Mobile.
-- **Estado/acesso:** planejada; profissional dono da associação.
-- **Descrição:** altera preço, duração ou disponibilidade do procedimento para aquele profissional, sem modificar o catálogo da clínica.
+- **Estado/acesso:** implementada; exige JWT e `procedimentos:gerenciar:proprios` (profissional autenticado dono da associação).
+- **Descrição:** altera preço, duração ou disponibilidade (`deleted_at`) do procedimento para aquele profissional, sem modificar o catálogo da clínica.
 
-Entrada:
+Entrada (todos os campos são opcionais/`nullable`):
 
 ```json
 {
-  "valor": 240.00,
-  "duracaoMinutos": 50,
+  "valor": 175.00,
+  "duracaoMinutos": 20,
   "disponivelAgendamento": true
 }
 ```
@@ -904,17 +905,15 @@ Saída `200 OK`:
 
 ```json
 {
-  "profissionalProcedimentoUuid": "9528014c-5161-4e5e-a8a1-ebf1c26f7417",
-  "valorBase": 180.00,
-  "valorEfetivo": 240.00,
-  "duracaoBaseMinutos": 30,
-  "duracaoEfetivaMinutos": 50,
+  "profissionalProcedimentoUuid": "cde721a1-12f5-4c5b-a2f0-bd97cd1d47df",
   "disponivelAgendamento": true,
-  "atualizadoEm": "2026-09-02T14:30:00-03:00"
+  "nome": "Consulta de Rotina",
+  "duracaoMinutos": 20,
+  "valor": 175.00
 }
 ```
 
-No `PATCH`, omitir um campo preserva o valor efetivo atual; enviar `null` copia o valor-base vigente para a associação; enviar um número grava o novo valor efetivo. Em todos os casos, alterações futuras no catálogo não se propagam automaticamente. `disponivelAgendamento: false` deixa de oferecer o procedimento sem apagar o histórico.
+No `PATCH`, omitir um campo ou enviá-lo como `null` preserva o valor efetivo ou estado atual que já estava salvo no vínculo; enviar um número grava o novo valor efetivo (`duracaoMinutos > 0` e `valor >= 0`). `disponivelAgendamento` representa a tradução booleana de `deleted_at`: `true` ativa/reativa o vínculo (`deleted_at = null`) e `false` inativa o vínculo (`deleted_at = DateTime.UtcNow` ou preserva a data de inativação já existente) sem apagar o histórico. Vínculo inexistente ou fora do escopo do profissional/clínica retorna `404 Not Found`; valores inválidos retornam `400 Bad Request`. Os cenários de ativação, desativação, envio completo e envio isolado de cada campo foram validados manualmente.
 
 ---
 
@@ -1037,7 +1036,8 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 | Agenda (rota interna `/agenda`) | `GET /api/agenda/{profissionalUuid}` | Implementado: consulta semanal, seleção de data, atendimentos/indisponibilidades, badges dos oito status e estados de carregamento, vazio e erro |
 | Detalhes do atendimento (rota interna `/agendamento/{agendamentoUuid}`) | `GET /api/agendamentos/{agendamentoUuid}`, `PATCH /api/agendamentos/{agendamentoUuid}/status` | Implementado: confirma em `agendado`; permite concluir/falta em `confirmado` e cancelar em ambos. Datas e transições validadas pela API; conflitos `409` são exibidos |
 | Bloquear ou liberar horário | `POST /api/me/indisponibilidades`, `DELETE /api/me/indisponibilidades/{eventoId}` | Planejado |
-| Meus Procedimentos (rota interna `/procedimentos`) | `GET /api/procedimentos`, `GET /api/me/procedimentos` | Implementado para consulta: combina catálogo e vínculos; busca local. Associação e edição permanecem indisponíveis |
+| Meus Procedimentos (rota interna `/procedimentos`) | `GET /api/procedimentos`, `GET /api/me/procedimentos` | Implementado: combina catálogo e vínculos, busca local, abre o formulário de vínculo e recarrega a lista ao retornar |
+| Vincular / Editar Procedimento (rota interna `/procedimento/{procedimentoUuid}`) | `GET /api/procedimentos`, `GET /api/me/procedimentos`, `POST /api/me/procedimentos`, `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` | Implementado: cria/reativa vínculos inativos via `POST` e altera preço, duração ou disponibilidade de vínculos ativos via `PATCH` |
 | Receitas (rota interna `/receitas`) | `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}` | Implementado: consulta mensal e navegação entre Início/Receitas |
 
 As telas mobile implementadas acompanham automaticamente o tema claro ou escuro configurado no sistema do dispositivo; essa preferência visual não exige chamada à API.
@@ -1062,7 +1062,7 @@ As telas mobile implementadas acompanham automaticamente o tema claro ou escuro 
 3. **Identificação da clínica no login:** o e-mail é único apenas dentro de uma clínica. O Mobile já pode resolver o `clinicaUuid` usando `GET /api/clinicas/resolver` com o `codigoIdentificador`; o Web atual obtém o UUID do segmento da URL de login. Em ambos os fluxos, o UUID segue no payload de `POST /api/auth/login`.
 4. **Dados iniciais:** clínica, usuários, horários de funcionamento, especialidades e catálogo de procedimentos precisam existir previamente no ambiente acadêmico.
 5. **Clientes e Telegram:** `clientes.id_telegram` aceita `NULL` no schema, na entidade e no mapping. A rota de resolução mantém o campo opcional e índices parciais únicos impedem que telefone ou Telegram ativos sejam compartilhados por clientes da mesma clínica.
-6. **Procedimentos do profissional:** `profissional_procedimentos` está sincronizada entre `database/init.sql`, entidade e mapping NHibernate, com unicidade ativa do par profissional/procedimento e valor/duração efetivos obrigatórios sem defaults silenciosos. A associação já é exposta para seleção por `GET /api/profissionais/{profissionalUuid}/procedimentos`; a criação administrativa futura deverá gravar os valores informados ou copiar os valores-base vigentes quando eles forem omitidos.
+6. **Procedimentos do profissional:** `profissional_procedimentos` está sincronizada entre `database/init.sql`, entidade e mapping NHibernate, com unicidade do par profissional/procedimento e valor/duração efetivos obrigatórios sem defaults silenciosos. A associação é exposta por `GET /api/profissionais/{profissionalUuid}/procedimentos` e `GET /api/me/procedimentos`, vinculada ou reativada pelo profissional autenticado por `POST /api/me/procedimentos` (que grava os valores informados ou copia os valores-base vigentes quando omitidos) e editada/ativada/inativada por `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` (que preserva os valores atuais do vínculo quando omitidos).
 7. **Schema atual:** a relação de `profissionais` com `usuarios` e a definição de `profissional_procedimentos` já estão corrigidas no bootstrap canônico. Mudanças estruturais futuras devem continuar sincronizadas com entidades e mappings.
 8. **Eventos do Calendar:** padronizar o marcador `tipo = agendamento | indisponibilidade`. A consulta deve retornar `agendamentoUuid` apenas quando o evento possuir registro relacional.
 9. **Bloqueios:** criar no n8n as operações de criar e excluir um evento `Indisponível`. A exclusão deve validar agenda, profissional e marcador do evento.
@@ -1073,9 +1073,9 @@ As telas mobile implementadas acompanham automaticamente o tema claro ou escuro 
 ## Resumo quantitativo
 
 - **24 contratos HTTP**;
-- **16 rotas implementadas**, incluindo resolução de clínica, login, perfil e alteração de status de agendamento;
-- **8 rotas planejadas**;
-- as dezesseis rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
+- **18 rotas implementadas**, incluindo resolução de clínica, login, perfil, associação e edição de procedimentos do profissional autenticado e alteração de status de agendamento;
+- **6 rotas planejadas**;
+- as dezoito rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
 - nenhuma listagem com busca ou paginação;
 - `GET /api/clientes` já fornece os clientes ativos para o select do modal Web. A interface carrega a coleção uma única vez enquanto a agenda permanece montada e filtra localmente por nome ou telefone. O início é escolhido no grid; `GET /api/profissionais/{profissionalUuid}/procedimentos` fornece o preço e a duração efetivos que definem o fim exibido, e a confirmação já usa `POST /api/agendamentos` com chave de idempotência.
 
