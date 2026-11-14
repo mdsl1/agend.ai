@@ -1,6 +1,6 @@
 # Rotas da API RESTful — MVP Acadêmico Web, Mobile e Chatbot
 
-> Última revisão: 9 de novembro de 2026.
+> Última revisão: 12 de novembro de 2026.
 
 Este documento define os contratos HTTP necessários para integrar os três projetos:
 
@@ -1031,7 +1031,8 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 
 | Tela ou fluxo | Rotas principais | Estado no aplicativo |
 |---|---|---|
-| Login e perfil | `POST /api/auth/login`, `GET /api/me` | Implementado |
+| Login e sessão | `POST /api/auth/login`, `GET /api/me` | Implementado |
+| Perfil Profissional (rota interna `/perfil`) | `GET /api/me` | Implementado: exibe dados cadastrais somente leitura (iniciais, prefixo + nome, especialidade + registro profissional, clínica e e-mail), card informativo de privacidade/segurança, atualização manual e logout local com remoção do token |
 | Início | `GET /api/me/overview` | Implementado: consulta integrada e exibição dos quatro indicadores diários; navegação para Receitas disponível |
 | Agenda (rota interna `/agenda`) | `GET /api/agenda/{profissionalUuid}` | Implementado: consulta semanal, seleção de data, atendimentos/indisponibilidades, badges dos oito status e estados de carregamento, vazio e erro |
 | Detalhes do atendimento (rota interna `/agendamento/{agendamentoUuid}`) | `GET /api/agendamentos/{agendamentoUuid}`, `PATCH /api/agendamentos/{agendamentoUuid}/status` | Implementado: confirma em `agendado`; permite concluir/falta em `confirmado` e cancelar em ambos. Datas e transições validadas pela API; conflitos `409` são exibidos |

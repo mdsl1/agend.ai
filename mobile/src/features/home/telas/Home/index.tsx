@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import NavegacaoInferior from '../../../../components/NavegacaoInferior';
 import { ApiError } from '../../../../services/api';
@@ -38,7 +38,7 @@ function obterMensagemErro(erro: unknown): string {
 }
 
 export default function HomeScreen() {
-    const { state, signOut, changeClinic } = useAuth();
+    const { state, signOut } = useAuth();
     const router = useRouter();
     const { cores } = useTema();
     const styles = useMemo(() => criarEstilos(cores), [cores]);
@@ -87,11 +87,7 @@ export default function HomeScreen() {
     const iniciais = profile.nome.split(/\s+/).slice(0, 2).map((parte) => parte[0]).join('').toUpperCase();
     const proximo = dados?.resumoAgenda.proximoAgendamento;
     const percentual = dados?.resumoReceitas.percentualVsMesAnterior;
-    const abrirAcoesConta = () => Alert.alert('Sua conta', profile.clinica.nome, [
-        { text: 'Sair da conta', style: 'destructive', onPress: () => void signOut() },
-        { text: 'Trocar clínica', onPress: () => void changeClinic() },
-        { text: 'Cancelar', style: 'cancel' },
-    ]);
+    const irParaPerfil = () => router.replace('/perfil' as Href);
 
     return (
         <SafeAreaView style={styles.tela} edges={['top', 'left', 'right', 'bottom']}>
@@ -104,7 +100,7 @@ export default function HomeScreen() {
                         <Text style={styles.data}>{dados ? formatarData(dados.dataReferencia).toLocaleUpperCase('pt-BR') : 'SUA ROTINA PROFISSIONAL'}</Text>
                         <Text style={styles.saudacao}>Olá, {nomeExibicao(profile.nome, profile.prefixo)}</Text>
                     </View>
-                    <Pressable accessibilityRole="button" accessibilityLabel="Opções da conta" onPress={abrirAcoesConta} style={styles.avatar}>
+                    <Pressable accessibilityRole="button" accessibilityLabel="Abrir perfil profissional" onPress={irParaPerfil} style={styles.avatar}>
                         <Text style={styles.avatarTexto}>{iniciais}</Text>
                     </Pressable>
                 </View>

@@ -4,14 +4,14 @@ import { useMemo } from 'react';
 import { useTema } from '../../tema/tema';
 import { criarEstilos } from './styles';
 
-type AbaAtiva = 'inicio' | 'agenda' | 'receitas' | 'servicos';
+type AbaAtiva = 'inicio' | 'agenda' | 'receitas' | 'servicos' | 'perfil';
 
 const itens = [
     { chave: 'inicio', rotulo: 'Início', icone: '⌂', rota: '/' },
     { chave: 'agenda', rotulo: 'Agenda', icone: '▦', rota: '/agenda' },
     { chave: 'receitas', rotulo: 'Receitas', icone: 'R$', rota: '/receitas' },
     { chave: 'servicos', rotulo: 'Serviços', icone: '✚', rota: '/procedimentos' },
-    { chave: 'perfil', rotulo: 'Perfil', icone: '○' },
+    { chave: 'perfil', rotulo: 'Perfil', icone: '○', rota: '/perfil' },
 ] as const;
 
 export default function NavegacaoInferior({ abaAtiva }: { abaAtiva: AbaAtiva }) {
@@ -19,7 +19,7 @@ export default function NavegacaoInferior({ abaAtiva }: { abaAtiva: AbaAtiva }) 
     const { cores } = useTema();
     const styles = useMemo(() => criarEstilos(cores), [cores]);
 
-    function selecionarAba(chave: string, rota?: '/' | '/agenda' | '/receitas' | '/procedimentos') {
+    function selecionarAba(chave: string, rota?: '/' | '/agenda' | '/receitas' | '/procedimentos' | '/perfil') {
         if (rota) {
             // O arquivo de tipos gerado em .expo ainda não incluiu esta rota nova.
             router.replace(rota as Href);
