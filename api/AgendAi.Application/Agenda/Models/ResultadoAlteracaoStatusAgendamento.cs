@@ -6,5 +6,8 @@ public sealed record ResultadoAlteracaoStatusAgendamento(
     string StatusPgtoAnterior,
     string NovoStatus,
     string NovoStatusPgto,
-    DateTimeOffset AlteradoEm
+    DateTimeOffset AlteradoEm,
+    string? IdEventoExterno,
+    string? IdAgendaExterna,
+    string? UrlWebhookAgenda
 );

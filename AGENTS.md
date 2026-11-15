@@ -4,7 +4,7 @@
 
 Este arquivo é o guia operacional durável para agentes que trabalham no Agend.AI. Ele consolida a arquitetura, a stack, a configuração, a estrutura do repositório, o estado implementado, as pendências e as regras que não podem ser inferidas apenas pelo código.
 
-O inventário técnico e o estado das rotas, autenticação JWT, RBAC, integrações n8n, schema, stack e consumidores foram revisados em **25 de setembro de 2026**; as rotas de detalhes de agendamento e catálogo de procedimentos foram atualizadas em **6 de outubro de 2026**, `GET /api/me/procedimentos` em **8 de outubro de 2026**, `GET /api/me/receitas/resumo` em **12 de outubro de 2026**, `GET /api/me/overview` em **13 de outubro de 2026**, `GET /api/clinicas/resolver` em **16 de outubro de 2026**, o fluxo mobile de status de agendamento em **4 de novembro de 2026**, `POST /api/me/procedimentos` em **8 de novembro de 2026**, `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` em **9 de novembro de 2026** e a tela mobile de perfil profissional em **12 de novembro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
+O inventário técnico e o estado das rotas, autenticação JWT, RBAC, integrações n8n, schema, stack e consumidores foram revisados em **25 de setembro de 2026**; as rotas de detalhes de agendamento e catálogo de procedimentos foram atualizadas em **6 de outubro de 2026**, `GET /api/me/procedimentos` em **8 de outubro de 2026**, `GET /api/me/receitas/resumo` em **12 de outubro de 2026**, `GET /api/me/overview` em **13 de outubro de 2026**, `GET /api/clinicas/resolver` em **16 de outubro de 2026**, o fluxo mobile de status de agendamento em **4 de novembro de 2026**, `POST /api/me/procedimentos` em **8 de novembro de 2026**, `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` em **9 de novembro de 2026**, a tela mobile de perfil profissional em **12 de novembro de 2026** e `POST /api/me/indisponibilidade` e `DELETE /api/me/indisponibilidade/{eventoId}` em **15 de novembro de 2026**. Ao alterar arquitetura, dependências, variáveis de ambiente, estrutura de diretórios ou estado funcional, atualize também as seções correspondentes deste arquivo.
 
 O Agend.AI é um CRM para clínicas com agenda, cadastros e automação de agendamentos. A solução combina uma SPA React, uma API ASP.NET Core, PostgreSQL com NHibernate e workflows n8n integrados, no desenho de destino, ao Telegram e ao Google Calendar.
 
@@ -116,9 +116,9 @@ AgendAi.API -+-- também referencia AgendAi.Application
 ```
 
 - `AgendAi.Domain`: contém as entidades atuais e deve concentrar as regras centrais; não depende das outras camadas.
-- `AgendAi.Application`: contém os casos de uso de resolução pública de clínica por código identificador, login, perfil atual, consulta de eventos e detalhes de agendamentos, listagem de profissionais agendáveis, procedimentos oferecidos por profissional, listagem, vinculação/reativação e alteração de procedimentos do profissional autenticado e catálogo de procedimentos, resolução e listagem de clientes, verificação de disponibilidade, criação de agendamento e consultas do resumo mensal de receitas e overview do profissional autenticado; também contém portas, modelos, permissões, autorização por escopo, validação e erros tipados; depende de Domain.
+- `AgendAi.Application`: contém os casos de uso de resolução pública de clínica por código identificador, login, perfil atual, consulta de eventos e detalhes de agendamentos, criação e exclusão de indisponibilidades do profissional autenticado, listagem de profissionais agendáveis, procedimentos oferecidos por profissional, listagem, vinculação/reativação e alteração de procedimentos do profissional autenticado e catálogo de procedimentos, resolução e listagem de clientes, verificação de disponibilidade, criação de agendamento e consultas do resumo mensal de receitas e overview do profissional autenticado; também contém portas, modelos, permissões, autorização por escopo, validação e erros tipados; depende de Domain.
 - `AgendAi.Infrastructure`: contém a configuração/mappings NHibernate, readers e writers, os gateways HTTP do n8n, hashing/verificação de senha e geração de JWT; referencia Application para implementar suas portas e Domain para consultar e persistir as entidades.
-- `AgendAi.API`: contém os contratos HTTP, os controllers dos dezoito endpoints implementados, a composição de dependências, autenticação JWT Bearer, contexto do usuário atual e tratamento global de exceções com Problem Details; referencia Application e Infrastructure.
+- `AgendAi.API`: contém os contratos HTTP, os controllers dos vinte endpoints implementados, a composição de dependências, autenticação JWT Bearer, contexto do usuário atual e tratamento global de exceções com Problem Details; referencia Application e Infrastructure.
 
 Preserve essa direção de dependências. Regras de negócio não pertencem a controllers, componentes React ou workflows quando forem regras centrais do CRM.
 
@@ -321,6 +321,8 @@ agend.ai/
 |   |   |   |-- Agenda/
 |   |   |   |   |-- ConsultarAgendaRequest.cs
 |   |   |   |   |-- ConsultarAgendaResponse.cs
+|   |   |   |   |-- CriarMinhaIndisponibilidadeRequest.cs
+|   |   |   |   |-- CriarMinhaIndisponibilidadeResponse.cs
 |   |   |   |   `-- EventoAgendaResponse.cs
 |   |   |   |-- Clientes/
 |   |   |   |   |-- ClienteResponse.cs
@@ -390,6 +392,13 @@ agend.ai/
 |   |   |   |   |-- CriarAgendamentoCommand.cs
 |   |   |   |   |-- CriarAgendamentoHandler.cs
 |   |   |   |   `-- CriarAgendamentoResult.cs
+|   |   |   |-- CriarMinhaIndisponibilidade/
+|   |   |   |   |-- CriarMinhaIndisponibilidadeCommand.cs
+|   |   |   |   |-- CriarMinhaIndisponibilidadeHandler.cs
+|   |   |   |   `-- CriarMinhaIndisponibilidadeResult.cs
+|   |   |   |-- ExcluirMinhaIndisponibilidade/
+|   |   |   |   |-- ExcluirMinhaIndisponibilidadeCommand.cs
+|   |   |   |   `-- ExcluirMinhaIndisponibilidadeHandler.cs
 |   |   |   |-- ConsultarAgendamento/
 |   |   |   |   |-- ClienteAgendamentoResult.cs
 |   |   |   |   |-- ConsultarAgendamentoHandler.cs
@@ -399,6 +408,7 @@ agend.ai/
 |   |   |   |   `-- ProfissionalAgendamentoResult.cs
 |   |   |   |-- Models/
 |   |   |   |   |-- CriacaoAgendamentoExterno.cs
+|   |   |   |   |-- CriacaoIndisponibilidadeExterna.cs
 |   |   |   |   |-- DadosAgendamentoAgenda.cs
 |   |   |   |   |-- DadosAgendamentoDetalhado.cs
 |   |   |   |   |-- DadosAgendaProfissional.cs
@@ -406,10 +416,13 @@ agend.ai/
 |   |   |   |   |-- DadosDisponibilidadeProfissional.cs
 |   |   |   |   |-- DadosJanelaAtendimento.cs
 |   |   |   |   |-- EventoAgendaExterna.cs
+|   |   |   |   |-- ExclusaoEventoAgendaExterna.cs
 |   |   |   |   |-- ConsultaDisponibilidadeExterna.cs
 |   |   |   |   |-- HorarioDisponivelExterno.cs
 |   |   |   |   |-- ResultadoCriacaoAgendamentoExterno.cs
-|   |   |   |   `-- ResultadoDisponibilidadeExterna.cs
+|   |   |   |   |-- ResultadoCriacaoIndisponibilidadeExterna.cs
+|   |   |   |   |-- ResultadoDisponibilidadeExterna.cs
+|   |   |   |   `-- ResultadoExclusaoEventoAgendaExterna.cs
 |   |   |   |-- Ports/
 |   |   |   |   |-- IAgendaExternaGateway.cs
 |   |   |   |   |-- IAgendamentoAgendaReader.cs
@@ -417,8 +430,10 @@ agend.ai/
 |   |   |   |   |-- IAgendamentoWriter.cs
 |   |   |   |   |-- ICriacaoAgendamentoExternoGateway.cs
 |   |   |   |   |-- ICriacaoAgendamentoReader.cs
+|   |   |   |   |-- ICriacaoIndisponibilidadeExternaGateway.cs
 |   |   |   |   |-- IDisponibilidadeExternaGateway.cs
 |   |   |   |   |-- IDisponibilidadeReader.cs
+|   |   |   |   |-- IExclusaoEventoAgendaExternaGateway.cs
 |   |   |   |   `-- IProfissionalAgendaReader.cs
 |   |   |   `-- Services/
 |   |   |       `-- VerificarDisponibilidadeService.cs
@@ -605,8 +620,12 @@ agend.ai/
 |       |       |-- N8nAgendaGateway.cs
 |       |       |-- N8nCriacaoAgendamentoContracts.cs
 |       |       |-- N8nCriacaoAgendamentoGateway.cs
+|       |       |-- N8nCriacaoIndisponibilidadeContracts.cs
+|       |       |-- N8nCriacaoIndisponibilidadeGateway.cs
 |       |       |-- N8nDisponibilidadeContracts.cs
-|       |       `-- N8nDisponibilidadeGateway.cs
+|       |       |-- N8nDisponibilidadeGateway.cs
+|       |       |-- N8nExclusaoEventoContracts.cs
+|       |       `-- N8nExclusaoEventoGateway.cs
 |       |-- Profissionais/
 |       |   |-- AlterarVinculoProcedimentoProfissionalWriter.cs
 |       |   |-- CriarVinculoProcedimentoProfissionalWriter.cs
@@ -689,7 +708,7 @@ agend.ai/
 
 - Projeto Expo/TypeScript inicializado em `mobile/`; Expo Router mantém adaptadores de rota em `mobile/app/` e telas com `index.tsx`/`styles.ts` em `mobile/src/features/`.
 - Fluxos de resolução da clínica, login, armazenamento de sessão e restauração de perfil implementados.
-- Tela Início integrada a `GET /api/me/overview`, com resumo de receita, os quatro indicadores diários (agendamentos, confirmados, restantes e cancelados), próximo atendimento opcional, estados de carregamento/erro e atualização manual. Tela Overview de Receitas na rota interna `/receitas`, integrada a `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}`, com troca de mês, detalhamento por procedimento, ticket médio calculado e estados de carregamento/vazio/erro. Tela Minha Agenda na rota interna `/agenda`, integrada a `GET /api/agenda/{profissionalUuid}` com consulta semanal, seleção de data, lista cronológica de atendimentos/indisponibilidades, etiquetas para os oito status, atualização manual, recarga ao retornar do detalhe e estados de carregamento/vazio/erro. Tela Detalhes do Agendamento na rota `/agendamento/{agendamentoUuid}`, integrada a `GET /api/agendamentos/{agendamentoUuid}` e `PATCH /api/agendamentos/{agendamentoUuid}/status`; em `agendado`, oferece confirmar e cancelar; em `confirmado`, oferece concluir, marcar falta e cancelar. A API valida datas e transições; a tela não prevê limites locais e mostra os conflitos `409`. Estados finais e de integração não apresentam ações. Tela Meus Procedimentos na rota `/procedimentos` carrega em paralelo o catálogo (`GET /api/procedimentos`) e os vínculos do profissional autenticado (`GET /api/me/procedimentos`), combina por UUID, permite busca local, abre a tela de vínculo e recarrega a lista ao retornar. Tela Vincular/Editar Procedimento na rota `/procedimento/{procedimentoUuid}` segue a estrutura do frame mobile `14 — Editar Procedimento` de `figma.css`: chama `POST /api/me/procedimentos` para criar ou reativar vínculos inativos com valor e duração personalizados (ou do catálogo quando deixados em branco) e chama `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` para vínculos já ativos, permitindo alterar valor, duração (preservando os valores atuais do vínculo quando deixados em branco) ou inativar a disponibilidade (`disponivelAgendamento: false`). Tela Perfil Profissional na rota `/perfil` segue o frame mobile `15 — Perfil Profissional` de `figma.css` com o recorte do MVP: exibe em modo somente leitura os dados do profissional autenticado retornados por `GET /api/me` (avatar com iniciais, nome com prefixo, especialidade e registro profissional, clínica vinculada e e-mail profissional), o card estático "Privacidade e segurança", atualização manual com tentativa novamente em caso de falha e o botão "Sair da conta" para logout local (sem os cards de Integrações e Preferências). O tema claro/escuro acompanha a preferência do sistema nas telas, navegação e formulários implementados. Navegação inferior compartilhada permite alternar entre todas as cinco abas do MVP: Início, Agenda, Receitas, Serviços e Perfil. Verificação em 12/11/2026: `npm --prefix mobile run typecheck` passou; lint e suíte de testes automatizados não estão configurados em `mobile/`. Teste visual em dispositivo não foi realizado pelo agente.
+- Tela Início integrada a `GET /api/me/overview`, com resumo de receita, os quatro indicadores diários (agendamentos, confirmados, restantes e cancelados), próximo atendimento opcional, atalho no avatar para `/perfil`, estados de carregamento/erro e atualização manual. Tela Overview de Receitas na rota interna `/receitas`, integrada a `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}`, com troca de mês, detalhamento por procedimento, ticket médio calculado e estados de carregamento/vazio/erro. Tela Minha Agenda na rota interna `/agenda`, integrada a `GET /api/agenda/{profissionalUuid}` com consulta semanal, seleção de data, lista cronológica de atendimentos/indisponibilidades, etiquetas para os oito status, ações para adicionar indisponibilidade e abrir bloqueios existentes, atualização manual, recarga ao retornar do detalhe/indisponibilidade e estados de carregamento/vazio/erro. Tela Indisponibilidade na rota `/indisponibilidade` segue o frame mobile `10 — Criar / Editar Indisponibilidade` de `figma.css`: quando aberta sem `eventoId` (pré-preenchida com a data selecionada em `/agenda`), permite criar bloqueio pontual ou recorrente (`seRepete`, `frequencia` entre `Daily`, `Weekly`, `Monthly` e `Yearly`, e `repetirAte` opcional até 1 ano) via `POST /api/me/indisponibilidade`, preservando os valores digitados em conflitos `409` ou falhas; quando aberta a partir de uma indisponibilidade existente (`eventoId`), exibe motivo/título, data e horário em modo somente leitura e permite remover o bloqueio com confirmação via `DELETE /api/me/indisponibilidade/{eventoId}`. Tela Detalhes do Agendamento na rota `/agendamento/{agendamentoUuid}`, integrada a `GET /api/agendamentos/{agendamentoUuid}` e `PATCH /api/agendamentos/{agendamentoUuid}/status`; em `agendado`, oferece confirmar e cancelar; em `confirmado`, oferece concluir, marcar falta e cancelar. A API valida datas e transições; a tela não prevê limites locais e mostra os conflitos `409`. Estados finais e de integração não apresentam ações. Tela Meus Procedimentos na rota `/procedimentos` carrega em paralelo o catálogo (`GET /api/procedimentos`) e os vínculos do profissional autenticado (`GET /api/me/procedimentos`), combina por UUID, permite busca local, abre a tela de vínculo e recarrega a lista ao retornar. Tela Vincular/Editar Procedimento na rota `/procedimento/{procedimentoUuid}` segue a estrutura do frame mobile `14 — Editar Procedimento` de `figma.css`: chama `POST /api/me/procedimentos` para criar ou reativar vínculos inativos com valor e duração personalizados (ou do catálogo quando deixados em branco) e chama `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` para vínculos já ativos, permitindo alterar valor, duração (preservando os valores atuais do vínculo quando deixados em branco) ou inativar a disponibilidade (`disponivelAgendamento: false`). Tela Perfil Profissional na rota `/perfil` segue o frame mobile `15 — Perfil Profissional` de `figma.css` com o recorte do MVP: exibe em modo somente leitura os dados do profissional autenticado retornados por `GET /api/me` (avatar com iniciais, nome com prefixo, especialidade e registro profissional, clínica vinculada e e-mail profissional), o card estático "Privacidade e segurança", atualização manual com tentativa novamente em caso de falha e o botão "Sair da conta" para logout local (sem os cards de Integrações e Preferências). O tema claro/escuro acompanha a preferência do sistema nas telas, navegação e formulários implementados. Navegação inferior compartilhada permite alternar entre todas as cinco abas do MVP: Início, Agenda, Receitas, Serviços e Perfil. Verificação em 15/11/2026: `npm --prefix mobile run typecheck` passou; lint e suíte de testes automatizados não estão configurados em `mobile/`. Teste visual em dispositivo não foi realizado pelo agente.
 - `figma.css` contém especificações mobile; usar a referência mobile para novas telas e preservar margem lateral e alvos de toque adequados.
 
 ### Infraestrutura local
@@ -737,10 +756,12 @@ agend.ai/
 - Endpoint `GET /api/procedimentos` para listar o catálogo ativo da clínica do token, com valor-base e duração estimada, destinado ao Mobile e acessível a profissionais e recepcionistas autorizados.
 - Endpoint `POST /api/me/procedimentos` para o profissional autenticado vincular um procedimento ativo do catálogo da clínica ou reativar um vínculo previamente inativado (`deleted_at != null`), copiando os valores-base vigentes quando duração ou valor forem omitidos.
 - Endpoint `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` para o profissional autenticado alterar valor, duração ou disponibilidade (`deleted_at`) de um vínculo existente, preservando os valores atuais do vínculo quando omitidos.
+- Endpoint `POST /api/me/indisponibilidade` para o profissional autenticado criar um bloqueio (pontual ou recorrente até 1 ano) no próprio Google Calendar via n8n, após validar conflitos no intervalo solicitado.
+- Endpoint `DELETE /api/me/indisponibilidade/{eventoId}` para o profissional autenticado remover um evento de indisponibilidade do próprio Google Calendar via n8n, impedindo a exclusão de eventos de agendamento (`ag{uuid:N}`).
 - Endpoint `GET /api/profissionais/{profissionalUuid}/disponibilidade`, exclusivo do chatbot, para verificar um horário solicitado e retornar alternativas próximas quando ele estiver ocupado.
 - Endpoint `GET /api/clientes` para listar os clientes ativos da clínica do token, ordenados por nome, para seleção no Web.
 - Endpoint `GET /api/agendamentos/{agendamentoUuid}` para consultar os detalhes de um atendimento no Web e no Mobile, com autorização do profissional responsável ou de usuário autorizado na clínica.
-- Endpoint `PATCH /api/agendamentos/{agendamentoUuid}/status` para o profissional responsável, recepcionista ou admin atualizar o status permitido; as regras de transição são validadas no domínio e a resposta contém o status resultante.
+- Endpoint `PATCH /api/agendamentos/{agendamentoUuid}/status` para o profissional responsável, recepcionista ou admin atualizar o status permitido; as regras de transição são validadas no domínio, o cancelamento remove o evento correspondente no Google Calendar via n8n e a resposta contém os status de agendamento e pagamento anteriores e resultantes.
 - Endpoint `POST /api/clientes/resolver`, destinado ao Web e ao chatbot, para localizar ou criar um cliente pelo telefone dentro da clínica do token e, quando informado, vincular sua identidade do Telegram.
 - Endpoint `POST /api/agendamentos`, usado pelo Web e pelo chatbot, para revalidar o horário, reservar o intervalo no PostgreSQL e criar o evento correspondente via n8n.
 - Listagem de profissionais agendáveis com filtro por clínica, calendário configurado e especialidade ativa opcional, sem expor o ID externo do Google Calendar.
@@ -749,7 +770,7 @@ agend.ai/
 - Resolução de clientes com normalização de telefone, reaproveitamento do cadastro ativo existente, vínculo opcional do Telegram e detecção de identidades conflitantes.
 - Listagem de clientes com filtro de clínica e soft delete, ordenação sem diferenciação de maiúsculas/minúsculas e projeção que não expõe CPF, Telegram, anamnese ou IDs internos.
 - Consulta dos detalhes do agendamento por UUID, escopada pela clínica do JWT, incluindo cliente, profissional, procedimento, período, motivo, anotações, valor e status do atendimento e pagamento; mantém os relacionamentos disponíveis para preservar dados históricos e não depende de n8n/Google Calendar.
-- Alteração autenticada do status do agendamento, com autorização do profissional responsável ou de recepcionista/admin da mesma clínica, validação da transição pela entidade de domínio e resposta HTTP `200` `{ "status": "..." }`; erros tipados de regra são convertidos em conflito `409`.
+- Alteração autenticada do status do agendamento, com autorização do profissional responsável ou de recepcionista/admin da mesma clínica, validação da transição pela entidade de domínio, exclusão do evento externo no Google Calendar via `IExclusaoEventoAgendaExternaGateway` (`N8nExclusaoEventoGateway`) quando o novo status é `cancelado` e resposta HTTP `200` com status e status de pagamento anteriores e novos; erros tipados de regra são convertidos em conflito `409`.
 - Consulta de agenda com contratos HTTP, caso de uso, leitura NHibernate do profissional, correlação em lote do ID externo com o UUID do agendamento e gateway HTTP para o n8n com timeout e erros tipados.
 - Consulta de disponibilidade com duração obtida da associação profissional/procedimento, validação das janelas de atendimento antes da integração, busca externa via n8n e validação defensiva das alternativas retornadas. A mesma lógica foi extraída para `VerificarDisponibilidadeService` e é reutilizada pela criação sem chamar internamente outro handler ou endpoint HTTP.
 - Criação de agendamento com `Idempotency-Key` obrigatória, consulta idempotente por clínica, persistência inicial como `pendente_integracao`, bloqueio concorrente de sobreposição, integração n8n com até duas tentativas totais e transição para `agendado` ou `falha_integracao`.
@@ -803,6 +824,14 @@ Rota autenticada exclusiva para o profissional alterar duração, valor ou dispo
 
 Campos omitidos ou enviados como `null` preservam os valores e o estado atualmente persistidos no vínculo. `disponivelAgendamento: true` limpa `deleted_at` (`null`), enquanto `disponivelAgendamento: false` preenche `deleted_at` com `DateTime.UtcNow` (ou mantém a data de inativação já existente). A escrita reutiliza `AlterarVinculoProcedimentoProfissionalWriter` e retorna `200 OK` com `profissionalProcedimentoUuid`, `disponivelAgendamento`, `nome`, `duracaoMinutos` e `valor`. Vínculo inexistente ou fora do escopo retorna `404`; duração `<= 0` ou valor `< 0` retorna `400`. Os cenários de ativação, desativação, envio completo e envio isolado de cada campo foram validados manualmente.
 
+#### `POST /api/me/indisponibilidade`
+
+Rota autenticada exclusiva para o profissional criar uma indisponibilidade no próprio Google Calendar via n8n (`operacao: "criar_indisponibilidade"`). Recebe `inicio` e `fim` obrigatórios, `motivo` opcional (padrão `"Indisponível"`, máximo de 150 caracteres), `seRepete` (`bool`), `frequencia` (`Daily`, `Weekly`, `Monthly` ou `Yearly` quando `seRepete == true`) e `repetirAte` opcional (quando `seRepete == true` e `repetirAte` é `null`, calcula `inicio.AddYears(1)`; quando informado, é limitado a no máximo 1 ano a partir de `inicio`). Exige `indisponibilidades:gerenciar:proprias`, obtém o calendário e o webhook por `IProfissionalAgendaReader` e verifica conflitos no intervalo via `IAgendaExternaGateway` antes de criar o evento por `ICriacaoIndisponibilidadeExternaGateway` (`N8nCriacaoIndisponibilidadeGateway`). Retorna `201 Created` com `id`, `tipo` (`"indisponibilidade"`), `titulo`, `inicio`, `fim`, `seRepete`, `frequencia` e `repetirAte`. Não persiste dados no PostgreSQL.
+
+#### `DELETE /api/me/indisponibilidade/{eventoId}`
+
+Rota autenticada exclusiva para o profissional remover um evento de indisponibilidade do próprio Google Calendar via n8n (`operacao: "excluir_evento"`). Exige `indisponibilidades:gerenciar:proprias`, rejeita com `409 Conflict` qualquer `eventoId` no formato determinístico de agendamento (`ag{agendamentoUuid:N}`), obtém o calendário e o webhook do profissional autenticado por `IProfissionalAgendaReader` e delega a remoção a `IExclusaoEventoAgendaExternaGateway` (`N8nExclusaoEventoGateway`), retornando `204 No Content`.
+
 #### `GET /api/me/receitas/resumo`
 
 Rota autenticada para o profissional consultar seu resumo financeiro mensal. Recebe `mes` (1 a 12) e `ano` obrigatórios por query string; clínica e profissional são derivados do usuário autenticado. O handler exige `receitas:visualizar:proprias`, calcula os limites do mês no fuso `America/Sao_Paulo` e chama `IResumoMinhasReceitasReader` com intervalos semiabertos baseados em `TimeDateInicio`.
@@ -835,15 +864,15 @@ Falhas documentadas: `400` para UUID vazio, `401` para token ausente/inválido, 
 
 Rota autenticada usada pelo Mobile para atualizar o status sem remover o histórico do agendamento. O handler deriva usuário e clínica do JWT e permite a operação ao admin da clínica, à recepcionista com permissão de gerenciamento da clínica ou ao profissional responsável pelo agendamento. O UUID é recebido na rota e o corpo contém somente o status desejado.
 
-Status aceitos: `confirmado`, `concluido`, `cancelado` e `faltou`. A entidade valida a data UTC da alteração contra a data UTC do início e o estado atual: confirmar somente a partir de `agendado` até o dia do atendimento inclusive; cancelar a partir de `agendado` ou `confirmado`, mas antes do dia UTC anterior; marcar falta a partir de `agendado` ou `confirmado` no dia do atendimento ou depois; concluir somente a partir de `confirmado` depois do dia do atendimento. A API retorna `409` para data/transição não permitida. O Mobile não calcula esses prazos: oferece as ações conforme o fluxo definido para o aplicativo e apresenta o erro retornado pela API. A operação atualiza o estado relacional e não chama n8n nem sincroniza o Google Calendar.
+Status aceitos: `confirmado`, `concluido`, `cancelado` e `faltou`. A entidade valida a data UTC da alteração contra a data UTC do início e o estado atual: confirmar somente a partir de `agendado` até o dia do atendimento inclusive (atualizando `statusPagamento` para `pago`); cancelar a partir de `agendado` ou `confirmado`, mas antes do dia UTC anterior (atualizando `statusPagamento` para `estornado`); marcar falta somente a partir de `confirmado` no dia do atendimento ou depois; concluir somente a partir de `confirmado` depois do dia do atendimento. A API retorna `409` para data/transição não permitida. Para `confirmado`, `concluido` e `faltou`, a operação atualiza somente o estado relacional no PostgreSQL; quando `novoStatus` é `cancelado` e o agendamento possui `IdEventGoogleCalendar`, `AlterarStatusAgendamentoHandler` também exclui o evento correspondente no Google Calendar via `IExclusaoEventoAgendaExternaGateway` (`N8nExclusaoEventoGateway`, `operacao: "excluir_evento"`).
 
 As datas são comparadas em UTC no backend. O Mobile não replica essas regras nem estima se uma alteração será aceita; ele exibe o detalhe retornado pela API em caso de `409`.
 
-Entrada: `{ "status": "faltou" }`.
+Entrada: `{ "status": "cancelado" }`.
 
-Resposta HTTP `200`: `agendamentoUuid`, `statusAnterior`, `novoStatus` e `alteradoEm`.
+Resposta HTTP `200`: `agendamentoUuid`, `statusAnterior`, `statusPagamentoAnterior`, `novoStatus`, `novoStatusPagamento` e `alteradoEm`.
 
-Falhas tratadas: `400` para status inválido, `401` para token ausente/inválido, `403` para falta de autorização, `404` para agendamento não encontrado no escopo da clínica e `409` para transição de domínio inválida. O handler converte a exceção tipada do domínio em `ConflitoException`, que o tratamento global retorna como `409`. No Mobile, `agendado` oferece confirmar/cancelar e `confirmado` oferece concluir/falta/cancelar; estados finais e de integração não exibem ações. Datas e transições são validadas pela API, e o app mostra os detalhes de conflitos `409`.
+Falhas tratadas: `400` para status inválido, `401` para token ausente/inválido, `403` para falta de autorização, `404` para agendamento não encontrado no escopo da clínica, `409` para transição de domínio inválida ou agenda/webhook não configurados (no cancelamento) e `502` quando a exclusão externa no n8n falha. O handler converte a exceção tipada do domínio em `ConflitoException`, que o tratamento global retorna como `409`. No Mobile, `agendado` oferece confirmar/cancelar e `confirmado` oferece concluir/falta/cancelar; estados finais e de integração não exibem ações. Datas e transições são validadas pela API, e o app mostra os detalhes de conflitos `409`.
 
 #### `GET /api/clientes`
 
@@ -998,7 +1027,7 @@ Não trate os itens abaixo como implementados apenas porque constam na documenta
 
 ### PoC funcional
 
-- Os dezoito endpoints atuais do backend estão implementados: resolução de clínica, login, perfil atual, overview e resumo de receitas do profissional autenticado, listagem, vinculação/reativação e alteração de procedimentos do profissional autenticado, consulta de agenda, listagem de profissionais agendáveis, listagem dos procedimentos oferecidos por profissional, listagem do catálogo de procedimentos, disponibilidade, listagem de clientes, detalhes e alteração de status do agendamento, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida.
+- Os vinte endpoints atuais do backend estão implementados: resolução de clínica, login, perfil atual, overview e resumo de receitas do profissional autenticado, listagem, vinculação/reativação e alteração de procedimentos do profissional autenticado, criação e exclusão de indisponibilidades do profissional autenticado, consulta de agenda, listagem de profissionais agendáveis, listagem dos procedimentos oferecidos por profissional, listagem do catálogo de procedimentos, disponibilidade, listagem de clientes, detalhes e alteração de status do agendamento, criação de agendamento e resolução de clientes. A antiga listagem duplicada `GET /api/agendas` foi removida.
 - O conjunto mínimo de rotas necessário ao chatbot estático está completo. O próximo fluxo pode resolver o cliente, listar profissionais e procedimentos, consultar disponibilidade e confirmar o agendamento sem acesso direto ao banco.
 - Para a PoC, o chatbot autenticará n8n → API com um JWT anual emitido pontualmente para um usuário `Recepcionista` com `isAdmin = true` da clínica. O token deve permanecer nas Credentials do n8n; a emissão não deve alterar permanentemente a duração padrão dos tokens humanos.
 - Criar os DTOs, casos de uso e endpoints adicionais somente quando os próximos fluxos de cadastro ou MVP os exigirem.

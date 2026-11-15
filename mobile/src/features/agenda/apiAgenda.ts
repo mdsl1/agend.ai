@@ -1,5 +1,9 @@
 import { apiRequest } from '../../services/api';
-import type { RespostaAgenda } from './typeAgenda';
+import type {
+    CriarMinhaIndisponibilidadeRequest,
+    CriarMinhaIndisponibilidadeResponse,
+    RespostaAgenda,
+} from './typeAgenda';
 
 export function obterEventosAgenda(
     profissionalUuid: string,
@@ -10,5 +14,30 @@ export function obterEventosAgenda(
     return apiRequest<RespostaAgenda>(
         `/api/agenda/${encodeURIComponent(profissionalUuid)}?${parametros.toString()}`,
         { authenticated: true },
+    );
+}
+
+export function criarMinhaIndisponibilidade(
+    dados: CriarMinhaIndisponibilidadeRequest,
+): Promise<CriarMinhaIndisponibilidadeResponse> {
+    return apiRequest<CriarMinhaIndisponibilidadeResponse>(
+        '/api/me/indisponibilidade',
+        {
+            method: 'POST',
+            body: dados,
+            authenticated: true,
+        },
+    );
+}
+
+export function excluirMinhaIndisponibilidade(
+    eventoId: string,
+): Promise<void> {
+    return apiRequest<void>(
+        `/api/me/indisponibilidade/${encodeURIComponent(eventoId)}`,
+        {
+            method: 'DELETE',
+            authenticated: true,
+        },
     );
 }

@@ -23,7 +23,8 @@ using AgendAi.Application.Agenda.ConsultarDisponibilidade;
 using AgendAi.Application.Agenda.CriarAgendamento;
 using AgendAi.Application.Agenda.ConsultarAgendamento;
 using AgendAi.Application.Agenda.AlterarStatusAgendamento;
-
+using AgendAi.Application.Agenda.CriarMinhaIndisponibilidade;
+using AgendAi.Application.Agenda.ExcluirMinhaIndisponibilidade;
 
 using AgendAi.Application.Profissionais.Ports;
 using AgendAi.Infrastructure.Profissionais;
@@ -165,6 +166,36 @@ builder.Services.AddHttpClient<
     }
 );
 builder.Services.AddScoped<CriarAgendamentoHandler>();
+
+builder.Services.AddHttpClient<
+    IExclusaoEventoAgendaExternaGateway,
+    N8nExclusaoEventoGateway
+>(
+    httpClient =>
+    {
+        httpClient.Timeout = TimeSpan.FromSeconds(10);
+        httpClient.DefaultRequestHeaders.Add(
+            "X-AgendAi-Api-Key",
+            n8nApiKey
+        );
+    }
+);
+builder.Services.AddScoped<ExcluirMinhaIndisponibilidadeHandler>();
+
+builder.Services.AddHttpClient<
+    ICriacaoIndisponibilidadeExternaGateway,
+    N8nCriacaoIndisponibilidadeGateway
+>(
+    httpClient =>
+    {
+        httpClient.Timeout = TimeSpan.FromSeconds(10);
+        httpClient.DefaultRequestHeaders.Add(
+            "X-AgendAi-Api-Key",
+            n8nApiKey
+        );
+    }
+);
+builder.Services.AddScoped<CriarMinhaIndisponibilidadeHandler>();
 
 builder.Services.AddScoped<IProfissionaisReader, ProfissionaisReader>();
 builder.Services.AddScoped<ListarProfissionaisHandler>();

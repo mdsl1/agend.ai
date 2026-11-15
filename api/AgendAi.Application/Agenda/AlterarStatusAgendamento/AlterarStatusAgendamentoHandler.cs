@@ -15,6 +15,7 @@ public sealed class AlterarStatusAgendamentoHandler
     private readonly IAgendamentoDetalhadoReader _reader;
     private readonly IContextUsuarioAtual _context;
     private readonly AutorizacaoService _autorizacaoService;
+    private readonly IExclusaoEventoAgendaExternaGateway _exclusaoGateway;
     private const string TimezonePadrao = "America/Sao_Paulo";
     private static readonly TimeZoneInfo TimezoneApp = TimeZoneInfo.FindSystemTimeZoneById(TimezonePadrao);
     
@@ -22,13 +23,15 @@ public sealed class AlterarStatusAgendamentoHandler
         IAgendamentoStatusWriter writer,
         IAgendamentoDetalhadoReader reader,
         IContextUsuarioAtual context,
-        AutorizacaoService autorizacaoService
+        AutorizacaoService autorizacaoService,
+        IExclusaoEventoAgendaExternaGateway exclusaoGateway
     )
     {
         _writer = writer;
         _reader = reader;
         _context = context;
         _autorizacaoService = autorizacaoService;
+        _exclusaoGateway = exclusaoGateway;
     }
 
     public async Task<AlterarStatusAgendamentoResult> HandleAsync(
@@ -89,6 +92,54 @@ public sealed class AlterarStatusAgendamentoHandler
                 exception.Codigo,
                 exception.Message,
                 exception
+            );
+        }
+
+        if (
+            string.Equals(
+                resultado.NovoStatus,
+                Agendamento.StatusCancelado,
+                StringComparison.OrdinalIgnoreCase
+            )
+            && !string.IsNullOrWhiteSpace(resultado.IdEventoExterno)
+        )
+        {
+            var idAgendaExterna = resultado.IdAgendaExterna;
+            if (string.IsNullOrWhiteSpace(idAgendaExterna))
+            {
+                throw new ConflitoException(
+                    codigo: "agenda_nao_configurada",
+                    mensagem: "O profissional ainda não possui uma agenda configurada."
+                );
+            }
+
+            var urlWebhookAgenda = resultado.UrlWebhookAgenda;
+            if (string.IsNullOrWhiteSpace(urlWebhookAgenda))
+            {
+                throw new ConflitoException(
+                    codigo: "webhook_nao_configurado",
+                    mensagem: "A clínica ainda não possui um webhook de agenda configurado."
+                );
+            }
+
+            if (
+                !Uri.TryCreate(urlWebhookAgenda, UriKind.Absolute, out var webhookUri)
+                || (webhookUri.Scheme != Uri.UriSchemeHttp && webhookUri.Scheme != Uri.UriSchemeHttps)
+            )
+            {
+                throw new ConflitoException(
+                    codigo: "webhook_invalido",
+                    mensagem: "O webhook de agenda configurado para a clínica é inválido."
+                );
+            }
+
+            await _exclusaoGateway.ExcluirAsync(
+                new ExclusaoEventoAgendaExterna(
+                    IdEventoExterno: resultado.IdEventoExterno,
+                    IdAgendaExterna: idAgendaExterna
+                ),
+                webhookUri,
+                cancellationToken
             );
         }
 

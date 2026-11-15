@@ -8,6 +8,8 @@ export type StatusAgendamento =
     | 'cancelado'
     | 'faltou';
 
+export type FrequenciaIndisponibilidade = 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
+
 export type EventoAgenda = {
     id: string;
     tipo: 'agendamento' | 'indisponibilidade';
@@ -23,4 +25,24 @@ export type EventoAgenda = {
 
 export type RespostaAgenda = {
     eventos: EventoAgenda[];
+};
+
+export type CriarMinhaIndisponibilidadeRequest = {
+    inicio: string;
+    fim: string;
+    motivo: string | null;
+    seRepete: boolean;
+    frequencia: FrequenciaIndisponibilidade | null;
+    repetirAte: string | null;
+};
+
+export type CriarMinhaIndisponibilidadeResponse = {
+    id: string;
+    tipo: string;
+    titulo: string;
+    inicio: string;
+    fim: string;
+    seRepete: boolean;
+    frequencia: FrequenciaIndisponibilidade | null;
+    repetirAte: string | null;
 };

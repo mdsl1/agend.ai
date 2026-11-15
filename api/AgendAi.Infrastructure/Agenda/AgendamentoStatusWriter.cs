@@ -36,7 +36,10 @@ public sealed class AgendamentoStatusWriter : IAgendamentoStatusWriter
                 && agendamento.Clinica.Uuid == clinicaUuid
                 && agendamento.Clinica.DeletedAt == null
                 && agendamento.DeletedAt == null
-            ).SingleOrDefaultAsync(cancellationToken);
+            )
+            .Fetch(agendamento => agendamento.Clinica)
+            .Fetch(agendamento => agendamento.Profissional)
+            .SingleOrDefaultAsync(cancellationToken);
 
         if (agendamento is null )
         {
@@ -87,7 +90,10 @@ public sealed class AgendamentoStatusWriter : IAgendamentoStatusWriter
             StatusPgtoAnterior: statusPgtoAnterior,
             NovoStatus: agendamento.Status,
             NovoStatusPgto: agendamento.StatusPagamento,
-            AlteradoEm: agendamento.UpdatedAt ?? alteradoEm
+            AlteradoEm: agendamento.UpdatedAt ?? alteradoEm,
+            IdEventoExterno: agendamento.IdEventGoogleCalendar,
+            IdAgendaExterna: agendamento.Profissional.IdGoogleCalendar,
+            UrlWebhookAgenda: agendamento.Clinica.WebhookCalendar
         );
 
     }

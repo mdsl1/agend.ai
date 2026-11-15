@@ -10,7 +10,7 @@ import {
     type TextStyle,
     type ViewStyle,
 } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ApiError } from '../../../../services/api';
 import { sessionService } from '../../../../services/session';
@@ -33,6 +33,14 @@ function obterPartesData(data: Date): { ano: number; mes: number; dia: number } 
 
 function criarDataCivil(ano: number, mes: number, dia: number): Date {
     return new Date(Date.UTC(ano, mes - 1, dia));
+}
+
+function formatarDataIso(data: Date): string {
+    const partes = obterPartesData(data);
+    const ano = String(partes.ano).padStart(4, '0');
+    const mes = String(partes.mes).padStart(2, '0');
+    const dia = String(partes.dia).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
 }
 
 function obterHojeEmSaoPaulo(): Date {
@@ -230,6 +238,23 @@ export default function TelaAgenda() {
         setDataSelecionada(hoje);
     }
 
+    function abrirCriacaoIndisponibilidade() {
+        const parametros = new URLSearchParams({
+            data: formatarDataIso(dataSelecionada),
+        });
+        router.push(`/indisponibilidade?${parametros.toString()}` as Href);
+    }
+
+    function abrirDetalheIndisponibilidade(evento: EventoAgenda) {
+        const parametros = new URLSearchParams({
+            eventoId: evento.id,
+            titulo: evento.titulo,
+            inicio: evento.inicio,
+            fim: evento.fim,
+        });
+        router.push(`/indisponibilidade?${parametros.toString()}` as Href);
+    }
+
     const eventosDoDia = useMemo(() => {
         const inicioDia = formatarInicioDiaComFuso(dataSelecionada);
         const fimDia = formatarInicioDiaComFuso(adicionarDias(dataSelecionada, 1));
@@ -278,9 +303,21 @@ export default function TelaAgenda() {
             >
                 <View style={styles.cabecalho}>
                     <Text style={styles.titulo}>Minha agenda</Text>
-                    <Pressable accessibilityRole="button" onPress={irParaHoje} style={styles.botaoHoje}>
-                        <Text style={styles.textoBotaoHoje}>Hoje</Text>
-                    </Pressable>
+                    <View style={styles.acoesCabecalho}>
+                        <Pressable accessibilityRole="button" onPress={irParaHoje} style={styles.botaoHoje}>
+                            <Text style={styles.textoBotaoHoje}>Hoje</Text>
+                        </Pressable>
+                        {profissionalUuid !== null && (
+                            <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel="Adicionar indisponibilidade"
+                                onPress={abrirCriacaoIndisponibilidade}
+                                style={styles.botaoAdicionarTopo}
+                            >
+                                <Text style={styles.iconeAdicionarTopo}>+</Text>
+                            </Pressable>
+                        )}
+                    </View>
                 </View>
 
                 <View style={styles.navegadorSemana}>
@@ -345,6 +382,18 @@ export default function TelaAgenda() {
                     </Pressable>
                 </View>
 
+                {profissionalUuid !== null && (
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Adicionar indisponibilidade nesta data"
+                        onPress={abrirCriacaoIndisponibilidade}
+                        style={styles.botaoNovaIndisponibilidade}
+                    >
+                        <Text style={styles.iconeNovaIndisponibilidade}>+</Text>
+                        <Text style={styles.textoNovaIndisponibilidade}>Adicionar indisponibilidade</Text>
+                    </Pressable>
+                )}
+
                 {state.profile.profissionalUuid === null ? (
                     <View style={styles.cartaoMensagem}>
                         <Text style={styles.textoErro}>Seu usuário ainda não está vinculado a um profissional.</Text>
@@ -368,6 +417,9 @@ export default function TelaAgenda() {
                     <View style={styles.listaEventos}>
                         {eventosDoDia.map((evento) => {
                             const indisponibilidade = evento.tipo === 'indisponibilidade';
+                            const podeAbrirAgendamento = evento.tipo === 'agendamento' && Boolean(evento.agendamentoUuid);
+                            const podeAbrirIndisponibilidade = indisponibilidade && Boolean(evento.id);
+                            const interativo = podeAbrirAgendamento || podeAbrirIndisponibilidade;
                             const varianteStatus = obterVarianteStatus(evento.statusAgendamento, indisponibilidade);
                             const rotuloStatus = indisponibilidade
                                 ? 'Indisponível'
@@ -377,12 +429,25 @@ export default function TelaAgenda() {
                             return (
                                 <Pressable
                                     key={evento.id}
-                                    accessibilityRole={evento.tipo === 'agendamento' && evento.agendamentoUuid ? 'button' : undefined}
-                                    accessibilityLabel={evento.tipo === 'agendamento' ? `Ver detalhes de ${evento.nomeCliente ?? evento.titulo}` : undefined}
-                                    disabled={evento.tipo !== 'agendamento' || !evento.agendamentoUuid}
+                                    accessibilityRole={interativo ? 'button' : undefined}
+                                    accessibilityLabel={
+                                        podeAbrirAgendamento
+                                            ? `Ver detalhes de ${evento.nomeCliente ?? evento.titulo}`
+                                            : podeAbrirIndisponibilidade
+                                                ? `Ver indisponibilidade ${evento.titulo}`
+                                                : undefined
+                                    }
+                                    disabled={!interativo}
                                     onPress={() => {
-                                        if (evento.agendamentoUuid) {
-                                            router.push({ pathname: '/agendamento/[agendamentoUuid]', params: { agendamentoUuid: evento.agendamentoUuid } });
+                                        if (podeAbrirAgendamento && evento.agendamentoUuid) {
+                                            router.push({
+                                                pathname: '/agendamento/[agendamentoUuid]',
+                                                params: { agendamentoUuid: evento.agendamentoUuid },
+                                            });
+                                            return;
+                                        }
+                                        if (podeAbrirIndisponibilidade) {
+                                            abrirDetalheIndisponibilidade(evento);
                                         }
                                     }}
                                     style={[styles.cartaoEvento, indisponibilidade && styles.cartaoIndisponibilidade]}
@@ -398,7 +463,7 @@ export default function TelaAgenda() {
                                         </Text>
                                         <Text style={styles.subtituloEvento} numberOfLines={1}>
                                             {indisponibilidade
-                                                ? 'Indisponibilidade'
+                                                ? 'Indisponibilidade · Toque para detalhes'
                                                 : evento.nomeProcedimento ?? evento.titulo}
                                         </Text>
                                     </View>
@@ -407,6 +472,7 @@ export default function TelaAgenda() {
                                             {rotuloStatus}
                                         </Text>
                                     </View>
+                                    {interativo && <Text accessibilityElementsHidden style={styles.setaEvento}>›</Text>}
                                 </Pressable>
                             );
                         })}

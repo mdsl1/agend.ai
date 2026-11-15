@@ -121,6 +121,8 @@ public sealed class AgendamentosController : ControllerBase
     [ProducesResponseType( typeof(AlterarStatusAgendamentoResponse), StatusCodes.Status200OK )]
     [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status400BadRequest )]
     [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status404NotFound )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status409Conflict )]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status502BadGateway )]
     [ProducesResponseType( StatusCodes.Status401Unauthorized )]
     [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status403Forbidden )]
     public async Task<ActionResult<AlterarStatusAgendamentoResponse>> AlterarStatusAsync(

@@ -4,12 +4,15 @@ using AgendAi.API.Contracts.Auth;
 using AgendAi.API.Contracts.Overview;
 using AgendAi.API.Contracts.Profissionais;
 using AgendAi.API.Contracts.Receitas;
+using AgendAi.API.Contracts.Agenda;
 using AgendAi.Application.Auth.MeuPerfil;
 using AgendAi.Application.Overview.ConsultarMeuOverview;
 using AgendAi.Application.Profissionais.ListarMeusProcedimentos;
 using AgendAi.Application.Profissionais.VincularMeuProcedimento;
 using AgendAi.Application.Profissionais.AlterarMeuProcedimento;
 using AgendAi.Application.Receitas.ResumoMinhasReceitas;
+using AgendAi.Application.Agenda.CriarMinhaIndisponibilidade;
+using AgendAi.Application.Agenda.ExcluirMinhaIndisponibilidade;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,6 +27,8 @@ public sealed class MeController : ControllerBase
     private readonly AlterarMeuProcedimentoHandler _alterarMeuProcedimentoHandler;
     private readonly ConsultarResumoMinhasReceitasHandler _consultarResumoMinhasReceitasHandler;
     private readonly ConsultarMeuOverviewHandler _consultarMeuOverviewHandler;
+    private readonly CriarMinhaIndisponibilidadeHandler _criarMinhaIndisponibilidadeHandler;
+    private readonly ExcluirMinhaIndisponibilidadeHandler _excluirMinhaIndisponibilidadeHandler;
 
     public MeController(
         MeuPerfilHandler meuPerfilHandler,
@@ -31,7 +36,9 @@ public sealed class MeController : ControllerBase
         VincularMeuProcedimentoHandler vincularMeuProcedimentoHandler,
         AlterarMeuProcedimentoHandler alterarMeuProcedimentoHandler,
         ConsultarResumoMinhasReceitasHandler consultarResumoMinhasReceitasHandler,
-        ConsultarMeuOverviewHandler consultarMeuOverviewHandler
+        ConsultarMeuOverviewHandler consultarMeuOverviewHandler,
+        CriarMinhaIndisponibilidadeHandler criarMinhaIndisponibilidadeHandler,
+        ExcluirMinhaIndisponibilidadeHandler excluirMinhaIndisponibilidadeHandler
     )
     {
         _meuPerfilHandler = meuPerfilHandler;
@@ -40,6 +47,8 @@ public sealed class MeController : ControllerBase
         _alterarMeuProcedimentoHandler = alterarMeuProcedimentoHandler;
         _consultarResumoMinhasReceitasHandler = consultarResumoMinhasReceitasHandler;
         _consultarMeuOverviewHandler = consultarMeuOverviewHandler;
+        _criarMinhaIndisponibilidadeHandler = criarMinhaIndisponibilidadeHandler;
+        _excluirMinhaIndisponibilidadeHandler = excluirMinhaIndisponibilidadeHandler;
     }
 
     [HttpGet]
@@ -271,4 +280,72 @@ public sealed class MeController : ControllerBase
         return Ok(res);
     }
 
+    [HttpPost("indisponibilidade")]
+    [ProducesResponseType(typeof(CriarMinhaIndisponibilidadeResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<CriarMinhaIndisponibilidadeResponse>> CriarMinhaIndisponibilidadeAsync(
+        [FromBody] CriarMinhaIndisponibilidadeRequest req,
+        CancellationToken cancellationToken
+    )
+    {
+        var command = new CriarMinhaIndisponibilidadeCommand(
+            Inicio: req.Inicio,
+            Fim: req.Fim,
+            Motivo: req.Motivo,
+            SeRepete: req.SeRepete,
+            Frequencia: req.Frequencia,
+            RepetirAte: req.RepetirAte
+        );
+
+        var result = await _criarMinhaIndisponibilidadeHandler.HandleAsync(
+            command,
+            cancellationToken
+        );
+
+        var res = new CriarMinhaIndisponibilidadeResponse(
+            Id: result.Id,
+            Tipo: result.Tipo,
+            Titulo: result.Titulo,
+            Inicio: result.Inicio,
+            Fim: result.Fim,
+            SeRepete: result.SeRepete,
+            Frequencia: result.Frequencia,
+            RepetirAte: result.RepetirAte
+        );
+
+        return StatusCode(
+            StatusCodes.Status201Created,
+            res
+        );
+    }
+
+        [HttpDelete("indisponibilidade/{eventoId}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status502BadGateway)]
+    public async Task<IActionResult> ExcluirMinhaIndisponibilidadeAsync(
+        [FromRoute] string eventoId,
+        CancellationToken cancellationToken
+    )
+    {
+        var command = new ExcluirMinhaIndisponibilidadeCommand(
+            EventoId: eventoId
+        );
+
+        await _excluirMinhaIndisponibilidadeHandler.HandleAsync(
+            command,
+            cancellationToken
+        );
+
+        return NoContent();
+    }
 }

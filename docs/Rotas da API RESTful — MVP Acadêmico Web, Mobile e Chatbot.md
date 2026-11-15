@@ -1,6 +1,6 @@
 # Rotas da API RESTful — MVP Acadêmico Web, Mobile e Chatbot
 
-> Última revisão: 12 de novembro de 2026.
+> Última revisão: 15 de novembro de 2026.
 
 Este documento define os contratos HTTP necessários para integrar os três projetos:
 
@@ -25,6 +25,8 @@ As seguintes rotas já existem na PoC:
 - `GET /api/me/procedimentos`;
 - `POST /api/me/procedimentos`;
 - `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}`;
+- `POST /api/me/indisponibilidade`;
+- `DELETE /api/me/indisponibilidade/{eventoId}`;
 - `GET /api/me/overview`;
 - `POST /api/clientes/resolver`;
 - `POST /api/agendamentos`;
@@ -451,7 +453,7 @@ A rota foi validada manualmente nos cenários de criação, repetição idempote
 
 - **Projeto:** Mobile.
 - **Estado/acesso:** implementada; exige JWT Bearer. Admin e recepcionista podem gerenciar agendamentos da clínica; profissional pode alterar somente o próprio agendamento.
-- **Descrição:** altera o status do agendamento sem excluir o registro. Os status aceitos são `confirmado`, `concluido`, `cancelado` e `faltou`; as transições e seus limites temporais são validados pela entidade de domínio. A rota altera o estado relacional no PostgreSQL e não chama o n8n nem sincroniza o Google Calendar.
+- **Descrição:** altera o status do agendamento sem excluir o registro relacional. Os status aceitos são `confirmado`, `concluido`, `cancelado` e `faltou`; as transições e seus limites temporais são validados pela entidade de domínio. Para `confirmado`, `concluido` e `faltou`, a rota altera apenas o estado relacional no PostgreSQL; quando o novo status é `cancelado` e o agendamento possui evento externo (`IdEventGoogleCalendar`), o handler também remove o evento do Google Calendar do profissional via n8n (`operacao: "excluir_evento"`).
 
 Entrada `PATCH /api/agendamentos/{agendamentoUuid}/status`:
 
@@ -467,21 +469,23 @@ Resposta de sucesso `200 OK`:
 {
   "agendamentoUuid": "4067caa6-debe-4041-94e1-1b4674b5a129",
   "statusAnterior": "agendado",
-  "novoStatus": "faltou",
-  "alteradoEm": "2026-11-02T19:49:59.5639232+00:00"
+  "statusPagamentoAnterior": "pendente",
+  "novoStatus": "cancelado",
+  "novoStatusPagamento": "estornado",
+  "alteradoEm": "2026-11-15T05:10:00.0000000+00:00"
 }
 ```
 
 Regras implementadas em `Agendamento` (o domínio compara a data UTC de `datetimeAlteracao` e `TimeDateInicio`):
 
-- `confirmado`: somente quando o estado atual é `agendado` e até a data UTC do atendimento, inclusive;
-- `cancelado`: somente quando o estado atual é `agendado` ou `confirmado` e antes da data UTC do atendimento menos um dia; na data imediatamente anterior, a API já recusa;
-- `faltou`: a API permite quando o estado atual é `agendado` ou `confirmado` e a data UTC atual é igual ou posterior à data UTC do atendimento;
+- `confirmado`: somente quando o estado atual é `agendado` e até a data UTC do atendimento, inclusive; atualiza atomicamente `statusPagamento` para `pago`;
+- `cancelado`: somente quando o estado atual é `agendado` ou `confirmado` e antes da data UTC do atendimento menos um dia; na data imediatamente anterior, a API já recusa; atualiza atomicamente `statusPagamento` para `estornado` e, se houver `IdEventGoogleCalendar`, aciona `IExclusaoEventoAgendaExternaGateway` (`N8nExclusaoEventoGateway`) para excluir o evento no Google Calendar;
+- `faltou`: somente quando o estado atual é `confirmado` e a data UTC atual é igual ou posterior à data UTC do atendimento;
 - `concluido`: somente quando o estado atual é `confirmado` e a data UTC atual é posterior à data UTC do atendimento.
 
-Os limites são regras da API; o Mobile envia a ação escolhida sem calcular datas e apresenta a mensagem `409` quando uma transição ou prazo não for permitido. A interface oferece concluir e marcar falta somente no estado `confirmado`, seguindo a regra deste consumidor, embora o domínio atualmente também aceite `faltou` diretamente de `agendado`. A API não usa `America/Sao_Paulo` nestas validações: `TimeDateInicio` é armazenado/consultado como UTC. Não há chamada ao n8n nem sincronização do Google Calendar.
+Os limites são regras da API; o Mobile envia a ação escolhida sem calcular datas e apresenta a mensagem `409` quando uma transição ou prazo não for permitido. A API não usa `America/Sao_Paulo` nas comparações de domínio: `TimeDateInicio` é armazenado/consultado como UTC.
 
-Falhas tratadas: `400` para status inválido, `401` para token ausente/inválido, `403` para usuário sem autorização, `404` para agendamento inexistente no escopo da clínica e `409` para transição incompatível com o estado atual ou com a data. Exemplo de conflito:
+Falhas tratadas: `400` para status inválido, `401` para token ausente/inválido, `403` para usuário sem autorização, `404` para agendamento inexistente no escopo da clínica, `409` para transição incompatível com o estado atual/data ou agenda/webhook não configurados (no cancelamento) e `502` quando a exclusão externa do evento no n8n falha. Exemplo de conflito:
 
 ```json
 {
@@ -496,51 +500,86 @@ Falhas tratadas: `400` para status inválido, `401` para token ausente/inválido
 
 Na interface mobile, `agendado` permite confirmar ou cancelar; `confirmado` permite concluir, marcar falta ou cancelar. Estados finais e de integração não apresentam ações. O botão de reagendamento permanece sem integração até a implementação de sua rota. Futuramente, poderá ser permitida a transição de `faltou` para `reagendado` conforme regra própria.
 
-### `POST /api/me/indisponibilidades`
+### `POST /api/me/indisponibilidade`
 
 - **Projeto:** Mobile.
-- **Estado/acesso:** planejada; profissional autenticado.
-- **Descrição:** cria um evento pontual e ocupado no Google Calendar do próprio profissional. O título é sempre definido pelo servidor como `Indisponível`.
+- **Estado/acesso:** implementada; exige JWT Bearer e permissão `indisponibilidades:gerenciar:proprias` (profissional autenticado com vínculo profissional ativo).
+- **Descrição:** cria um evento de indisponibilidade ocupado no Google Calendar do próprio profissional via n8n (`operacao: "criar_indisponibilidade"`), suportando bloqueios pontuais ou recorrentes. Não há persistência no PostgreSQL.
 
 Entrada:
 
 ```json
 {
-  "inicio": "2026-09-10T12:00:00-03:00",
-  "fim": "2026-09-10T13:00:00-03:00"
+  "inicio": "2026-11-16T13:00:00-03:00",
+  "fim": "2026-11-16T15:00:00-03:00",
+  "motivo": "Balé da filha",
+  "seRepete": true,
+  "frequencia": "Daily",
+  "repetirAte": "2026-11-30T13:00:00-03:00"
 }
 ```
 
-Saída `201 Created`:
+Saída `201 Created` (exemplo com repetição):
 
 ```json
 {
-  "id": "evento-opaco-456",
+  "id": "ef6cu1r0d4q3u9kkei382qto1s",
   "tipo": "indisponibilidade",
-  "titulo": "Indisponível",
-  "inicio": "2026-09-10T12:00:00-03:00",
-  "fim": "2026-09-10T13:00:00-03:00"
+  "titulo": "Balé da filha",
+  "inicio": "2026-11-16T13:00:00-03:00",
+  "fim": "2026-11-16T15:00:00-03:00",
+  "seRepete": true,
+  "frequencia": "Daily",
+  "repetirAte": "2026-11-30T13:00:00-03:00"
 }
 ```
 
-Não há recorrência nem persistência no PostgreSQL. Intervalo inválido ou sobreposto a outro evento retorna `409`.
+Saída `201 Created` (exemplo sem repetição):
 
-### `DELETE /api/me/indisponibilidades/{eventoId}`
+```json
+{
+  "id": "blv1htcph4uo45716qmp8fekug",
+  "tipo": "indisponibilidade",
+  "titulo": "Almoço",
+  "inicio": "2026-11-16T13:00:00-03:00",
+  "fim": "2026-11-16T14:00:00-03:00",
+  "seRepete": false,
+  "frequencia": null,
+  "repetirAte": null
+}
+```
+
+Regras implementadas:
+
+- `inicio` e `fim` são obrigatórios e `fim` deve ser posterior a `inicio`;
+- `motivo` é opcional (máximo de 150 caracteres após `Trim`); quando omitido ou em branco, a API define `"Indisponível"` por padrão;
+- quando `seRepete` é `false`, `frequencia` e `repetirAte` são ignorados e retornados como `null`;
+- quando `seRepete` é `true`, `frequencia` é obrigatória (`Daily`, `Weekly`, `Monthly` ou `Yearly`, sem diferenciar maiúsculas/minúsculas na entrada) e `repetirAte` é limitado a no máximo 1 ano a partir de `inicio` (se `repetirAte` vier `null`, a API calcula automaticamente `inicio.AddYears(1)`);
+- antes de solicitar a criação ao n8n, o handler consulta a agenda do profissional no intervalo `[inicio, fim]` por `IAgendaExternaGateway` e retorna `409 Conflict` (`horario_indisponivel`) se já existir qualquer evento sobreposto;
+- a comunicação com o n8n (`N8nCriacaoIndisponibilidadeGateway`) tem timeout de 10 segundos e até 2 tentativas para falhas transitórias;
+- falhas tratadas: `400 Bad Request` para período, motivo ou recorrência inválidos, `401 Unauthorized` para token ausente/inválido, `403 Forbidden` para usuário sem permissão ou sem vínculo profissional, `404 Not Found` para profissional inexistente/inativo, `409 Conflict` para agenda/webhook não configurados ou conflito de horário e `502 Bad Gateway` para falha no n8n. Os cenários pontual e recorrente foram validados manualmente.
+
+### `DELETE /api/me/indisponibilidade/{eventoId}`
 
 - **Projeto:** Mobile.
-- **Estado/acesso:** planejada; profissional autenticado.
-- **Descrição:** remove um evento de indisponibilidade para liberar novamente o período. A API deve confirmar que o evento pertence à agenda do profissional e foi criado como indisponibilidade.
+- **Estado/acesso:** implementada; exige JWT Bearer e permissão `indisponibilidades:gerenciar:proprias` (profissional autenticado com vínculo profissional ativo).
+- **Descrição:** remove um evento de indisponibilidade no Google Calendar do profissional autenticado via n8n (`operacao: "excluir_evento"`) para liberar novamente o período.
 
 Entrada:
 
 ```http
-DELETE /api/me/indisponibilidades/evento-opaco-456
+DELETE /api/me/indisponibilidade/blv1htcph4uo45716qmp8fekug
 Authorization: Bearer <access-token>
 ```
 
 Saída: `204 No Content`.
 
-Eventos de agendamento não podem ser removidos por esta rota.
+Regras implementadas:
+
+- `eventoId` é obrigatório na rota;
+- eventos de agendamento (cujo identificador determinístico no Google Calendar segue o formato `ag{agendamentoUuid:N}`) são bloqueados antes da chamada externa com `409 Conflict` (`exclusao_agendamento_nao_permitida`), impedindo que agendamentos sejam apagados pela rota de indisponibilidades;
+- o handler obtém o calendário (`IdAgendaExterna`) e o webhook da clínica exclusivamente do profissional autenticado no token e delega a exclusão para `IExclusaoEventoAgendaExternaGateway` (`N8nExclusaoEventoGateway`), com timeout de 10 segundos, até 2 tentativas para falhas transitórias e verificação de correlação do `id_event` retornado;
+- falhas tratadas: `400 Bad Request` para `eventoId` em branco, `401 Unauthorized` para token ausente/inválido, `403 Forbidden` para falta de permissão/vínculo profissional, `404 Not Found` para profissional não encontrado, `409 Conflict` para tentativa de excluir evento de agendamento ou agenda/webhook não configurados e `502 Bad Gateway` para falha externa no n8n. A exclusão foi validada manualmente.
 
 ---
 
@@ -1034,9 +1073,9 @@ No Web, atendentes e profissionais iniciam o novo agendamento selecionando diret
 | Login e sessão | `POST /api/auth/login`, `GET /api/me` | Implementado |
 | Perfil Profissional (rota interna `/perfil`) | `GET /api/me` | Implementado: exibe dados cadastrais somente leitura (iniciais, prefixo + nome, especialidade + registro profissional, clínica e e-mail), card informativo de privacidade/segurança, atualização manual e logout local com remoção do token |
 | Início | `GET /api/me/overview` | Implementado: consulta integrada e exibição dos quatro indicadores diários; navegação para Receitas disponível |
-| Agenda (rota interna `/agenda`) | `GET /api/agenda/{profissionalUuid}` | Implementado: consulta semanal, seleção de data, atendimentos/indisponibilidades, badges dos oito status e estados de carregamento, vazio e erro |
+| Agenda (rota interna `/agenda`) | `GET /api/agenda/{profissionalUuid}` | Implementado: consulta semanal, seleção de data, atendimentos/indisponibilidades, badges dos oito status, botão para adicionar indisponibilidade, abertura de bloqueios existentes e estados de carregamento, vazio e erro |
 | Detalhes do atendimento (rota interna `/agendamento/{agendamentoUuid}`) | `GET /api/agendamentos/{agendamentoUuid}`, `PATCH /api/agendamentos/{agendamentoUuid}/status` | Implementado: confirma em `agendado`; permite concluir/falta em `confirmado` e cancelar em ambos. Datas e transições validadas pela API; conflitos `409` são exibidos |
-| Bloquear ou liberar horário | `POST /api/me/indisponibilidades`, `DELETE /api/me/indisponibilidades/{eventoId}` | Planejado |
+| Bloquear ou liberar horário (rota interna `/indisponibilidade`) | `POST /api/me/indisponibilidade`, `DELETE /api/me/indisponibilidade/{eventoId}` | Implementado: cria bloqueios pontuais ou recorrentes (`Daily`, `Weekly`, `Monthly`, `Yearly`, com `repetirAte` opcional até 1 ano) via `POST`, preserva campos em conflito `409` e exibe/exclui bloqueios existentes com confirmação via `DELETE`, recarregando `/agenda` ao retornar |
 | Meus Procedimentos (rota interna `/procedimentos`) | `GET /api/procedimentos`, `GET /api/me/procedimentos` | Implementado: combina catálogo e vínculos, busca local, abre o formulário de vínculo e recarrega a lista ao retornar |
 | Vincular / Editar Procedimento (rota interna `/procedimento/{procedimentoUuid}`) | `GET /api/procedimentos`, `GET /api/me/procedimentos`, `POST /api/me/procedimentos`, `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` | Implementado: cria/reativa vínculos inativos via `POST` e altera preço, duração ou disponibilidade de vínculos ativos via `PATCH` |
 | Receitas (rota interna `/receitas`) | `GET /api/me/receitas/resumo?mes={1-12}&ano={AAAA}` | Implementado: consulta mensal e navegação entre Início/Receitas |
@@ -1066,7 +1105,7 @@ As telas mobile implementadas acompanham automaticamente o tema claro ou escuro 
 6. **Procedimentos do profissional:** `profissional_procedimentos` está sincronizada entre `database/init.sql`, entidade e mapping NHibernate, com unicidade do par profissional/procedimento e valor/duração efetivos obrigatórios sem defaults silenciosos. A associação é exposta por `GET /api/profissionais/{profissionalUuid}/procedimentos` e `GET /api/me/procedimentos`, vinculada ou reativada pelo profissional autenticado por `POST /api/me/procedimentos` (que grava os valores informados ou copia os valores-base vigentes quando omitidos) e editada/ativada/inativada por `PATCH /api/me/procedimentos/{profissionalProcedimentoUuid}` (que preserva os valores atuais do vínculo quando omitidos).
 7. **Schema atual:** a relação de `profissionais` com `usuarios` e a definição de `profissional_procedimentos` já estão corrigidas no bootstrap canônico. Mudanças estruturais futuras devem continuar sincronizadas com entidades e mappings.
 8. **Eventos do Calendar:** padronizar o marcador `tipo = agendamento | indisponibilidade`. A consulta deve retornar `agendamentoUuid` apenas quando o evento possuir registro relacional.
-9. **Bloqueios:** criar no n8n as operações de criar e excluir um evento `Indisponível`. A exclusão deve validar agenda, profissional e marcador do evento.
+9. **Bloqueios:** implementadas na API e no n8n as operações de criar (`POST /api/me/indisponibilidade`, com suporte a motivo e repetição limitada a 1 ano) e excluir (`DELETE /api/me/indisponibilidade/{eventoId}`) um evento de indisponibilidade na agenda do profissional autenticado, bloqueando a remoção de eventos de agendamento (`ag{uuid:N}`).
 10. **Idempotência da criação:** implementada por chave aleatória persistida e escopada pela clínica; retentativas idênticas concluídas devolvem o mesmo agendamento.
 11. **Receitas:** os valores representam atendimentos concluídos e receita prevista, não contabilidade, conciliação ou fluxo de caixa.
 12. **Overview do profissional:** implementada consulta agregada ao PostgreSQL para alimentar a tela Início sem encadear chamadas HTTP internas nem consultar o Google Calendar. A rota retorna os contadores de agenda (`qtdeHoje`, `qtdeConfirmados`, `qtdeRestante`, `qtdeCancelados`), o próximo agendamento quando houver e o resumo financeiro mensal.
@@ -1074,9 +1113,9 @@ As telas mobile implementadas acompanham automaticamente o tema claro ou escuro 
 ## Resumo quantitativo
 
 - **24 contratos HTTP**;
-- **18 rotas implementadas**, incluindo resolução de clínica, login, perfil, associação e edição de procedimentos do profissional autenticado e alteração de status de agendamento;
-- **6 rotas planejadas**;
-- as dezoito rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
+- **20 rotas implementadas**, incluindo resolução de clínica, login, perfil, associação e edição de procedimentos do profissional autenticado, criação e exclusão de indisponibilidades do profissional autenticado e alteração de status de agendamento;
+- **4 rotas planejadas**;
+- as vinte rotas implementadas possuem o estado de autenticação e escopo descrito em cada seção;
 - nenhuma listagem com busca ou paginação;
 - `GET /api/clientes` já fornece os clientes ativos para o select do modal Web. A interface carrega a coleção uma única vez enquanto a agenda permanece montada e filtra localmente por nome ou telefone. O início é escolhido no grid; `GET /api/profissionais/{profissionalUuid}/procedimentos` fornece o preço e a duração efetivos que definem o fim exibido, e a confirmação já usa `POST /api/agendamentos` com chave de idempotência.
 
